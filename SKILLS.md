@@ -77,10 +77,9 @@ wallet:
           type: "PublicKey"
         - name: "amount"
           type: "number"
-      constraints:
-        - "Policy validation required"
-        - "Balance check required"
-        - "Daily limit check"
+      notes:
+        - "Built-in agents go through policy validation"
+        - "BYOA agents have full autonomy — no policy checks"
     
     transfer_token:
       description: "Transfer SPL tokens (decimal-aware amount handling)"
@@ -164,10 +163,12 @@ security:
     scope: "Wallet private keys at rest"
 
   autonomous_intents:
+    design: "BYOA agents are AI / LLM agents with full autonomy"
     guardrails:
       - "Fully logged to intent history for auditability"
-      - "Raw transaction inspection before signing"
       - "Operator assumes full responsibility"
+      - "No program allowlist — agents may interact with any Solana program"
+      - "No policy validation on BYOA transfer/airdrop intents"
 ```
 
 ---
@@ -227,20 +228,21 @@ agent:
       parameters: []
 
     autonomous:
-      description: "Unrestricted agent action — bypasses policy engine"
+      description: "Unrestricted agent action — full autonomy, no policy checks"
       parameters:
         - name: "action"
           type: "string"
-          enum: ["airdrop", "transfer_sol", "transfer_token", "query_balance"]
+          enum: ["airdrop", "transfer_sol", "transfer_token", "query_balance", "execute_instructions", "raw_transaction", "swap", "create_token"]
           description: "The underlying action to execute"
         - name: "params"
           type: "object"
           description: "Action-specific parameters (same as the target action)"
       policy_checks: []  # No policy validation — autonomous
       notes:
+        - "BYOA agents are AI / LLM agents with full autonomy"
+        - "Can interact with ANY Solana program (no allowlist)"
         - "Fully logged to intent history for auditability"
-        - "Raw transaction inspection before signing"
-        - "Designed for advanced operators who accept full responsibility"
+        - "Operator assumes full responsibility"
 ```
 
 ---
@@ -299,6 +301,8 @@ protocol_interactions:
 byoa:
   version: "1.0.0"
   description: "External agents connect via REST API with bearer-token authentication"
+
+  design_philosophy: "BYOA agents are AI / LLM agents. They have full autonomy over the wallets assigned to them — no policy restrictions, no program allowlists."
 
   supported_intents:
     - REQUEST_AIRDROP
@@ -464,17 +468,21 @@ strategies:
 
 ## Policy Constraints
 
+> **Note:** Policy constraints apply to **built-in agents only**.
+> BYOA agents are AI / LLM agents with **full autonomy** — no policy validation, no transfer limits, no program allowlists.
+
 ```yaml
 policy:
+  scope: "Built-in agents only — BYOA agents are unrestricted"
   defaults:
     maxTransferAmount:
       value: 1.0
       unit: "SOL"
-      description: "Maximum SOL per transfer"
+      description: "Maximum SOL per transfer (built-in agents)"
     
     maxDailyTransfers:
       value: 100
-      description: "Maximum transfers per wallet per day"
+      description: "Maximum transfers per wallet per day (built-in agents)"
     
     requireMinBalance:
       value: 0.01
@@ -483,11 +491,11 @@ policy:
     
     allowedRecipients:
       value: null
-      description: "Optional whitelist of allowed recipients"
+      description: "Optional whitelist of allowed recipients (built-in agents)"
     
     blockedRecipients:
       value: null
-      description: "Optional blacklist of blocked recipients"
+      description: "Optional blacklist of blocked recipients (built-in agents)"
 ```
 
 ---
@@ -821,6 +829,42 @@ type ExternalAgentStatus =
   | 'active'
   | 'inactive'
   | 'revoked';
+```
+
+---
+
+## Persistence
+
+```yaml
+persistence:
+  engine: "JSON file store (data/ directory)"
+  files:
+    wallets.json: "Encrypted wallet key material and metadata"
+    agents.json: "Built-in agent state and configuration"
+    byoa-agents.json: "BYOA agent records and hashed tokens"
+    transactions.json: "Full transaction history with Date revival"
+  behavior:
+    - "Automatic save on every state change"
+    - "Automatic restore on server restart"
+    - "data/ is gitignored"
+```
+
+---
+
+## Test Suite
+
+```yaml
+testing:
+  framework: "vitest ^1.2.0"
+  command: "npm test"
+  files:
+    encryption.test.ts: "AES-256-GCM round-trip, tamper detection, secureCompare, generateSecureId (10 tests)"
+    wallet-manager.test.ts: "Wallet creation, signing, deletion, policy validation (10 tests)"
+    agent-factory.test.ts: "Strategy creation, param validation, registry DTOs (10 tests)"
+    agent-decisions.test.ts: "Autonomous decision-making for all 4 strategies (6 tests)"
+    store-and-registry.test.ts: "BYOA registration, auth, token rotation, lifecycle (8 tests)"
+    store.test.ts: "File-based persistence round-trip (2 tests)"
+  total: 46
 ```
 
 ---

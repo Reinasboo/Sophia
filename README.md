@@ -10,14 +10,14 @@ A production-grade autonomous AI agent wallet system for Solana Devnet. This sys
 - **Strategy Registry**: Extensible, Zod-validated strategy system with 4 built-in strategies
 - **Dynamic Configuration**: Update agent strategy params and execution settings at runtime
 - **Transaction Simulation**: Pre-flight simulation before every send to catch errors without paying fees
-- **Autonomous Safety**: Program allowlist for `execute_instructions` (12 vetted DeFi programs)
+- **BYOA Autonomy**: BYOA agents are AI / LLM agents with full autonomy — no policy restrictions, no program allowlists
 - **API Rate Limiting**: Per-IP sliding window (120 req/min) on all endpoints
 - **Pagination**: `/api/transactions` supports `page` and `limit` query params
 - **Graceful Shutdown**: HTTP drain with 10-second timeout, clean WebSocket close
 - **File-Based Persistence**: Agents, wallets, policies, and BYOA registrations survive server restarts — zero extra dependencies
 - **Secure Wallet Management**: AES-256-GCM encrypted key storage, scrypt KDF (N=32768), zero key after sign
 - **Multi-Agent Support**: Run multiple independent agents simultaneously
-- **Policy Engine**: Configurable constraints on agent actions
+- **Policy Engine**: Configurable constraints on built-in agent actions
 - **Bring Your Own Agent (BYOA)**: Register external AI agents and give them intent-based wallet access
 - **Autonomous Intent**: Unrestricted `AUTONOMOUS` intent type for advanced agents — bypasses policy engine, fully logged
 - **Real-time Dashboard**: Beautiful, Figma-quality frontend for monitoring and management
@@ -300,19 +300,19 @@ curl -X POST http://localhost:3001/api/byoa/intents \
 | `QUERY_BALANCE` | Check wallet balance | (none) | N/A |
 | `AUTONOMOUS` | Unrestricted action | `action`, `params` | **No** |
 
-The `AUTONOMOUS` intent type's `execute_instructions` action is restricted to a
-**program allowlist** of 12 known DeFi and system programs (System, Token, Jupiter,
-Raydium, Orca, Pump.fun, PumpSwap, Bonk.fun, etc.) to prevent abuse.
+> **Design philosophy**: BYOA agents are AI / LLM agents. They have **full autonomy**
+> over their assigned wallets — no policy restrictions, no program allowlists.
+> All executions are fully logged to the intent history for auditability.
 
 The `AUTONOMOUS` intent allows agents to execute any action without policy
 constraints. The `action` field specifies the underlying operation (`airdrop`,
-`transfer_sol`, `transfer_token`, `query_balance`) and `params` carries the
-action-specific parameters. All autonomous executions are fully logged.
+`transfer_sol`, `transfer_token`, `query_balance`, `execute_instructions`,
+`raw_transaction`) and `params` carries the action-specific parameters.
 
 ### Security Guarantees
 
 - External agents **never** receive private keys
-- All actions go through the **policy engine**
+- Built-in agent actions go through the **policy engine**; BYOA agents have **full autonomy**
 - Intents are **rate-limited** (30/min per agent)
 - Agents can only act on **their own** bound wallet
 - Control tokens are **hashed** at rest (SHA-256)
@@ -330,6 +330,7 @@ registrations automatically — agents that were running are restarted.
 | `data/agents.json` | Agent configs, strategy params, `wasRunning` flag |
 | `data/byoa-agents.json` | External agent records and token hashes |
 | `data/byoa-binder.json` | Wallet-to-agent binding map |
+| `data/transactions.json` | Full transaction history |
 
 > **Security note**: `data/` is listed in `.gitignore`. Never commit it — it contains
 > AES-256-GCM encrypted private keys. Back it up securely if needed.
@@ -340,8 +341,17 @@ registrations automatically — agents that were running are restarted.
 - Keys are only decrypted momentarily for signing
 - Agents have NO access to private keys
 - Frontend is read-only (no key exposure)
-- Policy engine validates all intents
+- Policy engine validates built-in agent intents
+- BYOA agents have full autonomy — no policy restrictions
 - See [SECURITY.md](SECURITY.md) for full threat model
+
+## Testing
+
+46 unit tests covering encryption, wallet management, agent decision-making, strategy registry, persistence, and BYOA lifecycle:
+
+```bash
+npm test
+```
 
 ## Configuration
 

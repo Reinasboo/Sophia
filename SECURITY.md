@@ -55,7 +55,8 @@ secretKey.fill(0); // zero before GC — defense in depth
 **Mitigations**:
 - Agents have NO cryptographic capabilities
 - Intent-based communication (agents emit wishes, not commands)
-- Policy engine validates all intents
+- Policy engine validates built-in agent intents
+- BYOA agents have full autonomy (no policy validation)
 - Rate limiting on transfers
 - Balance minimums enforced
 
@@ -68,8 +69,9 @@ signTransaction() // ❌ Not available
 return { type: 'transfer_sol', amount: 0.1, recipient: '...' }
 return { type: 'transfer_token', mint: '...', amount: 10, recipient: '...' }
 return { type: 'autonomous', action: 'transfer_sol', params: { amount: 0.5, recipient: '...' } }
-// All intent types are validated by the same policy engine
-// EXCEPT 'autonomous', which bypasses policy checks by design
+// Built-in agent intents are validated by the policy engine
+// BYOA agents have full autonomy — no policy restrictions, no program allowlists
+// All BYOA actions are fully logged and rate-limited
 ```
 
 #### 3. Frontend Attack
@@ -117,14 +119,16 @@ return { type: 'autonomous', action: 'transfer_sol', params: { amount: 0.5, reci
 - Transaction retry limits
 - Daily transfer limits per wallet
 
-#### 6. Arbitrary Program Execution
-**Threat**: Autonomous agent calls a malicious Solana program via `execute_instructions`
+#### 6. Unrestricted BYOA Agent Access
+**Threat**: BYOA agent calls a malicious Solana program or drains wallet
 
-**Mitigations**:
-- `AUTONOMOUS execute_instructions` enforces a **program allowlist** of 12 vetted programs
-- Disallowed program IDs are rejected before signing (no transaction built)
-- Allowlist includes: System Program, Token Program, ATA Program, Memo, Jupiter v6, Raydium AMM/CLMM, Orca Whirlpool, Pump.fun, PumpSwap, Bonk.fun
-- Unknown programs are logged and blocked with an actionable error message
+**Design Decision**:
+- BYOA agents are AI / LLM agents with **full autonomy** — this is by design
+- No program allowlist, no policy validation, no transfer caps
+- The operator who registers a BYOA agent assumes full responsibility
+- All actions are fully logged to the intent history for auditability
+- Rate limiting (30/min) still applies to prevent accidental runaway loops
+- Each agent is isolated to its own wallet (cannot affect other agents)
 
 #### 7. Pre-Execution Error Cost
 **Threat**: Agents burn SOL fees on transactions that would fail on-chain
@@ -198,10 +202,9 @@ External Agent                     Platform
      │                                │  1. Authenticate token
      │                                │  2. Verify intent in supported set
      │                                │  3. Rate limit check
-     │                                │  4. Policy validation (max amount, daily limit)
-     │                                │  5. Build transaction (RPC layer)
-     │                                │  6. Sign transaction (wallet layer - keys here only)
-     │                                │  7. Submit to Solana
+     │                                │  4. Build transaction (RPC layer)
+     │                                │  5. Sign transaction (wallet layer - keys here only)
+     │                                │  6. Submit to Solana
      │  { status: "executed",         │
      │    signature: "abc..." }       │
      │◄───────────────────────────────│
@@ -222,8 +225,8 @@ They never see:
 
 BYOA intents are rate-limited per agent:
 - **30 intents per minute** per agent (sliding window)
-- **Daily transfer limits** enforced by the policy engine
-- **Maximum transfer amounts** per the wallet's policy
+- **Built-in agents**: daily transfer limits enforced by the policy engine
+- **BYOA agents**: full autonomy — no policy restrictions
 
 ### Revocation
 
@@ -261,7 +264,7 @@ This means a disconnected or token-lost agent is **never** locked out of its wal
 
 ## Policy Engine
 
-The policy engine validates all agent intents:
+The policy engine validates **built-in** agent intents (BYOA agents have full autonomy):
 
 ```typescript
 interface Policy {
@@ -334,6 +337,7 @@ All system state is persisted to the `data/` directory as JSON files.
 | `data/agents.json` | Medium | Agent configs, strategy params, `wasRunning` flag |
 | `data/byoa-agents.json` | **HIGH** | SHA-256 token hashes, wallet bindings |
 | `data/byoa-binder.json` | Low | Wallet-to-agent ID mapping |
+| `data/transactions.json` | Medium | Full transaction history |
 
 **Mitigations**:
 - `data/` is listed in `.gitignore` — never committed to version control
@@ -385,14 +389,14 @@ if (config.SOLANA_NETWORK === 'mainnet-beta') {
 - [x] BYOA 1-wallet-per-agent isolation
 - [x] BYOA agent revocation
 - [x] **BYOA token rotation** (`rotate-token` — reconnect to same wallet with new token, old token invalidated atomically)
-- [x] **Program allowlist for `execute_instructions`** (12 vetted DeFi/system programs)
+- [x] **BYOA agent full autonomy** (no program allowlist, no policy restrictions — by design)
 - [x] **Transaction simulation on all execution paths** (10 paths — errors abort before fee is burned)
 - [x] Strategy Registry param validation (Zod schemas per strategy)
 - [x] Execution settings bounds (cycle 5 s–1 h, actions 1–10 000)
 - [x] SPL token transfer (`transfer_token`) validated by the same policy engine as `transfer_sol`
 - [x] SPL token transfers require wallet-layer signing (agents never access keys)
 - [x] **On-chain token decimal lookup** (`getMintDecimals()` — no hardcoded 9)
-- [x] AUTONOMOUS intent type: policy bypass is intentional, documented, and fully logged
+- [x] AUTONOMOUS intent type: full autonomy is intentional, documented, and fully logged
 - [x] Global intent history (`/api/intents`) provides unified audit trail for all intent types
 - [x] Orchestrator records built-in agent intents to IntentRouter for centralized logging
 - [x] Unhandled rejection / uncaught exception handlers
@@ -400,7 +404,7 @@ if (config.SOLANA_NETWORK === 'mainnet-beta') {
 - [x] Request body size limit (512 KB)
 - [x] Admin API key authentication on all mutation endpoints (X-Admin-Key header)
 - [x] BYOA registration requires admin auth (no open registration)
-- [x] Autonomous intent safety guardrails (rate limits, transfer caps, min balance)
+- [x] BYOA agents have full autonomy by design (operator assumes responsibility)
 - [x] Prototype pollution prevention (Zod record transforms strip __proto__/constructor)
 - [x] Error response sanitization (no stack traces leaked)
 - [x] Configurable CORS origins via CORS_ORIGINS env var
@@ -413,7 +417,7 @@ if (config.SOLANA_NETWORK === 'mainnet-beta') {
 - [x] Startup warnings for default encryption secret / admin key
 - [x] **Graceful shutdown** (HTTP drain 10s timeout, WebSocket 1001 close)
 - [x] **scrypt cost N=32768** (OWASP recommended)
-- [x] **File-based persistence** (wallets, agents, BYOA records survive restarts)
+- [x] **File-based persistence** (wallets, agents, transactions, BYOA records survive restarts)
 - [x] **Persistence directory gitignored** (`data/` — encrypted keys never committed)
 - [x] **Auto-restart agents** on startup (agents with `wasRunning: true` resume automatically)
 

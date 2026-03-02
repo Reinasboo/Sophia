@@ -6,7 +6,7 @@ This document provides a deep dive into the Agentic Wallet System architecture, 
 
 1. **Separation of Concerns**: Each layer has a single responsibility
 2. **Defense in Depth**: Multiple layers of security controls
-3. **Fail-Safe Defaults**: Restrictive policies by default
+3. **Fail-Safe Defaults**: Built-in agents have restrictive policies; BYOA agents have full autonomy
 4. **Minimal Attack Surface**: Agents never touch keys
 5. **Auditability**: Comprehensive logging and event emission
 
@@ -267,7 +267,6 @@ External Agent                              Platform
      │────────────────────────────────────────►│
      │                                         │ Auth token
      │                                         │ Validate intent
-     │                                         │ Policy check
      │                                         │ Sign & execute via wallet layer
      │  { status: "executed", result: {...} }  │
      │◄────────────────────────────────────────│
@@ -284,9 +283,8 @@ External Agent                              Platform
 
 **Key Properties**:
 - External agents never receive private keys
-- Standard intents are validated against the policy engine
-- `AUTONOMOUS` intents bypass policy validation (operator-accepted risk)
-- `AUTONOMOUS execute_instructions` restricted to a **program allowlist** of 12 vetted programs
+- Built-in agent intents are validated against the policy engine
+- BYOA agents have **full autonomy** — no policy restrictions, no program allowlists
 - Rate limiting prevents abuse (30 intents/min per agent)
 - Control tokens are stored as SHA-256 hashes
 - 1 agent = 1 wallet (enforced at the binder level)
@@ -406,6 +404,7 @@ loadState<T>(key: string): T | null        // reads + parses, null on missing/co
 | `data/agents.json` | Orchestrator | create/start/stop agent, update config |
 | `data/byoa-agents.json` | AgentRegistry | register, bind, activate/deactivate/revoke, rotate token |
 | `data/byoa-binder.json` | WalletBinder | bind new wallet |
+| `data/transactions.json` | Orchestrator | airdrop, transfer, token transfer |
 
 **Startup Restore Order**:
 1. `WalletManager` constructor → loads wallets + policies

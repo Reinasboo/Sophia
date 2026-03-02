@@ -8,12 +8,13 @@
  * External agents NEVER submit raw transactions — they submit intents such
  * as REQUEST_AIRDROP, TRANSFER_SOL, QUERY_BALANCE.
  *
- * SECURITY:
- * - Authenticates via control token (bearer)
- * - Validates the intent is in the agent's supported set
- * - Enforces rate limits per agent
- * - Delegates policy validation to WalletManager
- * - Routes execution through existing wallet layer (signing stays internal)
+ * DESIGN:
+ * - BYOA agents are AI / LLM agents. They have full autonomy over the
+ *   wallets assigned to them — no policy restrictions, no program
+ *   allowlists. The wallet is theirs to use as they see fit.
+ * - Authentication is via control token (bearer)
+ * - Rate limiting protects infrastructure (not wallet funds)
+ * - All actions are fully logged for auditability
  */
 
 import { v4 as uuidv4 } from 'uuid';
@@ -29,25 +30,9 @@ import { eventBus } from '../orchestrator/event-emitter.js';
 const logger = createLogger('BYOA_INTENT');
 
 // ────────────────────────────────────────────
-// Program allowlist for autonomous execute_instructions
-// Only these programs may be targeted by autonomous agents.
-// Add program IDs here as the platform evolves.
+// Program reference for autonomous execute_instructions
+// All programs are allowed — this list is for logging only.
 // ────────────────────────────────────────────
-
-const AUTONOMOUS_PROGRAM_ALLOWLIST: ReadonlySet<string> = new Set([
-  '11111111111111111111111111111111',                             // System Program
-  'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',                // Token Program
-  'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',               // Associated Token Program
-  'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr',               // Memo Program v2
-  'JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4',               // Jupiter v6
-  'jupoNjAxXgZ4rjzxzPMP4oxduvQsQtZzyknqvzYNrNu',               // Jupiter v6 Aggregator
-  '675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8',              // Raydium AMM v4
-  'CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK',              // Raydium CLMM
-  'whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc',               // Orca Whirlpool
-  '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P',               // Pump.fun
-  'pAMMBay6oceH9fJKBRHGP5D4bD4sWpmSwMn52FMfXEA',               // PumpSwap AMM
-  'BoNKFKgVR4AhBCbFvEJhEEGwBwMgh4xnSuFgrEbGo3xj',             // Bonk.fun
-]);
 
 // ────────────────────────────────────────────
 // External intent payload (what the caller sends)
@@ -324,25 +309,7 @@ export class IntentRouter {
     const pubkeyResult = this.walletManager.getPublicKey(walletId);
     if (!pubkeyResult.ok) throw pubkeyResult.error;
 
-    // Check balance
-    const balanceResult = await this.solanaClient.getBalance(pubkeyResult.value);
-    if (!balanceResult.ok) throw balanceResult.error;
-
-    // Build internal intent for policy validation
-    const internalIntent: Intent = {
-      id: uuidv4(),
-      agentId,
-      timestamp: new Date(),
-      type: 'transfer_sol',
-      recipient,
-      amount,
-    };
-
-    // Policy validation
-    const validResult = this.walletManager.validateIntent(walletId, internalIntent, balanceResult.value.sol);
-    if (!validResult.ok) throw validResult.error;
-
-    // Build transaction
+    // Build transaction — no policy restrictions, the agent has full autonomy
     const txResult = await buildSolTransfer(pubkeyResult.value, recipientPubkey, amount);
     if (!txResult.ok) throw txResult.error;
 
@@ -429,23 +396,7 @@ export class IntentRouter {
     const pubkeyResult = this.walletManager.getPublicKey(walletId);
     if (!pubkeyResult.ok) throw pubkeyResult.error;
 
-    // Check SOL balance (needed for fees)
-    const balanceResult = await this.solanaClient.getBalance(pubkeyResult.value);
-    if (!balanceResult.ok) throw balanceResult.error;
-
-    // Build policy validation intent
-    const internalIntent: Intent = {
-      id: uuidv4(),
-      agentId,
-      timestamp: new Date(),
-      type: 'transfer_token',
-      mint,
-      recipient,
-      amount,
-    };
-
-    const validResult = this.walletManager.validateIntent(walletId, internalIntent, balanceResult.value.sol);
-    if (!validResult.ok) throw validResult.error;
+    // No policy restrictions — the agent has full autonomy over its wallet
 
     // H-3/H-4: Accept decimals from params (default 9 for SOL-like tokens).
     // Callers SHOULD specify decimals for non-9-decimal tokens (e.g. USDC=6).
@@ -735,18 +686,8 @@ export class IntentRouter {
       }
     }
 
-    // Enforce program allowlist — reject instructions targeting unknown programs
-    const disallowed = instructions
-      .map((ix, i) => ({ index: i, programId: ix.programId }))
-      .filter(({ programId }) => !AUTONOMOUS_PROGRAM_ALLOWLIST.has(programId));
-
-    if (disallowed.length > 0) {
-      const names = disallowed.map(d => `[${d.index}] ${d.programId.slice(0, 12)}...`).join(', ');
-      throw new Error(
-        `execute_instructions blocked: instruction(s) target disallowed program(s): ${names}. ` +
-        'Only known DeFi and system programs are permitted for autonomous execution.',
-      );
-    }
+    // No program allowlist — BYOA agents have full autonomy to interact
+    // with any Solana program. All executions are logged for auditability.
 
     const memo = typeof params['memo'] === 'string'
       ? params['memo']

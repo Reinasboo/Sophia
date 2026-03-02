@@ -21,6 +21,7 @@ function deriveKey(passphrase: string, salt: Buffer): Buffer {
     N: 32768,
     r: 8,
     p: 1,
+    maxmem: 64 * 1024 * 1024, // 64 MiB — explicit to avoid OpenSSL default limits
   });
 }
 

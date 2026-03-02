@@ -528,6 +528,8 @@ export class Orchestrator {
         error: result.error.message,
       });
     }
+
+    this.saveTransactions();
   }
 
   /**
@@ -628,6 +630,8 @@ export class Orchestrator {
     } else {
       this.updateTransactionFailed(txRecord.id, sendResult.error.message);
     }
+
+    this.saveTransactions();
   }
 
   /**
@@ -829,6 +833,8 @@ export class Orchestrator {
         });
       }
     }
+
+    this.saveTransactions();
   }
 
   /**
@@ -838,6 +844,24 @@ export class Orchestrator {
     if (this.transactions.length > this.maxTransactions) {
       this.transactions = this.transactions.slice(-this.maxTransactions);
     }
+    this.saveTransactions();
+  }
+
+  private saveTransactions(): void {
+    saveState('transactions', this.transactions);
+  }
+
+  private loadTransactions(): void {
+    const saved = loadState<TransactionRecord[]>('transactions');
+    if (!saved || saved.length === 0) return;
+    for (const tx of saved) {
+      this.transactions.push({
+        ...tx,
+        createdAt: new Date(tx.createdAt),
+        confirmedAt: tx.confirmedAt ? new Date(tx.confirmedAt) : undefined,
+      });
+    }
+    logger.info('Transaction history restored from disk', { count: this.transactions.length });
   }
 
   /**
@@ -1010,6 +1034,9 @@ export class Orchestrator {
    * Called once from index.ts after startServer().
    */
   restoreFromStore(): void {
+    // Restore transaction history first so agents have context
+    this.loadTransactions();
+
     const saved = loadState<SavedAgent[]>('agents');
     if (!saved || saved.length === 0) return;
 
