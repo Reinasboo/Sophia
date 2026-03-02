@@ -1013,6 +1013,65 @@ app.post('/api/byoa/agents/:id/revoke', requireAdminAuth, (req: Request, res: Re
 });
 
 /**
+ * Rotate the control token for a BYOA agent.
+ *
+ * Invalidates the current token and issues a brand-new 256-bit token.
+ * The agent's wallet binding is preserved — the agent reconnects to the
+ * SAME wallet using the new token.
+ *
+ * Use this when:
+ *  - The agent has lost its original token
+ *  - The token is suspected compromised
+ *
+ * Requires admin auth. The new token is returned ONCE — store it securely.
+ */
+app.post('/api/byoa/agents/:id/rotate-token', requireAdminAuth, (req: Request, res: Response) => {
+  try {
+    const registry = getAgentRegistry();
+    const agentId = req.params['id'] ?? '';
+
+    const agentResult = registry.getAgent(agentId);
+    if (!agentResult.ok) {
+      res.status(404).json({
+        success: false,
+        error: agentResult.error.message,
+        timestamp: new Date(),
+      });
+      return;
+    }
+
+    const result = registry.rotateToken(agentId);
+    if (!result.ok) {
+      res.status(400).json({
+        success: false,
+        error: result.error.message,
+        timestamp: new Date(),
+      });
+      return;
+    }
+
+    logger.info('Control token rotated via API', { agentId });
+
+    res.json({
+      success: true,
+      data: {
+        agentId,
+        controlToken: result.value,           // New token — shown once
+        walletPublicKey: agentResult.value.walletPublicKey,
+        note: 'Token rotated. Update your agent with this new token. The wallet is unchanged.',
+      },
+      timestamp: new Date(),
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: sanitizeError(error),
+      timestamp: new Date(),
+    });
+  }
+});
+
+/**
  * Get all intent history (for dashboard).
  * Includes intents from both BYOA external agents and built-in orchestrated agents.
  */

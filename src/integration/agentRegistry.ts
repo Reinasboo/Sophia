@@ -257,6 +257,37 @@ export class AgentRegistry {
     return success(true);
   }
 
+  /**
+   * Rotate the control token for an agent.
+   *
+   * Generates a new 256-bit control token, invalidates the old one, and keeps
+   * the agent's wallet binding intact. Use this to recover access after a token
+   * is lost or suspected-compromised. The new token is returned once — store
+   * it securely.
+   */
+  rotateToken(agentId: string): Result<string, Error> {
+    const agent = this.agents.get(agentId);
+    if (!agent) {
+      return failure(new Error(`External agent not found: ${agentId}`));
+    }
+    if (agent.status === 'revoked') {
+      return failure(new Error('Cannot rotate token for a revoked agent'));
+    }
+
+    // Remove old token hash from index
+    this.tokenIndex.delete(agent.controlTokenHash);
+
+    // Generate and register new token
+    const newToken = generateControlToken();
+    const newHash = hashToken(newToken);
+
+    this.agents.set(agentId, { ...agent, controlTokenHash: newHash });
+    this.tokenIndex.set(newHash, agentId);
+
+    logger.info('Control token rotated for external agent', { agentId, name: agent.name });
+    return success(newToken);
+  }
+
   // ── Internal ─────────────────────────────
 
   private toPublicInfo(record: ExternalAgentRecord): ExternalAgentInfo {

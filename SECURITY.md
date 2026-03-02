@@ -233,6 +233,32 @@ Once revoked:
 - All subsequent intent submissions are rejected
 - The wallet remains but is no longer controllable
 
+### Token Rotation (Reconnect)
+
+If an agent loses its control token, an admin can issue a replacement via
+`POST /api/byoa/agents/:id/rotate-token` (requires admin auth).
+
+```bash
+curl -X POST http://localhost:3001/api/byoa/agents/<agentId>/rotate-token \
+  -H "X-Admin-Key: <adminKey>"
+
+# Response:
+{
+  "agentId": "...",
+  "controlToken": "<new-token-shown-once>",
+  "walletPublicKey": "...",
+  "note": "Token rotated. Update your agent with this new token. The wallet is unchanged."
+}
+```
+
+What happens internally:
+1. The old token hash is **deleted** from the token index (old token instantly invalid)
+2. A new 256-bit token is generated
+3. New hash is stored; wallet binding is **untouched**
+4. Agent submits intents with the new token — same wallet, same funds
+
+This means a disconnected or token-lost agent is **never** locked out of its wallet permanently.
+
 ## Policy Engine
 
 The policy engine validates all agent intents:
@@ -333,6 +359,7 @@ if (config.SOLANA_NETWORK === 'mainnet-beta') {
 - [x] BYOA intent validation against supported set
 - [x] BYOA 1-wallet-per-agent isolation
 - [x] BYOA agent revocation
+- [x] **BYOA token rotation** (`rotate-token` — reconnect to same wallet with new token, old token invalidated atomically)
 - [x] **Program allowlist for `execute_instructions`** (12 vetted DeFi/system programs)
 - [x] **Transaction simulation on all execution paths** (10 paths — errors abort before fee is burned)
 - [x] Strategy Registry param validation (Zod schemas per strategy)

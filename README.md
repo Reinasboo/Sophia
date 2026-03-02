@@ -178,6 +178,7 @@ DEEP_DIVE.md             # Design philosophy and rationale
 - `POST /api/byoa/agents/:id/activate` - Activate external agent
 - `POST /api/byoa/agents/:id/deactivate` - Deactivate external agent
 - `POST /api/byoa/agents/:id/revoke` - Revoke external agent (permanent)
+- `POST /api/byoa/agents/:id/rotate-token` - Issue a new control token (agent reconnects to same wallet)
 - `GET /api/byoa/intents` - Get all BYOA intent history
 
 ## Agent Strategies
@@ -313,6 +314,7 @@ action-specific parameters. All autonomous executions are fully logged.
 - Intents are **rate-limited** (30/min per agent)
 - Agents can only act on **their own** bound wallet
 - Control tokens are **hashed** at rest (SHA-256)
+- Lost token? An admin can **rotate** the token via `POST /api/byoa/agents/:id/rotate-token` — the agent reconnects to the **same wallet** with a new token, no funds lost
 
 ## Security
 
