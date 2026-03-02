@@ -15,6 +15,7 @@ import { randomBytes, createHash } from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 import { createLogger } from '../utils/logger.js';
 import { Result, success, failure } from '../utils/types.js';
+import { saveState, loadState } from '../utils/store.js';
 
 const logger = createLogger('BYOA_REGISTRY');
 
@@ -99,6 +100,36 @@ export class AgentRegistry {
 
   constructor(maxAgents: number = 50) {
     this.maxAgents = maxAgents;
+    this.loadFromStore();
+  }
+
+  // ── Persistence ──────────────────────────
+
+  private saveToStore(): void {
+    const agents = Array.from(this.agents.values());
+    saveState('byoa-agents', { agents });
+  }
+
+  private loadFromStore(): void {
+    interface SavedBYOA { agents: ExternalAgentRecord[] }
+    const saved = loadState<SavedBYOA>('byoa-agents');
+    if (!saved?.agents?.length) return;
+
+    let restored = 0;
+    for (const raw of saved.agents) {
+      const record: ExternalAgentRecord = {
+        ...raw,
+        createdAt: new Date(raw.createdAt),
+        lastActiveAt: raw.lastActiveAt ? new Date(raw.lastActiveAt) : undefined,
+      };
+      this.agents.set(record.id, record);
+      // Only index non-revoked agents
+      if (record.status !== 'revoked') {
+        this.tokenIndex.set(record.controlTokenHash, record.id);
+      }
+      restored++;
+    }
+    logger.info('BYOA agents restored from disk', { count: restored });
   }
 
   // ── Registration ─────────────────────────
@@ -146,6 +177,7 @@ export class AgentRegistry {
 
     this.agents.set(agentId, record);
     this.tokenIndex.set(controlTokenHash, agentId);
+    this.saveToStore();
 
     logger.info('External agent registered', {
       agentId,
@@ -173,6 +205,7 @@ export class AgentRegistry {
       walletPublicKey,
       status: 'active',
     });
+    this.saveToStore();
 
     logger.info('Wallet bound to external agent', { agentId, walletId, walletPublicKey });
     return success(true);
@@ -229,6 +262,7 @@ export class AgentRegistry {
       return failure(new Error(`External agent not found: ${agentId}`));
     }
     this.agents.set(agentId, { ...agent, status: 'inactive' });
+    this.saveToStore();
     logger.info('External agent deactivated', { agentId });
     return success(true);
   }
@@ -242,6 +276,7 @@ export class AgentRegistry {
       return failure(new Error('Agent has no bound wallet; cannot activate'));
     }
     this.agents.set(agentId, { ...agent, status: 'active' });
+    this.saveToStore();
     logger.info('External agent activated', { agentId });
     return success(true);
   }
@@ -253,6 +288,7 @@ export class AgentRegistry {
     }
     this.agents.set(agentId, { ...agent, status: 'revoked' });
     this.tokenIndex.delete(agent.controlTokenHash);
+    this.saveToStore();
     logger.info('External agent revoked', { agentId });
     return success(true);
   }
@@ -283,6 +319,7 @@ export class AgentRegistry {
 
     this.agents.set(agentId, { ...agent, controlTokenHash: newHash });
     this.tokenIndex.set(newHash, agentId);
+    this.saveToStore();
 
     logger.info('Control token rotated for external agent', { agentId, name: agent.name });
     return success(newToken);

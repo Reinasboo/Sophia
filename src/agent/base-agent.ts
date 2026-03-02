@@ -72,8 +72,9 @@ export abstract class BaseAgent {
     walletPublicKey: string,
     strategyParams?: Record<string, unknown>,
     executionSettings?: Partial<ExecutionSettings>,
+    idOverride?: string,
   ) {
-    this.id = uuidv4();
+    this.id = idOverride ?? uuidv4();
     this.name = name;
     this.strategy = strategy;
     this.walletId = walletId;

@@ -36,6 +36,7 @@ import { getStrategyRegistry } from '../agent/strategy-registry.js';
 import { getIntentRouter } from '../integration/intentRouter.js';
 import type { SupportedIntentType } from '../integration/agentRegistry.js';
 import { eventBus } from './event-emitter.js';
+import { saveState, loadState } from '../utils/store.js';
 
 const logger = createLogger('ORCHESTRATOR');
 
@@ -43,6 +44,20 @@ interface ManagedAgent {
   agent: BaseAgent;
   intervalId?: NodeJS.Timeout;
   cycleInProgress?: boolean; // Guard against overlapping async cycles
+}
+
+/** Minimal serialisable snapshot of an agent for disk persistence. */
+interface SavedAgent {
+  id: string;
+  name: string;
+  strategy: string;
+  strategyParams: Record<string, unknown>;
+  executionSettings: import('../utils/types.js').ExecutionSettings;
+  walletId: string;
+  walletPublicKey: string;
+  createdAt: string;
+  lastActionAt?: string;
+  wasRunning: boolean;
 }
 
 /**
@@ -127,6 +142,8 @@ export class Orchestrator {
     // Store managed agent
     this.agents.set(agent.id, { agent });
 
+    this.saveToStore();
+
     // Emit event
     eventBus.emit({
       id: uuidv4(),
@@ -175,7 +192,7 @@ export class Orchestrator {
     this.runAgentCycle(agentId);
 
     logger.info('Agent started', { agentId, cycleIntervalMs: interval });
-
+    this.saveToStore();
     return success(true);
   }
 
@@ -196,7 +213,7 @@ export class Orchestrator {
     managed.agent.stop();
 
     logger.info('Agent stopped', { agentId });
-
+    this.saveToStore();
     return success(true);
   }
 
@@ -868,6 +885,7 @@ export class Orchestrator {
     }
 
     logger.info('Agent config updated', { agentId });
+    this.saveToStore();
     return success(agent.getInfo());
   }
 
@@ -957,6 +975,102 @@ export class Orchestrator {
     }
 
     this.agents.clear();
+  }
+
+  // ── Persistence ──────────────────────────────────────────────────────────────
+
+  private saveToStore(): void {
+    const saved: SavedAgent[] = Array.from(this.agents.values()).map((m) => {
+      const info = m.agent.getInfo();
+      return {
+        id: info.id,
+        name: info.name,
+        strategy: info.strategy,
+        strategyParams: info.strategyParams ?? {},
+        executionSettings: info.executionSettings ?? {
+          cycleIntervalMs: this.loopInterval,
+          maxActionsPerDay: 100,
+          enabled: true,
+        },
+        walletId: m.agent.getWalletId(),
+        walletPublicKey: info.walletPublicKey,
+        createdAt: info.createdAt.toISOString(),
+        lastActionAt: info.lastActionAt?.toISOString(),
+        wasRunning: !!m.intervalId,
+      };
+    });
+    saveState('agents', saved);
+  }
+
+  /**
+   * Reload agents from disk after server restart.
+   * Agents are restored in stopped state; those that were running are
+   * auto-started so the system picks up where it left off.
+   *
+   * Called once from index.ts after startServer().
+   */
+  restoreFromStore(): void {
+    const saved = loadState<SavedAgent[]>('agents');
+    if (!saved || saved.length === 0) return;
+
+    let restored = 0;
+    const toStart: string[] = [];
+
+    for (const s of saved) {
+      // Skip if wallet no longer exists
+      const pubKeyResult = this.walletManager.getPublicKey(s.walletId);
+      if (!pubKeyResult.ok) {
+        logger.warn('Skipping agent restore — wallet missing', { agentId: s.id, walletId: s.walletId });
+        continue;
+      }
+
+      if (this.agents.size >= this.maxAgents) {
+        logger.warn('Agent limit reached during restore, some agents skipped');
+        break;
+      }
+
+      const agentResult = createAgent({
+        config: {
+          name: s.name,
+          strategy: s.strategy,
+          strategyParams: s.strategyParams,
+          executionSettings: s.executionSettings,
+        },
+        walletId: s.walletId,
+        walletPublicKey: s.walletPublicKey,
+        idOverride: s.id,
+        createdAtOverride: new Date(s.createdAt),
+      });
+
+      if (!agentResult.ok) {
+        logger.warn('Failed to restore agent', { agentId: s.id, error: agentResult.error.message });
+        continue;
+      }
+
+      const agent = agentResult.value;
+      if (s.lastActionAt) {
+        Object.assign(agent, { lastActionAt: new Date(s.lastActionAt) });
+      }
+
+      this.agents.set(agent.id, { agent });
+      restored++;
+
+      if (s.wasRunning) {
+        toStart.push(agent.id);
+      }
+    }
+
+    if (restored > 0) {
+      logger.info('Agents restored from disk', { count: restored, autoStarting: toStart.length });
+    }
+
+    // Auto-start agents that were running before shutdown
+    for (const agentId of toStart) {
+      const result = this.startAgent(agentId);
+      if (!result.ok) {
+        logger.warn('Failed to auto-start restored agent', { agentId, error: result.error.message });
+      }
+    }
   }
 }
 

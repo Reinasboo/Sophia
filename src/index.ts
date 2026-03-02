@@ -7,6 +7,7 @@
 import { startServer } from './server.js';
 import { createLogger } from './utils/logger.js';
 import { getConfig } from './utils/config.js';
+import { getOrchestrator } from './orchestrator/index.js';
 
 const logger = createLogger('MAIN');
 
@@ -53,6 +54,11 @@ async function main(): Promise<void> {
     });
     
     startServer();
+    
+    // Restore persisted agents (wallets and BYOA records are loaded in their
+    // respective constructors; agents need an explicit call because startup
+    // auto-starts timers that cannot run from a constructor).
+    getOrchestrator().restoreFromStore();
     
     logger.info('System started successfully');
     logger.info(`API available at http://localhost:${config.PORT}`);

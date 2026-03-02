@@ -16,6 +16,7 @@ import { createLogger } from '../utils/logger.js';
 import { Result, success, failure, WalletInfo } from '../utils/types.js';
 import { getWalletManager, WalletManager } from '../wallet/index.js';
 import { getAgentRegistry, AgentRegistry } from './agentRegistry.js';
+import { saveState, loadState } from '../utils/store.js';
 
 const logger = createLogger('BYOA_BINDER');
 
@@ -43,6 +44,23 @@ export class WalletBinder {
   constructor() {
     this.walletManager = getWalletManager();
     this.registry = getAgentRegistry();
+    this.loadFromStore();
+  }
+
+  // ── Persistence ──────────────────────────
+
+  private saveToStore(): void {
+    saveState('byoa-binder', { walletToAgent: Object.fromEntries(this.walletToAgent) });
+  }
+
+  private loadFromStore(): void {
+    interface SavedBinder { walletToAgent: Record<string, string> }
+    const saved = loadState<SavedBinder>('byoa-binder');
+    if (!saved?.walletToAgent) return;
+    for (const [walletId, agentId] of Object.entries(saved.walletToAgent)) {
+      this.walletToAgent.set(walletId, agentId);
+    }
+    logger.info('WalletBinder map restored from disk', { count: this.walletToAgent.size });
   }
 
   /**
@@ -85,6 +103,7 @@ export class WalletBinder {
 
     // Record reverse mapping
     this.walletToAgent.set(wallet.id, agentId);
+    this.saveToStore();
 
     logger.info('Wallet bound to external agent', {
       agentId,

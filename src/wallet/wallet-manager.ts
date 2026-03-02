@@ -24,6 +24,7 @@ import {
 import { encrypt, decrypt, generateSecureId } from '../utils/encryption.js';
 import { getConfig, ESTIMATED_SOL_TRANSFER_FEE, ESTIMATED_TOKEN_TRANSFER_FEE } from '../utils/config.js';
 import { createLogger } from '../utils/logger.js';
+import { saveState, loadState } from '../utils/store.js';
 
 const logger = createLogger('WALLET');
 
@@ -44,7 +45,7 @@ export class WalletManager {
   constructor() {
     const config = getConfig();
     this.encryptionSecret = config.KEY_ENCRYPTION_SECRET;
-    
+    this.loadFromStore();
     // Reset daily counters at midnight
     this.scheduleDailyReset();
   }
@@ -96,6 +97,7 @@ export class WalletManager {
         label,
       });
       
+      this.saveToStore();
       // Return only public information
       return success(this.toWalletInfo(wallet));
     } catch (error) {
@@ -314,6 +316,7 @@ export class WalletManager {
     
     logger.info('Policy updated', { walletId, policy: newPolicy });
     
+    this.saveToStore();
     return success(newPolicy);
   }
 
@@ -344,6 +347,7 @@ export class WalletManager {
     
     logger.info('Wallet deleted', { walletId });
     
+    this.saveToStore();
     return success(true);
   }
 
@@ -357,6 +361,37 @@ export class WalletManager {
       createdAt: wallet.createdAt,
       label: wallet.label,
     };
+  }
+
+  // ── Persistence ──────────────────────────────────────────────────────────────
+
+  private saveToStore(): void {
+    const walletsArr = Array.from(this.wallets.values());
+    const policiesObj: Record<string, Policy> = {};
+    for (const [id, policy] of this.policies.entries()) {
+      policiesObj[id] = policy;
+    }
+    saveState('wallets', { wallets: walletsArr, policies: policiesObj });
+  }
+
+  private loadFromStore(): void {
+    const saved = loadState<{ wallets: InternalWallet[]; policies: Record<string, Policy> }>('wallets');
+    if (!saved) return;
+
+    let loaded = 0;
+    for (const w of saved.wallets) {
+      const wallet: InternalWallet = {
+        ...w,
+        createdAt: new Date(w.createdAt),
+      };
+      this.wallets.set(wallet.id, wallet);
+      this.policies.set(wallet.id, saved.policies[wallet.id] ?? { ...DEFAULT_POLICY });
+      this.dailyTransfers.set(wallet.id, 0);
+      loaded++;
+    }
+    if (loaded > 0) {
+      logger.info('Wallets restored from disk', { count: loaded });
+    }
   }
 }
 

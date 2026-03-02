@@ -20,14 +20,17 @@ export interface CreateAgentOptions {
   config: AgentConfig;
   walletId: string;
   walletPublicKey: string;
+  /** When restoring from persisted state, preserve the original agent ID. */
+  idOverride?: string;
+  /** When restoring from persisted state, preserve the original creation time. */
+  createdAtOverride?: Date;
 }
 
 /**
  * Create an agent based on configuration
  */
 export function createAgent(options: CreateAgentOptions): Result<BaseAgent, Error> {
-  const { config, walletId, walletPublicKey } = options;
-  const registry = getStrategyRegistry();
+  const { config, walletId, walletPublicKey } = options;  const registry = getStrategyRegistry();
 
   logger.info('Creating agent', {
     name: config.name,
@@ -96,6 +99,14 @@ export function createAgent(options: CreateAgentOptions): Result<BaseAgent, Erro
     // Apply execution settings if provided
     if (config.executionSettings) {
       agent.updateExecutionSettings(config.executionSettings);
+    }
+
+    // Restore original id/createdAt when loading from persisted state
+    if (options.idOverride) {
+      Object.assign(agent, { id: options.idOverride });
+    }
+    if (options.createdAtOverride) {
+      Object.assign(agent, { createdAt: options.createdAtOverride });
     }
 
     logger.info('Agent created successfully', {
