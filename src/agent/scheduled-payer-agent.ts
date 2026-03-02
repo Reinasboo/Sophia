@@ -9,6 +9,7 @@
 
 import { BaseAgent, AgentContext, AgentDecision } from './base-agent.js';
 import { createLogger } from '../utils/logger.js';
+import { ESTIMATED_SOL_TRANSFER_FEE } from '../utils/config.js';
 
 const logger = createLogger('SCHEDULED_PAYER');
 
@@ -58,7 +59,7 @@ export class ScheduledPayerAgent extends BaseAgent {
       return { shouldAct: false, reasoning: `Daily payment limit reached (${this.params.maxPaymentsPerDay})` };
     }
 
-    const afterSend = context.balance.sol - this.params.amount - 0.00001;
+    const afterSend = context.balance.sol - this.params.amount - ESTIMATED_SOL_TRANSFER_FEE;
     if (afterSend < this.params.minBalanceToSend) {
       return { shouldAct: false, reasoning: `Balance too low to send (need ${this.params.minBalanceToSend} SOL reserve)` };
     }

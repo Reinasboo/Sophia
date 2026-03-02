@@ -18,7 +18,7 @@ const SALT_LENGTH = 32;
  */
 function deriveKey(passphrase: string, salt: Buffer): Buffer {
   return scryptSync(passphrase, salt, KEY_LENGTH, {
-    N: 16384,
+    N: 32768,
     r: 8,
     p: 1,
   });

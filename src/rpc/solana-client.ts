@@ -256,9 +256,10 @@ export class SolanaClient {
           break;
         }
         
-        // Wait before retry
+        // Wait before retry (exponential backoff: 1s, 2s, 4s, 8s...)
         if (attempt < this.maxRetries) {
-          await this.sleep(1000 * (attempt + 1));
+          const backoffMs = Math.min(1000 * Math.pow(2, attempt), 16_000);
+          await this.sleep(backoffMs);
         }
       }
     }
@@ -304,11 +305,17 @@ export class SolanaClient {
   }
 
   /**
-   * Get recent blockhash for transaction building
+   * Get recent blockhash and lastValidBlockHeight for transaction building.
+   * The overloaded signature preserves backward compatibility.
    */
-  async getRecentBlockhash(): Promise<Result<string, Error>> {
+  async getRecentBlockhash(): Promise<Result<string, Error>>;
+  async getRecentBlockhash(full: true): Promise<Result<{ blockhash: string; lastValidBlockHeight: number }, Error>>;
+  async getRecentBlockhash(full?: true): Promise<Result<string | { blockhash: string; lastValidBlockHeight: number }, Error>> {
     try {
-      const { blockhash } = await this.connection.getLatestBlockhash();
+      const { blockhash, lastValidBlockHeight } = await this.connection.getLatestBlockhash();
+      if (full) {
+        return success({ blockhash, lastValidBlockHeight });
+      }
       return success(blockhash);
     } catch (error) {
       return failure(error instanceof Error ? error : new Error(String(error)));
@@ -322,6 +329,47 @@ export class SolanaClient {
     try {
       const lamports = await this.connection.getMinimumBalanceForRentExemption(dataSize);
       return success(lamports);
+    } catch (error) {
+      return failure(error instanceof Error ? error : new Error(String(error)));
+    }
+  }
+
+  /**
+   * Fetch the decimals for an SPL token mint.
+   * Falls back to 9 if the mint account can't be read.
+   */
+  async getMintDecimals(mint: PublicKey): Promise<number> {
+    try {
+      const info = await this.connection.getParsedAccountInfo(mint);
+      const data = info?.value?.data;
+      if (data && typeof data === 'object' && 'parsed' in data) {
+        const decimals = data.parsed?.info?.decimals;
+        if (typeof decimals === 'number') return decimals;
+      }
+      return 9; // default for most SPL tokens
+    } catch {
+      logger.warn('Failed to fetch mint decimals, defaulting to 9', { mint: mint.toBase58() });
+      return 9;
+    }
+  }
+
+  /**
+   * Simulate a transaction before sending to catch errors before paying fees.
+   */
+  async simulateTransaction(
+    transaction: import('@solana/web3.js').Transaction | import('@solana/web3.js').VersionedTransaction,
+  ): Promise<Result<true, Error>> {
+    try {
+      let result;
+      if ('version' in transaction) {
+        result = await this.connection.simulateTransaction(transaction);
+      } else {
+        result = await this.connection.simulateTransaction(transaction);
+      }
+      if (result.value.err) {
+        return failure(new Error(`Simulation failed: ${JSON.stringify(result.value.err)}`));
+      }
+      return success(true);
     } catch (error) {
       return failure(error instanceof Error ? error : new Error(String(error)));
     }

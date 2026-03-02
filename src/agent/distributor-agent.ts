@@ -9,6 +9,7 @@
 
 import { BaseAgent, AgentContext, AgentDecision } from './base-agent.js';
 import { createLogger } from '../utils/logger.js';
+import { ESTIMATED_SOL_TRANSFER_FEE } from '../utils/config.js';
 
 const logger = createLogger('DISTRIBUTOR');
 
@@ -73,7 +74,7 @@ export class DistributorAgent extends BaseAgent {
     }
 
     // Check minimum balance
-    const balanceAfterTransfer = context.balance.sol - this.params.amountPerTransfer - 0.00001; // fees
+    const balanceAfterTransfer = context.balance.sol - this.params.amountPerTransfer - ESTIMATED_SOL_TRANSFER_FEE;
     if (balanceAfterTransfer < this.params.minBalanceToDistribute) {
       return {
         shouldAct: false,

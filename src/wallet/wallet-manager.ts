@@ -22,7 +22,7 @@ import {
   Intent,
 } from '../utils/types.js';
 import { encrypt, decrypt, generateSecureId } from '../utils/encryption.js';
-import { getConfig } from '../utils/config.js';
+import { getConfig, ESTIMATED_SOL_TRANSFER_FEE, ESTIMATED_TOKEN_TRANSFER_FEE } from '../utils/config.js';
 import { createLogger } from '../utils/logger.js';
 
 const logger = createLogger('WALLET');
@@ -169,6 +169,9 @@ export class WalletManager {
         transaction.sign([keypair]);
       }
       
+      // Zero out private key material from memory
+      secretKey.fill(0);
+      
       logger.debug('Transaction signed', { walletId });
       
       // Return the signed transaction
@@ -192,16 +195,12 @@ export class WalletManager {
       return failure(new Error(`No policy found for wallet: ${walletId}`));
     }
     
-    // Check daily transfer limit
     const dailyCount = this.dailyTransfers.get(walletId) ?? 0;
-    if (dailyCount >= policy.maxDailyTransfers) {
-      return failure(new Error('Daily transfer limit exceeded'));
-    }
-    
+
     // Autonomous intents still enforce basic safety guardrails:
     // - Max transfer amount (prevents single-intent wallet drain)
     // - Minimum balance requirement (keeps wallet operational)
-    // - Daily transfer count limit
+    // - Daily transfer count limit (autonomous gets 2x normal allowance)
     // Everything is still logged via intent history and transaction events.
     if (intent.type === 'autonomous') {
       logger.info('Autonomous intent — limited policy check', {
@@ -210,7 +209,6 @@ export class WalletManager {
       });
 
       // Enforce daily transfer limit (autonomous gets 2x normal allowance)
-      const dailyCount = this.dailyTransfers.get(walletId) ?? 0;
       if (dailyCount >= policy.maxDailyTransfers * 2) {
         return failure(new Error(
           `Autonomous intent: daily transfer limit reached (${dailyCount}/${policy.maxDailyTransfers * 2})`
@@ -221,8 +219,7 @@ export class WalletManager {
       const autonomousIntent = intent as import('../utils/types.js').AutonomousIntent;
       const action = autonomousIntent.action;
       if (action === 'transfer_sol' || action === 'transfer_token') {
-        // Check if amount is embedded in the intent
-      const amount = (intent as unknown as Record<string, unknown>)['amount'];
+        const amount = (intent as unknown as Record<string, unknown>)['amount'];
         if (typeof amount === 'number' && amount > policy.maxTransferAmount * 2) {
           return failure(new Error(
             `Autonomous transfer amount ${amount} exceeds safety cap (${policy.maxTransferAmount * 2} SOL)`
@@ -241,6 +238,11 @@ export class WalletManager {
       return success(true);
     }
 
+    // Check daily transfer limit (standard agents)
+    if (dailyCount >= policy.maxDailyTransfers) {
+      return failure(new Error('Daily transfer limit exceeded'));
+    }
+
     // Validate based on intent type
     if (intent.type === 'transfer_sol') {
       // Check max transfer amount
@@ -249,7 +251,7 @@ export class WalletManager {
       }
       
       // Check minimum balance requirement
-      const balanceAfterTransfer = currentBalance - intent.amount - 0.000005; // Account for fees
+      const balanceAfterTransfer = currentBalance - intent.amount - ESTIMATED_SOL_TRANSFER_FEE;
       if (balanceAfterTransfer < policy.requireMinBalance) {
         return failure(new Error(`Transfer would leave balance below minimum (${policy.requireMinBalance} SOL)`));
       }
@@ -266,7 +268,7 @@ export class WalletManager {
 
     if (intent.type === 'transfer_token') {
       // Token transfers still need SOL for fees; enforce minimum balance
-      const balanceAfterFees = currentBalance - 0.01; // ATA creation + fee headroom
+      const balanceAfterFees = currentBalance - ESTIMATED_TOKEN_TRANSFER_FEE;
       if (balanceAfterFees < policy.requireMinBalance) {
         return failure(new Error(`Insufficient SOL for token transfer fees (min ${policy.requireMinBalance} SOL)`));
       }

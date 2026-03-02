@@ -29,6 +29,27 @@ import { eventBus } from '../orchestrator/event-emitter.js';
 const logger = createLogger('BYOA_INTENT');
 
 // ────────────────────────────────────────────
+// Program allowlist for autonomous execute_instructions
+// Only these programs may be targeted by autonomous agents.
+// Add program IDs here as the platform evolves.
+// ────────────────────────────────────────────
+
+const AUTONOMOUS_PROGRAM_ALLOWLIST: ReadonlySet<string> = new Set([
+  '11111111111111111111111111111111',                             // System Program
+  'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',                // Token Program
+  'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',               // Associated Token Program
+  'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr',               // Memo Program v2
+  'JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4',               // Jupiter v6
+  'jupoNjAxXgZ4rjzxzPMP4oxduvQsQtZzyknqvzYNrNu',               // Jupiter v6 Aggregator
+  '675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8',              // Raydium AMM v4
+  'CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK',              // Raydium CLMM
+  'whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc',               // Orca Whirlpool
+  '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P',               // Pump.fun
+  'pAMMBay6oceH9fJKBRHGP5D4bD4sWpmSwMn52FMfXEA',               // PumpSwap AMM
+  'BoNKFKgVR4AhBCbFvEJhEEGwBwMgh4xnSuFgrEbGo3xj',             // Bonk.fun
+]);
+
+// ────────────────────────────────────────────
 // External intent payload (what the caller sends)
 // ────────────────────────────────────────────
 
@@ -329,6 +350,10 @@ export class IntentRouter {
     const signResult = this.walletManager.signTransaction(walletId, txResult.value);
     if (!signResult.ok) throw signResult.error;
 
+    // Simulate before sending to catch errors pre-fee
+    const simResult = await this.solanaClient.simulateTransaction(signResult.value);
+    if (!simResult.ok) throw simResult.error;
+
     // Send
     const sendResult = await this.solanaClient.sendTransaction(signResult.value);
     if (!sendResult.ok) throw sendResult.error;
@@ -441,6 +466,10 @@ export class IntentRouter {
     // Sign
     const signResult = this.walletManager.signTransaction(walletId, txResult.value);
     if (!signResult.ok) throw signResult.error;
+
+    // Simulate before sending to catch errors pre-fee
+    const simResult = await this.solanaClient.simulateTransaction(signResult.value);
+    if (!simResult.ok) throw simResult.error;
 
     // Send
     const sendResult = await this.solanaClient.sendTransaction(signResult.value);
@@ -589,6 +618,10 @@ export class IntentRouter {
     const signResult = this.walletManager.signTransaction(walletId, txResult.value);
     if (!signResult.ok) throw signResult.error;
 
+    // Simulate before sending to catch errors pre-fee
+    const simResult = await this.solanaClient.simulateTransaction(signResult.value);
+    if (!simResult.ok) throw simResult.error;
+
     const sendResult = await this.solanaClient.sendTransaction(signResult.value);
     if (!sendResult.ok) throw sendResult.error;
 
@@ -649,6 +682,10 @@ export class IntentRouter {
     const signResult = this.walletManager.signTransaction(walletId, txResult.value);
     if (!signResult.ok) throw signResult.error;
 
+    // Simulate before sending to catch errors pre-fee
+    const simResult = await this.solanaClient.simulateTransaction(signResult.value);
+    if (!simResult.ok) throw simResult.error;
+
     const sendResult = await this.solanaClient.sendTransaction(signResult.value);
     if (!sendResult.ok) throw sendResult.error;
 
@@ -698,6 +735,19 @@ export class IntentRouter {
       }
     }
 
+    // Enforce program allowlist — reject instructions targeting unknown programs
+    const disallowed = instructions
+      .map((ix, i) => ({ index: i, programId: ix.programId }))
+      .filter(({ programId }) => !AUTONOMOUS_PROGRAM_ALLOWLIST.has(programId));
+
+    if (disallowed.length > 0) {
+      const names = disallowed.map(d => `[${d.index}] ${d.programId.slice(0, 12)}...`).join(', ');
+      throw new Error(
+        `execute_instructions blocked: instruction(s) target disallowed program(s): ${names}. ` +
+        'Only known DeFi and system programs are permitted for autonomous execution.',
+      );
+    }
+
     const memo = typeof params['memo'] === 'string'
       ? params['memo']
       : `AgenticWallet:autonomous_exec:${agentId}`;
@@ -712,6 +762,10 @@ export class IntentRouter {
     // Sign via wallet layer
     const signResult = this.walletManager.signTransaction(walletId, txResult.value);
     if (!signResult.ok) throw signResult.error;
+
+    // Simulate before sending to catch errors pre-fee
+    const simResult = await this.solanaClient.simulateTransaction(signResult.value);
+    if (!simResult.ok) throw simResult.error;
 
     // Submit
     const sendResult = await this.solanaClient.sendTransaction(signResult.value);
@@ -787,6 +841,10 @@ export class IntentRouter {
     const signResult = this.walletManager.signTransaction(walletId, txResult.value);
     if (!signResult.ok) throw signResult.error;
 
+    // Simulate before sending to catch errors pre-fee
+    const simResult = await this.solanaClient.simulateTransaction(signResult.value);
+    if (!simResult.ok) throw simResult.error;
+
     const sendResult = await this.solanaClient.sendTransaction(signResult.value);
     if (!sendResult.ok) throw sendResult.error;
 
@@ -847,6 +905,10 @@ export class IntentRouter {
 
     const signResult = this.walletManager.signTransaction(walletId, txResult.value);
     if (!signResult.ok) throw signResult.error;
+
+    // Simulate before sending to catch errors pre-fee
+    const simResult = await this.solanaClient.simulateTransaction(signResult.value);
+    if (!simResult.ok) throw simResult.error;
 
     const sendResult = await this.solanaClient.sendTransaction(signResult.value);
     if (!sendResult.ok) throw sendResult.error;
@@ -910,6 +972,10 @@ export class IntentRouter {
 
     const signResult = this.walletManager.signTransaction(walletId, txResult.value);
     if (!signResult.ok) throw signResult.error;
+
+    // Simulate before sending to catch errors pre-fee
+    const simResult = await this.solanaClient.simulateTransaction(signResult.value);
+    if (!simResult.ok) throw simResult.error;
 
     const sendResult = await this.solanaClient.sendTransaction(signResult.value);
     if (!sendResult.ok) throw sendResult.error;

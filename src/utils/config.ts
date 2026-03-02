@@ -103,6 +103,17 @@ export function isDevelopment(): boolean {
   return process.env['NODE_ENV'] !== 'production';
 }
 
+// ── Fee constants ───────────────────────────────────────────
+// Solana base fee is 5000 lamports (0.000005 SOL) per signature.
+// For pre-decision balance checks we use a generous headroom so
+// agents never undershoot when priority fees or rent are involved.
+
+/** Estimated SOL fee for a simple transfer (single signature). */
+export const ESTIMATED_SOL_TRANSFER_FEE = 0.00001;
+
+/** Estimated SOL fee for a token transfer (may create ATA + priority). */
+export const ESTIMATED_TOKEN_TRANSFER_FEE = 0.01;
+
 /**
  * Get the Solana explorer URL for a transaction
  */

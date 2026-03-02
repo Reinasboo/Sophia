@@ -9,6 +9,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import { WebSocketServer, WebSocket } from 'ws';
 import { z } from 'zod';
+import { PublicKey } from '@solana/web3.js';
 import { getOrchestrator, eventBus } from './orchestrator/index.js';
 import { getWalletManager } from './wallet/index.js';
 import { getSolanaClient } from './rpc/index.js';
@@ -45,6 +46,42 @@ app.use(cors({
 
 // Limit request body size to prevent DoS (512kb for raw transactions)
 app.use(express.json({ limit: '512kb' }));
+
+// ── API-level rate limiting (per IP) ────────────────────────────────
+const apiRateLimitWindow = 60_000; // 1 minute
+const apiRateLimitMax = 120;       // requests per window per IP
+const apiRateMap = new Map<string, number[]>();
+
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const ip = req.ip ?? req.socket.remoteAddress ?? 'unknown';
+  const now = Date.now();
+  let timestamps = apiRateMap.get(ip) ?? [];
+  timestamps = timestamps.filter((t) => now - t < apiRateLimitWindow);
+  if (timestamps.length >= apiRateLimitMax) {
+    res.status(429).json({
+      success: false,
+      error: 'Too many requests. Please slow down.',
+      timestamp: new Date(),
+    });
+    return;
+  }
+  timestamps.push(now);
+  apiRateMap.set(ip, timestamps);
+  next();
+});
+
+// Cleanup stale rate-limit entries every 5 minutes
+setInterval(() => {
+  const cutoff = Date.now() - apiRateLimitWindow;
+  for (const [ip, timestamps] of apiRateMap) {
+    const filtered = timestamps.filter((t) => t > cutoff);
+    if (filtered.length === 0) {
+      apiRateMap.delete(ip);
+    } else {
+      apiRateMap.set(ip, filtered);
+    }
+  }
+}, 300_000);
 
 // Request logging middleware
 app.use((req: Request, _res: Response, next: NextFunction) => {
@@ -245,7 +282,7 @@ app.get('/api/agents', async (_req: Request, res: Response) => {
 
         if (walletResult.ok) {
           const balanceResult = await client.getBalance(
-            new (await import('@solana/web3.js')).PublicKey(walletResult.value.publicKey)
+            new PublicKey(walletResult.value.publicKey)
           );
           if (balanceResult.ok) {
             balance = balanceResult.value.sol;
@@ -297,7 +334,7 @@ app.get('/api/agents/:id', async (req: Request, res: Response) => {
 
     const walletResult = walletManager.getWallet(agent.walletId);
     if (walletResult.ok) {
-      const pubkey = new (await import('@solana/web3.js')).PublicKey(
+      const pubkey = new PublicKey(
         walletResult.value.publicKey
       );
       const balanceResult = await client.getBalance(pubkey);
@@ -531,14 +568,20 @@ app.get('/api/strategies/:name', (req: Request, res: Response) => {
 // TRANSACTION ENDPOINTS
 // ============================================
 
-app.get('/api/transactions', (_req: Request, res: Response) => {
+app.get('/api/transactions', (req: Request, res: Response) => {
   try {
     const orchestrator = getOrchestrator();
-    const transactions = orchestrator.getAllTransactions();
+    const allTransactions = orchestrator.getAllTransactions();
 
-    const response: ApiResponse<typeof transactions> = {
+    // Pagination
+    const page = Math.max(parseInt(req.query['page'] as string) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(req.query['limit'] as string) || 50, 1), 500);
+    const start = (page - 1) * limit;
+    const transactions = allTransactions.slice(start, start + limit);
+
+    const response: ApiResponse<{ transactions: typeof transactions; total: number; page: number; limit: number }> = {
       success: true,
-      data: transactions,
+      data: { transactions, total: allTransactions.length, page, limit },
       timestamp: new Date(),
     };
 
@@ -775,7 +818,7 @@ app.get('/api/byoa/agents', async (_req: Request, res: Response) => {
           const walletResult = walletManager.getWallet(agent.walletId);
           if (walletResult.ok) {
             const balanceResult = await client.getBalance(
-              new (await import('@solana/web3.js')).PublicKey(walletResult.value.publicKey)
+              new PublicKey(walletResult.value.publicKey)
             );
             if (balanceResult.ok) {
               balance = balanceResult.value.sol;
@@ -827,7 +870,7 @@ app.get('/api/byoa/agents/:id', async (req: Request, res: Response) => {
     if (agent.walletId) {
       const walletResult = walletManager.getWallet(agent.walletId);
       if (walletResult.ok) {
-        const pubkey = new (await import('@solana/web3.js')).PublicKey(
+        const pubkey = new PublicKey(
           walletResult.value.publicKey
         );
         const balanceResult = await client.getBalance(pubkey);
@@ -1075,35 +1118,48 @@ function setupWebSocket(port: number): void {
 // SERVER STARTUP
 // ============================================
 
+let httpServer: import('http').Server | null = null;
+
 export function startServer(): void {
   const config = getConfig();
 
-  app.listen(config.PORT, () => {
+  httpServer = app.listen(config.PORT, () => {
     logger.info('API server started', { port: config.PORT });
   });
 
   setupWebSocket(config.WS_PORT);
 }
 
-// Handle graceful shutdown
-process.on('SIGINT', () => {
-  logger.info('Received SIGINT, shutting down...');
-  const orchestrator = getOrchestrator();
-  orchestrator.shutdown();
-  if (wss) {
-    wss.close();
-  }
-  process.exit(0);
-});
+// Graceful shutdown — drain in-flight requests before exiting
+function gracefulShutdown(signal: string): void {
+  logger.info(`Received ${signal}, shutting down gracefully...`);
 
-process.on('SIGTERM', () => {
-  logger.info('Received SIGTERM, shutting down...');
   const orchestrator = getOrchestrator();
   orchestrator.shutdown();
+
+  // Close WebSocket server (stop accepting new connections)
   if (wss) {
+    wss.clients.forEach((ws) => ws.close(1001, 'Server shutting down'));
     wss.close();
   }
-  process.exit(0);
-});
+
+  // Close HTTP server (drain in-flight requests with a timeout)
+  if (httpServer) {
+    httpServer.close(() => {
+      logger.info('HTTP server closed');
+      process.exit(0);
+    });
+    // Force exit after 10 seconds if connections don't drain
+    setTimeout(() => {
+      logger.warn('Forced shutdown after timeout');
+      process.exit(1);
+    }, 10_000).unref();
+  } else {
+    process.exit(0);
+  }
+}
+
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 
 export { app };

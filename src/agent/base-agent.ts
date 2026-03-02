@@ -23,6 +23,7 @@ import {
   TokenBalance,
 } from '../utils/types.js';
 import { createLogger } from '../utils/logger.js';
+import { PublicKey } from '@solana/web3.js';
 
 const logger = createLogger('AGENT');
 
@@ -59,7 +60,8 @@ export abstract class BaseAgent {
   protected walletPublicKey: string;
   protected lastActionAt?: Date;
   protected errorMessage?: string;
-  protected loopCount: number = 0;
+  protected cycleCount: number = 0;
+  protected actionCount: number = 0;
   protected strategyParams: Record<string, unknown>;
   protected executionSettings: ExecutionSettings;
 
@@ -176,9 +178,13 @@ export abstract class BaseAgent {
   }
 
   /**
-   * Create a SOL transfer intent
+   * Create a SOL transfer intent (validates recipient address)
    */
   protected createTransferSolIntent(recipient: string, amount: number): TransferSolIntent {
+    // Validate recipient is a valid Solana public key
+    try { new PublicKey(recipient); } catch {
+      throw new Error(`Invalid recipient address: ${recipient}`);
+    }
     return {
       id: uuidv4(),
       agentId: this.id,
@@ -190,9 +196,15 @@ export abstract class BaseAgent {
   }
 
   /**
-   * Create an SPL token transfer intent (targets the Token Program)
+   * Create an SPL token transfer intent (validates addresses)
    */
   protected createTransferTokenIntent(mint: string, recipient: string, amount: number): TransferTokenIntent {
+    try { new PublicKey(recipient); } catch {
+      throw new Error(`Invalid recipient address: ${recipient}`);
+    }
+    try { new PublicKey(mint); } catch {
+      throw new Error(`Invalid mint address: ${mint}`);
+    }
     return {
       id: uuidv4(),
       agentId: this.id,
@@ -217,11 +229,15 @@ export abstract class BaseAgent {
   }
 
   /**
-   * Record that an action was taken
+   * Record that a cycle completed.
+   * @param acted — true if the agent actually executed an intent this cycle.
    */
-  recordAction(): void {
+  recordAction(acted: boolean = true): void {
     this.lastActionAt = new Date();
-    this.loopCount++;
+    if (acted) {
+      this.actionCount++;
+    }
+    this.cycleCount++;
   }
 
   /**

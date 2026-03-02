@@ -250,7 +250,7 @@ export class Orchestrator {
         await this.executeIntent(agent, decision.intent, context.value.balance.sol);
       }
 
-      agent.recordAction();
+      agent.recordAction(decision.shouldAct);
       agent.setStatus('idle');
     } catch (error) {
       logger.error('Agent cycle failed', {
@@ -572,6 +572,13 @@ export class Orchestrator {
       return;
     }
 
+    // Simulate before sending to catch errors pre-fee
+    const simResult = await this.solanaClient.simulateTransaction(signResult.value);
+    if (!simResult.ok) {
+      this.updateTransactionFailed(txRecord.id, `Simulation failed: ${simResult.error.message}`);
+      return;
+    }
+
     // Send transaction
     const sendResult = await this.solanaClient.sendTransaction(signResult.value);
 
@@ -650,14 +657,15 @@ export class Orchestrator {
     this.trimTransactions();
 
     // Build token transfer via SPL Token Program
-    // Use amount as raw integer units (caller decides decimals); default 9 decimals for most SPL tokens
-    const rawAmount = BigInt(Math.round(amount * 1e9));
+    // Query actual mint decimals on-chain instead of hardcoding
+    const decimals = await this.solanaClient.getMintDecimals(mintPubkey);
+    const rawAmount = BigInt(Math.round(amount * Math.pow(10, decimals)));
     const txResult = await buildTokenTransfer(
       publicKeyResult.value,
       mintPubkey,
       recipientPubkey,
       rawAmount,
-      9,
+      decimals,
       `AgenticWallet:token_transfer:${agent.id}`,
     );
 
@@ -670,6 +678,13 @@ export class Orchestrator {
     const signResult = this.walletManager.signTransaction(walletId, txResult.value);
     if (!signResult.ok) {
       this.updateTransactionFailed(txRecord.id, signResult.error.message);
+      return;
+    }
+
+    // Simulate before sending to catch errors pre-fee
+    const simResult = await this.solanaClient.simulateTransaction(signResult.value);
+    if (!simResult.ok) {
+      this.updateTransactionFailed(txRecord.id, `Simulation failed: ${simResult.error.message}`);
       return;
     }
 
@@ -899,19 +914,17 @@ export class Orchestrator {
     const agents = this.getAllAgents();
     const activeAgents = agents.filter((a) => a.status !== 'stopped').length;
 
-    // Calculate total SOL under management
-    let totalSol = 0;
-    for (const managed of this.agents.values()) {
+    // Calculate total SOL under management (parallelized)
+    const balancePromises = Array.from(this.agents.values()).map(async (managed) => {
       const publicKeyResult = this.walletManager.getPublicKey(
         managed.agent.getWalletId()
       );
-      if (publicKeyResult.ok) {
-        const balanceResult = await this.solanaClient.getBalance(publicKeyResult.value);
-        if (balanceResult.ok) {
-          totalSol += balanceResult.value.sol;
-        }
-      }
-    }
+      if (!publicKeyResult.ok) return 0;
+      const balanceResult = await this.solanaClient.getBalance(publicKeyResult.value);
+      return balanceResult.ok ? balanceResult.value.sol : 0;
+    });
+    const balances = await Promise.all(balancePromises);
+    const totalSol = balances.reduce((sum, b) => sum + b, 0);
 
     // Check network health
     const healthResult = await this.solanaClient.checkHealth();
