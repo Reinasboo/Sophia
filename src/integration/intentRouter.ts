@@ -586,15 +586,11 @@ export class IntentRouter {
         // raw transaction is provided, execute that. The agent is never
         // blocked from interacting with any Solana program.
         if (Array.isArray(params['instructions'])) {
-          logger.info(
-            `Action "${action}" — executing as arbitrary instructions (full autonomy)`
-          );
+          logger.info(`Action "${action}" — executing as arbitrary instructions (full autonomy)`);
           return this.executeArbitraryInstructions(walletId, agentId, params, intentId);
         }
         if (typeof params['transaction'] === 'string') {
-          logger.info(
-            `Action "${action}" — executing as raw transaction (full autonomy)`
-          );
+          logger.info(`Action "${action}" — executing as raw transaction (full autonomy)`);
           return this.executeRawTransaction(walletId, agentId, params, intentId);
         }
         throw new Error(
