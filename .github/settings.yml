@@ -1,0 +1,72 @@
+repository:
+  name: Agentic-wallet
+  description: "Enterprise-grade autonomous AI wallet orchestration for Solana — intent-driven execution, AES-256-GCM key encryption, BYOA integration, and security-first governance."
+  homepage: https://github.com/Reinasboo/Agentic-wallet
+  private: false
+  has_issues: true
+  has_projects: true
+  has_wiki: false
+  has_downloads: true
+  default_branch: main
+  allow_squash_merge: true
+  allow_merge_commit: false
+  allow_rebase_merge: true
+  delete_branch_on_merge: true
+
+labels:
+  - name: bug
+    color: d73a4a
+    description: Something is not working
+  - name: enhancement
+    color: a2eeef
+    description: New feature or request
+  - name: security
+    color: b60205
+    description: Security-related issue
+  - name: dependencies
+    color: 0366d6
+    description: Dependency updates
+  - name: automated
+    color: ededed
+    description: Automated PR (Dependabot, bots)
+  - name: ci
+    color: 5319e7
+    description: CI/CD and automation
+  - name: documentation
+    color: 0075ca
+    description: Documentation changes
+  - name: triage
+    color: fbca04
+    description: Needs initial review
+  - name: breaking-change
+    color: b60205
+    description: Introduces a breaking change
+  - name: good-first-issue
+    color: 7057ff
+    description: Good for newcomers
+  - name: help-wanted
+    color: 008672
+    description: Extra attention is needed
+  - name: frontend
+    color: 1d76db
+    description: Frontend dashboard related
+  - name: backend
+    color: 0e8a16
+    description: Backend / API related
+
+topics:
+  - web3
+  - solana
+  - blockchain
+  - wallet
+  - ai-agents
+  - autonomous-agents
+  - defi
+  - typescript
+  - nextjs
+  - devops
+  - security
+  - encryption
+  - intent-based
+  - enterprise
+  - open-source

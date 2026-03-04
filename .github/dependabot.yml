@@ -1,0 +1,56 @@
+version: 2
+updates:
+  # Root package (backend)
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 10
+    reviewers:
+      - Reinasboo
+    labels:
+      - dependencies
+      - automated
+    commit-message:
+      prefix: "deps"
+    groups:
+      solana:
+        patterns:
+          - "@solana/*"
+      dev-dependencies:
+        dependency-type: development
+
+  # Frontend package
+  - package-ecosystem: npm
+    directory: "/apps/frontend"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 10
+    reviewers:
+      - Reinasboo
+    labels:
+      - dependencies
+      - frontend
+      - automated
+    commit-message:
+      prefix: "deps(frontend)"
+    groups:
+      next:
+        patterns:
+          - "next"
+          - "react"
+          - "react-dom"
+
+  # GitHub Actions
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    labels:
+      - dependencies
+      - ci
+      - automated
+    commit-message:
+      prefix: "ci"

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 🔒 Critical Security Vulnerability
+    url: mailto:security@agentic-wallet.dev
+    about: For critical security vulnerabilities, please use responsible disclosure via email.
+  - name: 💬 Discussions & Questions
+    url: https://github.com/Reinasboo/Agentic-wallet/discussions
+    about: Ask questions and discuss ideas in GitHub Discussions.
