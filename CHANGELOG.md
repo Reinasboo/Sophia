@@ -19,6 +19,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Expanded CONTRIBUTING.md with code style guide, testing requirements, and documentation standards.
 - Hardened .gitignore with comprehensive exclusion patterns.
 - Detailed .env.example with inline security guidance.
+- ESLint configuration (`.eslintrc.json`) with TypeScript parser and Prettier integration.
+- Prettier configuration (`.prettierrc.json`, `.prettierignore`) for consistent code formatting.
+- `lint:fix`, `format`, and `format:check` npm scripts.
+- `.nvmrc` for explicit Node.js version pinning.
+- `SUPPORT.md` with troubleshooting guide, support channels, and version table.
+- `.github/GOVERNANCE.md` with leadership structure, contribution tiers, and release cadence.
+- `.github/workflows/stale.yml` for automated stale issue/PR management.
+- `package.json` metadata: repository, homepage, bugs, keywords, author, license fields.
+- Prettier format check added to CI lint job.
 
 ### Changed
 

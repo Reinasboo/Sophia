@@ -1,0 +1,8 @@
+dist/
+build/
+node_modules/
+.next/
+apps/frontend/.next/
+coverage/
+package-lock.json
+*.log

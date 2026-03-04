@@ -2,7 +2,32 @@
   "name": "agentic-wallet-system",
   "version": "1.0.0",
   "private": true,
-  "description": "Autonomous AI Agent Wallet System for Solana Devnet",
+  "description": "Enterprise-grade autonomous AI wallet orchestration for Solana with BYOA integration and security-first governance.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Reinasboo/Agentic-wallet.git"
+  },
+  "homepage": "https://github.com/Reinasboo/Agentic-wallet",
+  "bugs": {
+    "url": "https://github.com/Reinasboo/Agentic-wallet/issues",
+    "email": "security@agentic-wallet.dev"
+  },
+  "keywords": [
+    "solana",
+    "wallet",
+    "ai-agents",
+    "autonomous",
+    "agent-orchestration",
+    "web3",
+    "blockchain",
+    "defi",
+    "typescript",
+    "encryption",
+    "byoa",
+    "intent-based"
+  ],
+  "author": "Reinasboo (https://github.com/Reinasboo)",
+  "license": "MIT",
   "scripts": {
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:backend": "node --disable-warning=DEP0040 --require tsx/cjs --require ./src/preload.ts --import tsx src/index.ts",
@@ -10,7 +35,10 @@
     "build": "tsc && cd apps/frontend && npm run build",
     "start": "node dist/index.js",
     "test": "vitest",
-    "lint": "eslint . --ext .ts,.tsx"
+    "lint": "eslint . --ext .ts,.tsx",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,json,md}\""
   },
   "dependencies": {
     "@solana/spl-token": "^0.4.0",
@@ -29,7 +57,13 @@
     "@types/node": "^20.11.0",
     "@types/uuid": "^9.0.7",
     "@types/ws": "^8.5.10",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
     "concurrently": "^8.2.2",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^9.1.2",
+    "eslint-plugin-import": "^2.32.0",
+    "prettier": "^3.8.1",
     "tsx": "^4.7.0",
     "typescript": "^5.3.3",
     "vitest": "^1.2.0"
