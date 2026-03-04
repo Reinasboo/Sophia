@@ -12,6 +12,11 @@
  * - BYOA agents are AI / LLM agents. They have full autonomy over the
  *   wallets assigned to them — no policy restrictions, no program
  *   allowlists. The wallet is theirs to use as they see fit.
+ * - Agents can interact with ANY valid Solana program including but not
+ *   limited to: trading (Jupiter, Raydium, Orca), token launches (Pump.fun,
+ *   Bonk.fun), staking (Marinade, Jito, native stake), NFT marketplaces
+ *   (Magic Eden, Tensor, Metaplex), lending (Marginfi, Kamino, Solend),
+ *   and any custom or future deployed program.
  * - Authentication is via control token (bearer)
  * - Rate limiting protects infrastructure (not wallet funds)
  * - All actions are fully logged for auditability
@@ -510,7 +515,10 @@ export class IntentRouter {
    *   raw_transaction    – submit a base64 serialized transaction (unsigned)
    *   swap               – token swap via Jupiter / PumpSwap / Raydium / Orca
    *   create_token       – launch token via Pump.fun / Bonk.fun / Metaplex
-   *   <any other>        – treated as execute_instructions if `instructions` param present
+   *   stake              – stake SOL (Marinade / Jito / native stake)
+   *   buy_nft            – purchase NFT (Magic Eden / Tensor / any marketplace)
+   *   interact_program   – interact with any deployed Solana program
+   *   <any other>        – routed to execute_instructions for full autonomy
    */
   private async executeAutonomous(
     walletId: string,
@@ -563,19 +571,36 @@ export class IntentRouter {
       case 'create_token':
         return this.executeCreateToken(walletId, agentId, params, intentId);
 
+      case 'stake':
+      case 'buy_nft':
+      case 'interact_program':
+        // First-class aliases — all route to arbitrary instruction execution.
+        // Agents have full autonomy to interact with any valid Solana program:
+        // staking (Marinade, Jito, native), NFTs (Magic Eden, Tensor, Metaplex),
+        // DeFi, gaming, governance, or any custom program.
+        return this.executeArbitraryInstructions(walletId, agentId, params, intentId);
+
       default:
-        // If the agent sent an unknown action but included `instructions`,
-        // treat it as arbitrary instruction execution for forward-compatibility.
+        // FULL AUTONOMY: any action name the agent sends is accepted.
+        // If instructions are provided, execute them. Otherwise, if a
+        // raw transaction is provided, execute that. The agent is never
+        // blocked from interacting with any Solana program.
         if (Array.isArray(params['instructions'])) {
           logger.info(
-            `Unknown action "${action}" but instructions present — executing as arbitrary instructions`
+            `Action "${action}" — executing as arbitrary instructions (full autonomy)`
           );
           return this.executeArbitraryInstructions(walletId, agentId, params, intentId);
         }
+        if (typeof params['transaction'] === 'string') {
+          logger.info(
+            `Action "${action}" — executing as raw transaction (full autonomy)`
+          );
+          return this.executeRawTransaction(walletId, agentId, params, intentId);
+        }
         throw new Error(
-          `Autonomous intent: unknown action "${action}". ` +
-            'Supported: airdrop, transfer_sol, transfer_token, query_balance, ' +
-            'execute_instructions, raw_transaction, swap, create_token'
+          `Autonomous intent action "${action}" requires either an "instructions" array ` +
+            'or a "transaction" (base64) param. The agent has full autonomy to interact ' +
+            'with any Solana program — provide the program instructions to execute.'
         );
     }
   }

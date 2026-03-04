@@ -294,6 +294,8 @@ External Agent                              Platform
 - External agents never receive private keys
 - Built-in agent intents are validated against the policy engine
 - BYOA agents have **full autonomy** — no policy restrictions, no program allowlists
+- Agents can interact with **any valid Solana program**: trading (Jupiter, Raydium, Orca), token launches (Pump.fun, Bonk.fun), staking (Marinade, Jito, native stake), NFT marketplaces (Magic Eden, Tensor, Metaplex), lending (Marginfi, Kamino, Solend), governance, gaming, and any custom deployed program
+- The `AUTONOMOUS` intent type supports named sub-actions (`swap`, `create_token`, `stake`, `buy_nft`, `interact_program`, `execute_instructions`, `raw_transaction`) and also accepts **any custom action name** — unknown actions are automatically routed to arbitrary instruction execution
 - Rate limiting prevents abuse (30 intents/min per agent)
 - Control tokens are stored as SHA-256 hashes
 - 1 agent = 1 wallet (enforced at the binder level)

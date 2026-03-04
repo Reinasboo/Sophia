@@ -247,24 +247,63 @@ export async function estimateFee(transaction: Transaction): Promise<Result<numb
 // ============================================
 
 /**
- * Well-known Solana program IDs for DeFi protocols.
- * These are used for logging and display, not for routing.
+ * Well-known Solana program IDs for DeFi protocols, NFT marketplaces,
+ * staking, and other ecosystem programs.
+ * All programs are allowed — this list is for logging and display only.
+ * BYOA agents have full autonomy to interact with ANY deployed Solana program,
+ * including programs not listed here.
  */
 export const KNOWN_PROGRAMS: Record<string, string> = {
+  // ── Core ──────────────────────────────────
   '11111111111111111111111111111111': 'System Program',
   TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA: 'Token Program',
   ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL: 'Associated Token Program',
   MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr: 'Memo Program v2',
+  TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb: 'Token-2022 Program',
+
+  // ── Token Launchpads ──────────────────────
   '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P': 'Pump.fun',
-  pAMMBay6oceH9fJKBRHGP5D4bD4sWpmSwMn52FMfXEA: 'PumpSwap AMM',
   BoNKFKgVR4AhBCbFvEJhEEGwBwMgh4xnSuFgrEbGo3xj: 'Bonk.fun',
+
+  // ── DEX / AMMs ────────────────────────────
+  pAMMBay6oceH9fJKBRHGP5D4bD4sWpmSwMn52FMfXEA: 'PumpSwap AMM',
   JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4: 'Jupiter v6',
   jupoNjAxXgZ4rjzxzPMP4oxduvQsQtZzyknqvzYNrNu: 'Jupiter v6 Aggregator',
   '675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8': 'Raydium AMM v4',
   whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc: 'Orca Whirlpool',
   CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK: 'Raydium CLMM',
+  LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo: 'Meteora DLMM',
+  Eo7WjKq67rjJQSZxS6z3YkapzY3eMj6Xy8X5EQVn5UaB: 'Lifinity v2',
+
+  // ── NFT / Metaplex ────────────────────────
   metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s: 'Metaplex Token Metadata',
   cndy3Z4yapfJBmearM12BSwWbJyVnDErehJuiPaM2mn: 'Candy Machine v2',
+  Guard1JwRhJkVH6XZhzoYxeBVQe872VH6QggF4BWmS9g: 'Candy Guard',
+  CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d: 'Metaplex Core',
+  BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY: 'Bubblegum (cNFTs)',
+  TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN: 'Tensor Swap',
+  TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfSsgAS: 'Tensor Compressed',
+  M2mx93ekt1fmXSVkTrUL9xVFHkmME8HTUi5Cyc5aF7K: 'Magic Eden v2',
+  mmm3XBJg5gk8XJxEKBvdgptZz6SgK4tXvn36sodowMc: 'Magic Eden AMM',
+
+  // ── Staking ───────────────────────────────
+  Stake11111111111111111111111111111111111111: 'Native Stake Program',
+  MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD: 'Marinade Finance',
+  sSo14endRuUbvQaJS3dq36Q829a3A6BEfoeeRGJywEh: 'Sanctum (Marinade Native)',
+  Jito4APyf642JPZPx3hGc6WWJ8zPKtRbRs4P815Awbb: 'Jito Staking',
+  stkitrT1Uoy18Dk1fTrgPw8W6MVzoCfYoAFT4MLsmhq: 'Lido for Solana',
+  BLZEEuZUBVqFhj8adcCFPJvPVCiCyVmh3hkJMrU8KuJA: 'BlazeStake',
+
+  // ── Lending / Borrowing ───────────────────
+  So1endDq2YkqhipRh3WViPa8hFSqg167Mw2PWGmd2Mg: 'Solend',
+  MFv2hWf31Z9kbCa1snEPYctwafyhdvnV7FZnsebVacA: 'Marginfi v2',
+  KLend2g3cP87ber8LCJR2MBk68DJYMAWfNBTamTzp8b: 'Kamino Lending',
+  DjVE6JNiYqPL2QXyCUUh8rNjHrbz9hXHNYt99MQ59qw1: 'Drift Protocol',
+
+  // ── Governance / Misc ─────────────────────
+  GovER5Lthms3bLBqWub97yVrMmEogzX7xNjdXpPPCVZw: 'SPL Governance',
+  namesLPneVptA9Z5rqUDD9tMTWEJwofgaYwp8cawRkX: 'Name Service',
+  auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg: 'Glow Auth',
 };
 
 /**

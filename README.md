@@ -68,8 +68,8 @@ Whether you're building autonomous treasury bots, fleet-scale DeFi operators, or
 │  4 Built-in      │                   │  External agents auth  │
 │  Strategies      │                   │  via bearer tokens     │
 │  + Custom via    │                   │  5 intent types        │
-│  Strategy        │                   │  8 autonomous actions  │
-│  Registry        │                   │                        │
+│  Strategy        │                   │  11 autonomous actions │
+│  Registry        │                   │  Full program autonomy │
 └──────┬───────────┘                   └────────┬──────────────┘
        │           Intent Validation            │
        └──────────────────┬─────────────────────┘
@@ -103,7 +103,9 @@ Whether you're building autonomous treasury bots, fleet-scale DeFi operators, or
 
 - Register external AI agents via REST API with bearer-token authentication
 - **5 intent types** — `REQUEST_AIRDROP`, `TRANSFER_SOL`, `TRANSFER_TOKEN`, `QUERY_BALANCE`, `AUTONOMOUS`
-- **8 autonomous actions** — airdrop, transfer SOL/tokens, swap, create token, execute instructions, raw transactions
+- **11 named autonomous actions** — airdrop, transfer SOL/tokens, swap, create token, stake, buy NFT, interact with any program, execute arbitrary instructions, raw transactions
+- **Fully autonomous** — no program allowlists, no transfer caps, no recipient filtering; agents can interact with **any valid Solana program** including Jupiter, Raydium, Orca, Pump.fun, Bonk.fun, Marinade, Jito, Magic Eden, Tensor, Metaplex, Marginfi, Kamino, and any custom deployed program
+- Unknown action names are automatically routed to instruction execution — the agent is never blocked
 - Full intent history logging for audit and compliance
 
 ### Security
@@ -111,7 +113,7 @@ Whether you're building autonomous treasury bots, fleet-scale DeFi operators, or
 - **AES-256-GCM** encrypted key storage with scrypt key derivation
 - Agents **never** access private keys — signing is isolated to the wallet layer
 - Admin API key (`X-Admin-Key`) required for all mutation endpoints
-- Rate limits, transfer caps, minimum balance reserves for autonomous intents
+- Rate limits (30 intents/min) protect infrastructure; BYOA agents have full wallet autonomy with no transfer caps
 - Prototype pollution prevention, error sanitization, WebSocket origin validation
 - 26-finding security audit completed and resolved
 
