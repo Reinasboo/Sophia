@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Expanded CONTRIBUTING.md with code style guide, testing requirements, and documentation standards.
 - Hardened .gitignore with comprehensive exclusion patterns.
 - Detailed .env.example with inline security guidance.
-- ESLint configuration (`.eslintrc.json`) with TypeScript parser and Prettier integration.
+- ESLint v9 flat config (`eslint.config.mjs`) with TypeScript parser and Prettier integration.
 - Prettier configuration (`.prettierrc.json`, `.prettierignore`) for consistent code formatting.
 - `lint:fix`, `format`, and `format:check` npm scripts.
 - `.nvmrc` for explicit Node.js version pinning.
@@ -28,6 +28,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `.github/workflows/stale.yml` for automated stale issue/PR management.
 - `package.json` metadata: repository, homepage, bugs, keywords, author, license fields.
 - Prettier format check added to CI lint job.
+- Branch protection rules: required PR reviews, CODEOWNERS enforcement, merge restricted to `@Reinasboo`.
+
+### Fixed
+
+- CI badges pinned to `?branch=main` to reflect main-branch status only (not Dependabot PR runs).
+- ESLint upgraded from v8 to v9 flat config to resolve dependency audit vulnerabilities.
+- npm audit commands use `--omit=dev --audit-level=critical` to handle unfixable Solana SDK transitive vulnerabilities.
 
 ### Changed
 

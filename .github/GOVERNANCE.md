@@ -56,6 +56,16 @@ following structured processes defined in [CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ---
 
+## Merge Policy
+
+- The `main` branch is protected with required status checks and CODEOWNERS review.
+- Only `@Reinasboo` has permission to merge pull requests into `main`.
+- All PRs must pass CI checks: Lint & Format Check, Test Suite, Build Verification, and Dependency Audit.
+- Stale reviews are automatically dismissed when new commits are pushed.
+- See `.github/settings.yml` for the full branch protection configuration.
+
+---
+
 ## Release Cadence
 
 | Release Type       | Frequency           | Trigger                              |

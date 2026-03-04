@@ -113,6 +113,8 @@ We follow [coordinated vulnerability disclosure](https://en.wikipedia.org/wiki/C
 | **Transport security** | WebSocket origin validation; configurable CORS                  |
 | **Audit trail**        | All intents, decisions, and transactions logged                 |
 | **CI security gates**  | CodeQL, TruffleHog, dependency review, npm audit                |
+| **Branch protection**  | Required PR reviews, CODEOWNERS approval, merge restricted      |
+| **Audit strategy**     | `--omit=dev --audit-level=critical` for known transitive vulns  |
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) and [DEEP_DIVE.md](DEEP_DIVE.md) for full design details.
 

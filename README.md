@@ -126,15 +126,16 @@ Whether you're building autonomous treasury bots, fleet-scale DeFi operators, or
 
 ## Tech Stack
 
-| Layer             | Technology                                                             |
-| ----------------- | ---------------------------------------------------------------------- |
-| **Frontend**      | Next.js 14, React 18, Tailwind CSS, WebSocket                          |
-| **API Server**    | Express.js, Zod validation, REST + WebSocket                           |
-| **Agent Runtime** | TypeScript, strategy pattern, event-driven orchestrator                |
-| **Wallet Layer**  | AES-256-GCM encryption, scrypt KDF, policy engine                      |
-| **Blockchain**    | Solana Devnet via `@solana/web3.js` 1.91, `@solana/spl-token`          |
-| **Testing**       | Vitest                                                                 |
-| **CI/CD**         | GitHub Actions (lint, test, build, audit, security scan, auto-release) |
+| Layer             | Technology                                                                |
+| ----------------- | ------------------------------------------------------------------------- |
+| **Frontend**      | Next.js 14, React 18, Tailwind CSS, WebSocket                             |
+| **API Server**    | Express.js, Zod validation, REST + WebSocket                              |
+| **Agent Runtime** | TypeScript, strategy pattern, event-driven orchestrator                   |
+| **Wallet Layer**  | AES-256-GCM encryption, scrypt KDF, policy engine                         |
+| **Blockchain**    | Solana Devnet via `@solana/web3.js` 1.91, `@solana/spl-token`             |
+| **Testing**       | Vitest (46 tests across 6 suites)                                         |
+| **Linting**       | ESLint v9 (flat config), Prettier 3.x                                     |
+| **CI/CD**         | GitHub Actions (lint, format, test, build, audit, security, auto-release) |
 
 ---
 
@@ -283,6 +284,10 @@ npm test -- --run
 
 # Run in watch mode
 npm test
+
+# Lint and format check
+npm run lint
+npm run format:check
 ```
 
 Tests cover agent decision logic, wallet management, encryption, data store operations, and agent factory creation.
@@ -324,7 +329,8 @@ We welcome contributions. Please read [CONTRIBUTING.md](CONTRIBUTING.md) before 
 
 - [Conventional Commits](https://www.conventionalcommits.org/) for commit messages
 - Branch naming: `feat/`, `fix/`, `docs/`, `test/`, `ci/`, `chore/`, `security/`
-- All PRs require passing CI checks and maintainer review
+- All PRs require passing CI checks and CODEOWNERS approval
+- Only `@Reinasboo` can merge into `main` — see [GOVERNANCE.md](.github/GOVERNANCE.md)
 - See [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for community standards
 
 ---

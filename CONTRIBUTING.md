@@ -144,9 +144,11 @@ BREAKING CHANGE: All mutation API calls now require the X-Admin-Key header.
 
 1. **Rebase** on latest `main` before opening the PR.
 2. **Complete the PR template** — fill in all sections including security checklist.
-3. **Ensure all CI checks pass** — lint, test, build, audit.
+3. **Ensure all CI checks pass** — lint, format, test, build, audit.
 4. **Request maintainer review** — assign `@Reinasboo`.
 5. **Squash merge** unless otherwise instructed by the maintainer.
+
+> **Branch Protection:** The `main` branch is protected. All PRs require passing CI status checks, CODEOWNERS approval, and can only be merged by `@Reinasboo`. See [GOVERNANCE.md](.github/GOVERNANCE.md) for details.
 
 ### Review Expectations
 
@@ -163,7 +165,8 @@ BREAKING CHANGE: All mutation API calls now require the X-Admin-Key header.
 Before requesting review, ensure:
 
 ```bash
-npm run lint          # No warnings or errors
+npm run lint          # No errors (warnings acceptable)
+npm run format:check  # All files Prettier-formatted
 npm test -- --run     # All tests pass
 npm run build         # Build succeeds
 ```
@@ -178,8 +181,9 @@ npm run build         # Build succeeds
 ## Code Style
 
 - **Language:** TypeScript (strict mode)
-- **Formatting:** 2-space indentation, LF line endings (see `.editorconfig`)
-- **Linting:** ESLint — run `npm run lint` before committing
+- **Formatting:** Prettier (see `.prettierrc.json`) — 2-space indentation, single quotes, 100-char line width, LF line endings
+- **Linting:** ESLint v9 flat config (see `eslint.config.mjs`) — run `npm run lint` before committing
+- **Format check:** Run `npm run format:check` to verify; `npm run format` to auto-fix
 - **Imports:** Prefer named imports; group by external → internal → relative
 - **Naming:** camelCase for variables/functions, PascalCase for classes/types, UPPER_SNAKE for constants
 - **Error handling:** Validate at system boundaries; trust internal code contracts
