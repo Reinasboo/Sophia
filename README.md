@@ -41,7 +41,6 @@ Whether you're building autonomous treasury bots, fleet-scale DeFi operators, or
 - [Testing](#testing)
 - [Project Structure](#project-structure)
 - [Contributing](#contributing)
-- [Roadmap](#roadmap)
 - [License](#license)
 - [Maintainers](#maintainers)
 
@@ -317,7 +316,6 @@ Tests cover agent decision logic, wallet management, encryption, data store oper
 ├── SECURITY.md           # Vulnerability disclosure policy
 ├── CONTRIBUTING.md       # Contribution standards
 ├── CHANGELOG.md          # Release history (Keep a Changelog)
-├── ROADMAP.md            # Strategic priorities
 └── SKILLS.md             # Machine-readable capability reference
 ```
 
@@ -334,19 +332,6 @@ We welcome contributions. Please read [CONTRIBUTING.md](CONTRIBUTING.md) before 
 - All PRs require passing CI checks and CODEOWNERS approval
 - Only `@Reinasboo` can merge into `main` — see [GOVERNANCE.md](.github/GOVERNANCE.md)
 - See [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for community standards
-
----
-
-## Roadmap
-
-| Quarter       | Focus                                                                    |
-| ------------- | ------------------------------------------------------------------------ |
-| **2026 Q2**   | Stabilize governance, add coverage CI badge, operational runbooks        |
-| **2026 Q3**   | Production deployment guides, observability docs, platform compatibility |
-| **2026 Q4**   | Release security review checklist, contributor automation, LTS cadence   |
-| **Long-term** | Multi-network support, compliance mappings, advanced BYOA policy packs   |
-
-Full details in [ROADMAP.md](ROADMAP.md).
 
 ---
 
@@ -367,6 +352,6 @@ This project is licensed under the **MIT License** — see [LICENSE](LICENSE) fo
 
 <div align="center">
 
-**[Documentation](ARCHITECTURE.md)** · **[Security](SECURITY.md)** · **[Contributing](CONTRIBUTING.md)** · **[Changelog](CHANGELOG.md)** · **[Roadmap](ROADMAP.md)**
+**[Documentation](ARCHITECTURE.md)** · **[Security](SECURITY.md)** · **[Contributing](CONTRIBUTING.md)** · **[Changelog](CHANGELOG.md)**
 
 </div>
