@@ -31,6 +31,10 @@ function ensureDataDir(): void {
  * Errors are logged but never thrown.
  */
 export function saveState<T>(key: string, data: T): void {
+  // L-2 FIX: Validate key to prevent path traversal (e.g. "../../etc/passwd").
+  if (!/^[a-zA-Z0-9_-]+$/.test(key)) {
+    throw new Error(`Invalid state key: "${key}". Only alphanumeric, _ and - are allowed.`);
+  }
   try {
     ensureDataDir();
     const filePath = join(DATA_DIR, `${key}.json`);
@@ -46,6 +50,10 @@ export function saveState<T>(key: string, data: T): void {
  * Dates are NOT automatically revived — callers must revive them if needed.
  */
 export function loadState<T>(key: string): T | null {
+  // L-2 FIX: Same key validation on reads.
+  if (!/^[a-zA-Z0-9_-]+$/.test(key)) {
+    throw new Error(`Invalid state key: "${key}". Only alphanumeric, _ and - are allowed.`);
+  }
   try {
     const filePath = join(DATA_DIR, `${key}.json`);
     if (!existsSync(filePath)) return null;

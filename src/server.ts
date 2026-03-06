@@ -15,6 +15,7 @@ import { getWalletManager } from './wallet/index.js';
 import { getSolanaClient } from './rpc/index.js';
 import { getConfig, getExplorerUrl } from './utils/config.js';
 import { createLogger } from './utils/logger.js';
+import { secureCompare } from './utils/encryption.js';
 import { ApiResponse, SystemEvent, AgentConfig } from './utils/types.js';
 import {
   getAgentRegistry,
@@ -43,6 +44,14 @@ app.use(
     methods: ['GET', 'POST', 'PATCH'],
   })
 );
+
+// L-3 FIX: Explicitly handle OPTIONS preflight so browsers get correct CORS headers.
+app.options('*', cors({ origin: corsOrigins, methods: ['GET', 'POST', 'PATCH'] }));
+
+// H-3 FIX: Only trust the immediate upstream reverse proxy (first hop).
+// This prevents X-Forwarded-For spoofing for rate-limit bypass.
+// Set TRUST_PROXY=0 to disable (e.g. when running without a proxy).
+app.set('trust proxy', process.env['TRUST_PROXY'] !== '0' ? 1 : false);
 
 // Limit request body size to prevent DoS (512kb for raw transactions)
 app.use(express.json({ limit: '512kb' }));
@@ -100,10 +109,11 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
 /**
  * C-1/C-2: Require admin API key for mutation endpoints.
  * Expects header: X-Admin-Key: <ADMIN_API_KEY>
+ * H-1 FIX: Uses constant-time comparison to prevent timing attacks.
  */
 function requireAdminAuth(req: Request, res: Response, next: NextFunction): void {
   const adminKey = req.headers['x-admin-key'];
-  if (!adminKey || adminKey !== config.ADMIN_API_KEY) {
+  if (!adminKey || !secureCompare(adminKey as string, config.ADMIN_API_KEY)) {
     res.status(401).json({
       success: false,
       error: 'Missing or invalid X-Admin-Key header',
@@ -146,12 +156,22 @@ app.get('/', (_req: Request, res: Response) => {
   });
 });
 
-// M-1: Strip prototype-polluting keys from z.record() to prevent __proto__ injection
+// M-1 FIX: Recursively strip prototype-polluting keys from nested objects.
+// A shallow strip (top-level only) is bypassable with {a: {__proto__: ...}}.
 function stripDangerousKeys(obj: Record<string, unknown>): Record<string, unknown> {
   const dangerous = new Set(['__proto__', 'constructor', 'prototype']);
   const cleaned: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(obj)) {
-    if (!dangerous.has(key)) {
+    if (dangerous.has(key)) continue;
+    if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+      cleaned[key] = stripDangerousKeys(value as Record<string, unknown>);
+    } else if (Array.isArray(value)) {
+      cleaned[key] = value.map((item) =>
+        item !== null && typeof item === 'object' && !Array.isArray(item)
+          ? stripDangerousKeys(item as Record<string, unknown>)
+          : item
+      );
+    } else {
       cleaned[key] = value;
     }
   }
@@ -573,8 +593,15 @@ app.get('/api/transactions', (req: Request, res: Response) => {
     const allTransactions = orchestrator.getAllTransactions();
 
     // Pagination
-    const page = Math.max(parseInt(req.query['page'] as string) || 1, 1);
-    const limit = Math.min(Math.max(parseInt(req.query['limit'] as string) || 50, 1), 500);
+    // M-3 FIX: parseInt can silently return NaN; use a safe parser with an
+    // explicit radix and explicit integer-validity check.
+    const parsePositiveInt = (val: unknown, def: number): number => {
+      if (typeof val !== 'string') return def;
+      const n = parseInt(val, 10);
+      return Number.isInteger(n) && n > 0 ? n : def;
+    };
+    const page = parsePositiveInt(req.query['page'], 1);
+    const limit = Math.min(parsePositiveInt(req.query['limit'], 50), 500);
     const start = (page - 1) * limit;
     const transactions = allTransactions.slice(start, start + limit);
 

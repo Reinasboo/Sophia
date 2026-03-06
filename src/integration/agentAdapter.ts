@@ -21,6 +21,35 @@ import { IntentResult } from './intentRouter.js';
 
 const logger = createLogger('BYOA_ADAPTER');
 
+/**
+ * H-2 FIX: Validate a remote endpoint URL before making any HTTP request.
+ * Rejects non-HTTP(S) schemes, credentials, and RFC-1918 / loopback addresses.
+ * (Mirrors validateAgentEndpoint in agentRegistry.ts — defence-in-depth.)
+ */
+function isSafeEndpoint(endpoint: string): boolean {
+  try {
+    const u = new URL(endpoint);
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') return false;
+    if (u.username || u.password) return false;
+    const h = u.hostname.toLowerCase();
+    if (h === 'localhost' || h === '::1' || h.startsWith('127.')) return false;
+    if (h.startsWith('169.254.') || h.startsWith('fe80')) return false;
+    if (h.startsWith('10.') || h.startsWith('192.168.')) return false;
+    if (h.includes('::ffff:')) return false;
+    const p = h.split('.');
+    if (
+      p.length === 4 &&
+      p[0] === '172' &&
+      parseInt(p[1] ?? '', 10) >= 16 &&
+      parseInt(p[1] ?? '', 10) <= 31
+    )
+      return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // ────────────────────────────────────────────
 // Adapter interfaces
 // ────────────────────────────────────────────
@@ -109,6 +138,15 @@ export class AgentAdapter {
       return failure(new Error('Agent has no endpoint configured'));
     }
 
+    // H-2 FIX: Reject requests to private/loopback addresses.
+    if (!isSafeEndpoint(agent.endpoint)) {
+      logger.warn('Blocked health probe to unsafe endpoint', {
+        agentId: agent.id,
+        endpoint: agent.endpoint,
+      });
+      return failure(new Error('Agent endpoint is not a safe public URL'));
+    }
+
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), this.httpTimeoutMs);
@@ -169,6 +207,15 @@ export class AgentAdapter {
   ): Promise<Result<AgentCallbackResponse, Error>> {
     if (!agent.endpoint) {
       return failure(new Error(`Remote agent "${agent.name}" has no endpoint`));
+    }
+
+    // H-2 FIX: Block SSRF to private/loopback addresses.
+    if (!isSafeEndpoint(agent.endpoint)) {
+      logger.warn('Blocked notification to unsafe endpoint', {
+        agentId: agent.id,
+        endpoint: agent.endpoint,
+      });
+      return failure(new Error('Agent endpoint is not a safe public URL'));
     }
 
     const controller = new AbortController();

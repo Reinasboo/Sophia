@@ -443,13 +443,28 @@ export class IntentRouter {
 
     // No policy restrictions — the agent has full autonomy over its wallet
 
-    // H-3/H-4: Accept decimals from params (default 9 for SOL-like tokens).
-    // Callers SHOULD specify decimals for non-9-decimal tokens (e.g. USDC=6).
-    const decimals =
-      typeof params['decimals'] === 'number'
-        ? Math.min(Math.max(Math.floor(params['decimals']), 0), 18)
+    // M-2/M-4 FIX: Validate decimals strictly — must be a safe integer 0–18.
+    // Reject Infinity/NaN/floats which would corrupt the BigInt conversion.
+    const rawDecimals = params['decimals'];
+    const decimals: number =
+      rawDecimals !== undefined && rawDecimals !== null
+        ? (() => {
+            if (
+              typeof rawDecimals !== 'number' ||
+              !Number.isInteger(rawDecimals) ||
+              rawDecimals < 0 ||
+              rawDecimals > 18
+            ) {
+              throw new Error('decimals must be an integer between 0 and 18');
+            }
+            return rawDecimals;
+          })()
         : 9;
-    const rawAmount = BigInt(Math.round(amount * Math.pow(10, decimals)));
+    const scaled = amount * Math.pow(10, decimals);
+    if (!Number.isFinite(scaled) || scaled > Number.MAX_SAFE_INTEGER) {
+      throw new Error('Token amount is too large to convert safely');
+    }
+    const rawAmount = BigInt(Math.round(scaled));
     const txResult = await buildTokenTransfer(
       pubkeyResult.value,
       mintPubkey,
@@ -697,12 +712,27 @@ export class IntentRouter {
     const pubkeyResult = this.walletManager.getPublicKey(walletId);
     if (!pubkeyResult.ok) throw pubkeyResult.error;
 
-    // H-3/H-4: Accept decimals from params (default 9 for SOL-like tokens).
-    const decimals =
-      typeof params['decimals'] === 'number'
-        ? Math.min(Math.max(Math.floor(params['decimals']), 0), 18)
+    // M-2/M-4 FIX: Validate decimals strictly — must be a safe integer 0–18.
+    const rawDecimals = params['decimals'];
+    const decimals: number =
+      rawDecimals !== undefined && rawDecimals !== null
+        ? (() => {
+            if (
+              typeof rawDecimals !== 'number' ||
+              !Number.isInteger(rawDecimals) ||
+              rawDecimals < 0 ||
+              rawDecimals > 18
+            ) {
+              throw new Error('decimals must be an integer between 0 and 18');
+            }
+            return rawDecimals;
+          })()
         : 9;
-    const rawAmount = BigInt(Math.round(amount * Math.pow(10, decimals)));
+    const scaled = amount * Math.pow(10, decimals);
+    if (!Number.isFinite(scaled) || scaled > Number.MAX_SAFE_INTEGER) {
+      throw new Error('Token amount is too large to convert safely');
+    }
+    const rawAmount = BigInt(Math.round(scaled));
     const txResult = await buildTokenTransfer(
       pubkeyResult.value,
       mintPubkey,

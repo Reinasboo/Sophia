@@ -20,11 +20,17 @@ import type {
 } from './types';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-const ADMIN_API_KEY = process.env.NEXT_PUBLIC_ADMIN_API_KEY || 'dev-admin-key-change-in-production';
 
-/** Headers for admin-authenticated mutation requests */
+// C-1 FIX: Admin key is NEVER embedded in frontend JavaScript.
+// Mutation requests are proxied through the Next.js API route at
+// /api/proxy-admin which injects the key server-side from a
+// server-only environment variable (no NEXT_PUBLIC_ prefix).
+// Direct browser calls to mutation endpoints will be rejected.
+
+/** Headers for admin-authenticated mutation requests (proxied server-side) */
 function adminHeaders(): Record<string, string> {
-  return { 'X-Admin-Key': ADMIN_API_KEY };
+  // No key exposed here — the Next.js proxy route handles injection.
+  return {};
 }
 
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {

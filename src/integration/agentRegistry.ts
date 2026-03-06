@@ -88,6 +88,63 @@ function hashToken(token: string): string {
   return createHash('sha256').update(token).digest('hex');
 }
 
+/**
+ * H-2 FIX: Validate an agent endpoint URL to prevent SSRF.
+ * Returns an error string if invalid, or null if the URL is safe.
+ *
+ * Rules:
+ * - Must be http:// or https://
+ * - Hostname must not resolve to loopback, link-local, or RFC-1918 private ranges
+ *   (checked textually — DNS rebind protection is out of scope here)
+ * - Must not contain credentials (user:pass@)
+ */
+function validateAgentEndpoint(endpoint: string): string | null {
+  let parsed: URL;
+  try {
+    parsed = new URL(endpoint);
+  } catch {
+    return 'must be a valid URL';
+  }
+
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    return 'must use http or https scheme';
+  }
+
+  if (parsed.username || parsed.password) {
+    return 'must not contain credentials';
+  }
+
+  const host = parsed.hostname.toLowerCase();
+
+  // Block loopback
+  if (host === 'localhost' || host === '::1' || host.startsWith('127.')) {
+    return 'must not target loopback addresses';
+  }
+
+  // Block link-local (169.254.x.x, fe80::)
+  if (host.startsWith('169.254.') || host.startsWith('fe80')) {
+    return 'must not target link-local addresses';
+  }
+
+  // Block RFC-1918 private ranges: 10.x, 172.16-31.x, 192.168.x
+  if (host.startsWith('10.')) return 'must not target private network addresses';
+  const parts = host.split('.');
+  if (
+    parts.length === 4 &&
+    parts[0] === '172' &&
+    parseInt(parts[1] ?? '', 10) >= 16 &&
+    parseInt(parts[1] ?? '', 10) <= 31
+  ) {
+    return 'must not target private network addresses';
+  }
+  if (host.startsWith('192.168.')) return 'must not target private network addresses';
+
+  // Block IPv4-mapped IPv6 addresses like ::ffff:192.168.1.1
+  if (host.includes('::ffff:')) return 'must not target private network addresses';
+
+  return null;
+}
+
 // ────────────────────────────────────────────
 // Agent Registry
 // ────────────────────────────────────────────
@@ -146,6 +203,13 @@ export class AgentRegistry {
     }
     if (reg.agentType === 'remote' && !reg.agentEndpoint) {
       return failure(new Error('Remote agents must provide an endpoint URL'));
+    }
+    // H-2 FIX: Validate endpoint URL to prevent SSRF (internal IP scanning).
+    if (reg.agentEndpoint) {
+      const endpointError = validateAgentEndpoint(reg.agentEndpoint);
+      if (endpointError) {
+        return failure(new Error(`Invalid agent endpoint: ${endpointError}`));
+      }
     }
     if (!reg.supportedIntents || reg.supportedIntents.length === 0) {
       return failure(new Error('At least one supported intent type is required'));
