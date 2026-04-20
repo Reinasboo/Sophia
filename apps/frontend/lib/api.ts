@@ -19,7 +19,7 @@ import type {
   BYOARegistrationResult,
 } from './types';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://sophia-production-1a83.up.railway.app';
 
 // C-1 FIX: Admin key is NEVER embedded in frontend JavaScript.
 // Mutation requests are proxied through the Next.js API route at
