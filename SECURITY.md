@@ -128,3 +128,18 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) and [DEEP_DIVE.md](DEEP_DIVE.md) for full
 - **Dependency Review** — license and vulnerability checks on PRs
 - **npm audit** — dependency audit at moderate+ severity level
 - **Secret scanning** — GitHub-native secret scanning enabled
+
+---
+
+## Current Vulnerability Status
+
+**Last Audit:** April 20, 2026  
+**Status:** 2/9 vulnerabilities fixed; 7 require breaking changes to Solana dependencies
+
+For detailed advisories, risk assessment, and mitigation strategies, see [SECURITY_ADVISORIES.md](SECURITY_ADVISORIES.md).
+
+**Quick Summary:**
+- ✅ Fixed: lodash (code injection), path-to-regexp (ReDoS)
+- ⚠️ Remaining: bigint-buffer (HIGH), esbuild (MODERATE) require Solana SPL Token upgrade
+- 📍 Production Impact: LOW (dev/transitive dependencies only)
+- 🎯 Next Review: April 27, 2026
