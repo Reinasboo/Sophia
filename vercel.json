@@ -1,0 +1,11 @@
+{
+  "buildCommand": "cd ../.. && npm run build && cd apps/frontend && npm run build",
+  "devCommand": "next dev",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "nodeVersion": "22.x",
+  "env": {
+    "NEXT_PUBLIC_API_URL": "@next_public_api_url",
+    "NEXT_PUBLIC_WS_URL": "@next_public_ws_url"
+  }
+}
