@@ -10,18 +10,19 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import {
-  AgentInfo,
   AgentStatus,
   AgentStrategy,
   ExecutionSettings,
+  TokenBalance,
+} from '../types/shared.js';
+import {
+  AgentInfo,
   Intent,
   AirdropIntent,
   TransferSolIntent,
   TransferTokenIntent,
-  CheckBalanceIntent,
   BalanceInfo,
-  TokenBalance,
-} from '../utils/types.js';
+} from '../types/internal.js';
 import { createLogger } from '../utils/logger.js';
 import { PublicKey } from '@solana/web3.js';
 
@@ -224,18 +225,6 @@ export abstract class BaseAgent {
       mint,
       recipient,
       amount,
-    };
-  }
-
-  /**
-   * Create a balance check intent
-   */
-  protected createCheckBalanceIntent(): CheckBalanceIntent {
-    return {
-      id: uuidv4(),
-      agentId: this.id,
-      timestamp: new Date(),
-      type: 'check_balance',
     };
   }
 

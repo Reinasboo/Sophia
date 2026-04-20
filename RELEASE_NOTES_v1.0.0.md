@@ -1,4 +1,4 @@
-# v1.0.0 — Agentic Wallet System for Solana
+# v1.0.0 — Sophia: Autonomous Wallet System for Solana
 
 **First stable release** of the Agentic Wallet System—a production-grade autonomous AI agent wallet platform for Solana Devnet.
 

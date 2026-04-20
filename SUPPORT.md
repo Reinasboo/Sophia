@@ -4,17 +4,17 @@
 
 ### Questions & Discussions
 
-- **GitHub Discussions**: [Agentic Wallet Discussions](https://github.com/Reinasboo/Agentic-wallet/discussions)
+- **GitHub Discussions**: [Sophia Discussions](https://github.com/Reinasboo/Sophia/discussions)
 - **Expected response time**: 2–3 business days
 
 ### Bug Reports
 
-- **GitHub Issues**: [Open a bug report](https://github.com/Reinasboo/Agentic-wallet/issues/new?template=bug_report.yml)
+- **GitHub Issues**: [Open a bug report](https://github.com/Reinasboo/Sophia/issues/new?template=bug_report.yml)
 - **Expected assessment**: 5 business days
 
 ### Security Vulnerabilities
 
-- **Email**: [security@agentic-wallet.dev](mailto:security@agentic-wallet.dev)
+- **Email**: [security@sophia.dev](mailto:security@sophia.dev)
 - **Expected acknowledgment**: 48 hours
 - **See**: [SECURITY.md](SECURITY.md) for full vulnerability disclosure policy
 
@@ -64,4 +64,4 @@ If you'd like to help, please read [CONTRIBUTING.md](CONTRIBUTING.md) before sub
 
 ---
 
-**Questions?** Open a [Discussion](https://github.com/Reinasboo/Agentic-wallet/discussions) or see [ARCHITECTURE.md](ARCHITECTURE.md) for technical details.
+**Questions?** Open a [Discussion](https://github.com/Reinasboo/Sophia/discussions) or see [ARCHITECTURE.md](ARCHITECTURE.md) for technical details.

@@ -35,3 +35,21 @@ export {
   AgentCallbackResponse,
   LocalAdapterFn,
 } from './agentAdapter.js';
+
+// ─── Multi-Tenant (Phase 1) ──────────────────────────────────────────────────
+
+export { TenantDatabase, getTenantDatabase } from './tenant-database.js';
+
+export { verifyTenantToken, extractBearerToken } from './auth-middleware.js';
+
+export {
+  PrivyUserInfo,
+  verifyPrivyToken,
+  getOrCreateTenantForPrivyUser,
+} from './privy-integration.js';
+
+export {
+  StrategyMarketplace,
+  getStrategyMarketplace,
+  UserStrategyInstance,
+} from './strategy-marketplace.js';

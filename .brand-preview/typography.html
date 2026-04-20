@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sophia Typography Pairs</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Courier+Prime:wght@400;700&family=IBM+Plex+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@400;700&family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600&family=Plus+Jakarta+Sans:wght@400;600;700&family=Roboto+Mono:wght@400;700&family=Syne:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #000000;
+            color: #ffffff;
+            padding: 40px 20px;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .header {
+            max-width: 1400px;
+            margin: 0 auto 60px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #ffffff;
+        }
+        
+        .header p {
+            font-size: 1rem;
+            color: #a0a0a0;
+        }
+        
+        .instruction {
+            max-width: 1400px;
+            margin: 0 auto 40px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            color: #e0e0e0;
+        }
+        
+        .gallery {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+        }
+        
+        .card {
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 32px;
+            background: rgba(10, 10, 10, 0.8);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(255, 0, 128, 0.15);
+        }
+        
+        .pair-number {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #606060;
+            margin-bottom: 16px;
+        }
+        
+        .pair-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #00d9ff;
+            margin-bottom: 24px;
+        }
+        
+        .display {
+            margin-bottom: 32px;
+        }
+        
+        .display h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            line-height: 1.2;
+        }
+        
+        .display p {
+            font-size: 0.9rem;
+            color: #e0e0e0;
+            line-height: 1.5;
+        }
+        
+        .body-text {
+            margin-bottom: 24px;
+        }
+        
+        .body-text p {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #e0e0e0;
+            margin-bottom: 12px;
+        }
+        
+        .label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #606060;
+            margin-bottom: 8px;
+        }
+        
+        .mono {
+            font-size: 0.85rem;
+            line-height: 1.4;
+            color: #a0a0a0;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 12px;
+            border-radius: 6px;
+            border-left: 2px solid #ff0080;
+            margin-bottom: 24px;
+            overflow-x: auto;
+        }
+        
+        .cta {
+            display: inline-block;
+            background: #ff0080;
+            color: #ffffff;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-right: 8px;
+            margin-bottom: 24px;
+        }
+        
+        .secondary-cta {
+            display: inline-block;
+            background: transparent;
+            color: #00d9ff;
+            padding: 12px 24px;
+            border: 1px solid #00d9ff;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .font-info {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 16px;
+            font-size: 0.8rem;
+            color: #606060;
+        }
+        
+        .font-info strong {
+            color: #a0a0a0;
+        }
+        
+        @media (max-width: 768px) {
+            .gallery {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Sophia Typography Pairs</h1>
+        <p>Bold Aggressive Palette • Pick 1-6, or ask for variations</p>
+    </div>
+    
+    <div class="instruction">
+        <strong>Pick your favorite pair:</strong> Reply with a number (1-6), or ask for tweaks.
+    </div>
+    
+    <div class="gallery">
+        <!-- Pair 1: Inter + Courier Prime -->
+        <div class="card">
+            <div class="pair-number">Pair 1</div>
+            <div class="pair-title">Tech Minimal</div>
+            
+            <div class="display" style="font-family: 'Inter', sans-serif;">
+                <h1>Autonomous Wallet</h1>
+                <p>Enterprise orchestration for Solana agents</p>
+            </div>
+            
+            <div class="body-text" style="font-family: 'Inter', sans-serif;">
+                <p>Inter is clean and modern — the default for tech products. Pairs well with Courier Prime monospace for code/addresses, giving a balanced, accessible vibe.</p>
+            </div>
+            
+            <div class="label">Example address</div>
+            <div class="mono" style="font-family: 'Courier Prime', monospace;">
+                9B5X...pumpCOPY
+            </div>
+            
+            <a href="#" class="cta" style="font-family: 'Inter', sans-serif;">Send SOL</a>
+            <a href="#" class="secondary-cta" style="font-family: 'Inter', sans-serif;">View Agents</a>
+            
+            <div class="font-info">
+                <strong>Sans:</strong> Inter (400, 600, 700) · <strong>Mono:</strong> Courier Prime (400, 700)
+            </div>
+        </div>
+        
+        <!-- Pair 2: IBM Plex Sans + IBM Plex Mono -->
+        <div class="card">
+            <div class="pair-number">Pair 2</div>
+            <div class="pair-title">Enterprise Pro</div>
+            
+            <div class="display" style="font-family: 'IBM Plex Sans', sans-serif;">
+                <h1>Autonomous Wallet</h1>
+                <p>Enterprise orchestration for Solana agents</p>
+            </div>
+            
+            <div class="body-text" style="font-family: 'IBM Plex Sans', sans-serif;">
+                <p>IBM Plex fonts are engineered for accessibility and precision. Heavy-weight geometric design says "enterprise-grade." Matches technical credibility perfectly.</p>
+            </div>
+            
+            <div class="label">Example address</div>
+            <div class="mono" style="font-family: 'IBM Plex Mono', monospace;">
+                9B5X...pumpCOPY
+            </div>
+            
+            <a href="#" class="cta" style="font-family: 'IBM Plex Sans', sans-serif;">Send SOL</a>
+            <a href="#" class="secondary-cta" style="font-family: 'IBM Plex Sans', sans-serif;">View Agents</a>
+            
+            <div class="font-info">
+                <strong>Sans:</strong> IBM Plex Sans (400, 600, 700) · <strong>Mono:</strong> IBM Plex Mono (400, 700)
+            </div>
+        </div>
+        
+        <!-- Pair 3: Space Grotesk + JetBrains Mono -->
+        <div class="card">
+            <div class="pair-number">Pair 3</div>
+            <div class="pair-title">Bold Tech</div>
+            
+            <div class="display" style="font-family: 'Space Grotesk', sans-serif;">
+                <h1>Autonomous Wallet</h1>
+                <p>Enterprise orchestration for Solana agents</p>
+            </div>
+            
+            <div class="body-text" style="font-family: 'Space Grotesk', sans-serif;">
+                <p>Space Grotesk is geometric, futuristic, and bold — perfect for "AI/Tech" positioning. JetBrains Mono is what developers actually use in their IDEs.</p>
+            </div>
+            
+            <div class="label">Example address</div>
+            <div class="mono" style="font-family: 'JetBrains Mono', monospace;">
+                9B5X...pumpCOPY
+            </div>
+            
+            <a href="#" class="cta" style="font-family: 'Space Grotesk', sans-serif;">Send SOL</a>
+            <a href="#" class="secondary-cta" style="font-family: 'Space Grotesk', sans-serif;">View Agents</a>
+            
+            <div class="font-info">
+                <strong>Sans:</strong> Space Grotesk (400, 600, 700) · <strong>Mono:</strong> JetBrains Mono (400, 600)
+            </div>
+        </div>
+        
+        <!-- Pair 4: Plus Jakarta Sans + Roboto Mono -->
+        <div class="card">
+            <div class="pair-number">Pair 4</div>
+            <div class="pair-title">Modern Balanced</div>
+            
+            <div class="display" style="font-family: 'Plus Jakarta Sans', sans-serif;">
+                <h1>Autonomous Wallet</h1>
+                <p>Enterprise orchestration for Solana agents</p>
+            </div>
+            
+            <div class="body-text" style="font-family: 'Plus Jakarta Sans', sans-serif;">
+                <p>Plus Jakarta Sans is warm, modern, and contemporary. Roboto Mono is reliable and readable. Together they feel approachable yet technical — balance.</p>
+            </div>
+            
+            <div class="label">Example address</div>
+            <div class="mono" style="font-family: 'Roboto Mono', monospace;">
+                9B5X...pumpCOPY
+            </div>
+            
+            <a href="#" class="cta" style="font-family: 'Plus Jakarta Sans', sans-serif;">Send SOL</a>
+            <a href="#" class="secondary-cta" style="font-family: 'Plus Jakarta Sans', sans-serif;">View Agents</a>
+            
+            <div class="font-info">
+                <strong>Sans:</strong> Plus Jakarta Sans (400, 600, 700) · <strong>Mono:</strong> Roboto Mono (400, 700)
+            </div>
+        </div>
+        
+        <!-- Pair 5: Syne + Space Mono -->
+        <div class="card">
+            <div class="pair-number">Pair 5</div>
+            <div class="pair-title">Bold Modern</div>
+            
+            <div class="display" style="font-family: 'Syne', sans-serif;">
+                <h1>Autonomous Wallet</h1>
+                <p>Enterprise orchestration for Solana agents</p>
+            </div>
+            
+            <div class="body-text" style="font-family: 'Syne', sans-serif;">
+                <p>Syne is ultra-geometric and striking — very high contrast, personality-driven. Space Mono adds quirky charm. Best if you want maximum personality.</p>
+            </div>
+            
+            <div class="label">Example address</div>
+            <div class="mono" style="font-family: 'Space Mono', monospace;">
+                9B5X...pumpCOPY
+            </div>
+            
+            <a href="#" class="cta" style="font-family: 'Syne', sans-serif;">Send SOL</a>
+            <a href="#" class="secondary-cta" style="font-family: 'Syne', sans-serif;">View Agents</a>
+            
+            <div class="font-info">
+                <strong>Sans:</strong> Syne (400, 700) · <strong>Mono:</strong> Space Mono (400, 700)
+            </div>
+        </div>
+        
+        <!-- Pair 6: Inter + JetBrains Mono -->
+        <div class="card">
+            <div class="pair-number">Pair 6</div>
+            <div class="pair-title">Developer's Choice</div>
+            
+            <div class="display" style="font-family: 'Inter', sans-serif;">
+                <h1>Autonomous Wallet</h1>
+                <p>Enterprise orchestration for Solana agents</p>
+            </div>
+            
+            <div class="body-text" style="font-family: 'Inter', sans-serif;">
+                <p>Inter + JetBrains Mono: the combo used by top-tier dev tools (Vercel, Stripe, GitHub). Neutral, professional, instantly trusted by engineers.</p>
+            </div>
+            
+            <div class="label">Example address</div>
+            <div class="mono" style="font-family: 'JetBrains Mono', monospace;">
+                9B5X...pumpCOPY
+            </div>
+            
+            <a href="#" class="cta" style="font-family: 'Inter', sans-serif;">Send SOL</a>
+            <a href="#" class="secondary-cta" style="font-family: 'Inter', sans-serif;">View Agents</a>
+            
+            <div class="font-info">
+                <strong>Sans:</strong> Inter (400, 600, 700) · <strong>Mono:</strong> JetBrains Mono (400, 600)
+            </div>
+        </div>
+    </div>
+</body>
+</html>

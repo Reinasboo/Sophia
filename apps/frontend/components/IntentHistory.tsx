@@ -8,7 +8,18 @@
  */
 
 import { motion } from 'framer-motion';
-import { CheckCircle2, XCircle, ArrowUpRight, Cloud, Wallet, Zap } from 'lucide-react';
+import {
+  CheckCircle2,
+  XCircle,
+  ArrowUpRight,
+  Cloud,
+  Wallet,
+  Zap,
+  Plus,
+  Flame,
+  TrendingDown,
+  Minus,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { IntentHistoryRecord, SupportedIntentType } from '@/lib/types';
 
@@ -17,29 +28,34 @@ const intentTypeConfig: Record<
   { label: string; icon: typeof Cloud; color: string }
 > = {
   REQUEST_AIRDROP: {
-    label: 'Airdrop',
+    label: 'Request Airdrop',
     icon: Cloud,
     color: 'text-blue-500',
   },
   TRANSFER_SOL: {
-    label: 'Transfer',
+    label: 'Transfer SOL',
     icon: ArrowUpRight,
     color: 'text-amber-500',
   },
   TRANSFER_TOKEN: {
-    label: 'Token Transfer',
+    label: 'Transfer Token',
     icon: ArrowUpRight,
-    color: 'text-purple-500',
+    color: 'text-amber-600',
   },
   QUERY_BALANCE: {
-    label: 'Balance',
+    label: 'Query Balance',
     icon: Wallet,
-    color: 'text-emerald-500',
+    color: 'text-slate-400',
   },
   AUTONOMOUS: {
     label: 'Autonomous',
     icon: Zap,
-    color: 'text-rose-500',
+    color: 'text-purple-500',
+  },
+  SERVICE_PAYMENT: {
+    label: 'Service Payment',
+    icon: ArrowUpRight,
+    color: 'text-green-500',
   },
 };
 
@@ -48,26 +64,12 @@ interface IntentRowProps {
 }
 
 function IntentRow({ record }: IntentRowProps) {
-  const config = intentTypeConfig[record.type] ?? intentTypeConfig.QUERY_BALANCE;
+  const config = intentTypeConfig[record.type as SupportedIntentType] ?? intentTypeConfig.AUTONOMOUS;
   const Icon = config.icon;
   const isExecuted = record.status === 'executed';
 
-  // Build a richer label for autonomous intents
+  // Use label from config
   let label = config.label;
-  if (record.type === 'AUTONOMOUS' && record.params?.action) {
-    const action = String(record.params.action);
-    const actionLabels: Record<string, string> = {
-      airdrop: 'Auto Airdrop',
-      transfer_sol: 'Auto Transfer',
-      transfer_token: 'Auto Token Transfer',
-      query_balance: 'Auto Balance Check',
-      execute_instructions: 'Arbitrary Execute',
-      raw_transaction: 'Raw Transaction',
-      swap: `Swap${record.params.dex ? ' (' + record.params.dex + ')' : ''}`,
-      create_token: `Create Token${record.params.platform ? ' (' + record.params.platform + ')' : ''}`,
-    };
-    label = actionLabels[action] ?? `Autonomous: ${action}`;
-  }
 
   return (
     <motion.div
@@ -89,11 +91,6 @@ function IntentRow({ record }: IntentRowProps) {
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className="text-body font-medium text-text-primary">{label}</span>
-          {record.type === 'AUTONOMOUS' && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-400 font-semibold uppercase">
-              autonomous
-            </span>
-          )}
           <span
             className={cn(
               'inline-flex items-center gap-1 text-caption font-medium',

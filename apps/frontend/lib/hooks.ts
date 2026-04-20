@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Custom React Hooks
  */
 
@@ -179,10 +179,6 @@ export function useWebSocket(onEvent?: (event: SystemEvent) => void) {
     const ws = api.createWebSocket(
       (event) => {
         setEvents((prev) => {
-          // Handle initial state
-          if (event.type === 'initial_state') {
-            return prev;
-          }
           // Add new event, keep last 100
           const updated = [event, ...prev].slice(0, 100);
           return updated;
@@ -344,4 +340,62 @@ export function useAllIntentHistory(pollInterval: number = 5000) {
   }, [fetchIntents, pollInterval]);
 
   return { intents, loading, error, refetch: fetchIntents };
+}
+
+// Alias for useAllIntentHistory (used by pages)
+export function useIntentHistory(pollInterval: number = 5000) {
+  return useAllIntentHistory(pollInterval);
+}
+
+// Mock hook for connected agents
+export function useConnectedAgents(pollInterval: number = 5000) {
+  const [agents, setAgents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchAgents = useCallback(async () => {
+    try {
+      setError(null);
+      // Mock data - replace with real API call when available
+      setAgents([
+        {
+          id: 'agent_123',
+          name: 'Test Agent',
+          type: 'BYOA',
+          status: 'active',
+          lastSeen: new Date().toISOString(),
+        },
+      ]);
+      setLoading(false);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch agents';
+      setError(errorMessage);
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAgents();
+  }, [fetchAgents]);
+
+  const revoke = useCallback(async (id: string) => {
+    try {
+      setError(null);
+      setAgents(agents => agents.filter(a => a.id !== id));
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to revoke agent';
+      setError(errorMessage);
+    }
+  }, []);
+
+  const refresh = useCallback(async () => {
+    try {
+      await fetchAgents();
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to refresh agents';
+      setError(errorMessage);
+    }
+  }, [fetchAgents]);
+
+  return { agents, loading, error, refresh, revoke };
 }

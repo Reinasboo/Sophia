@@ -5,12 +5,12 @@
   "description": "Enterprise-grade autonomous AI wallet orchestration for Solana with BYOA integration and security-first governance.",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Reinasboo/Agentic-wallet.git"
+    "url": "https://github.com/Reinasboo/Sophia.git"
   },
-  "homepage": "https://github.com/Reinasboo/Agentic-wallet",
+  "homepage": "https://github.com/Reinasboo/Sophia",
   "bugs": {
-    "url": "https://github.com/Reinasboo/Agentic-wallet/issues",
-    "email": "security@agentic-wallet.dev"
+    "url": "https://github.com/Reinasboo/Sophia/issues",
+    "email": "security@sophia.dev"
   },
   "keywords": [
     "solana",

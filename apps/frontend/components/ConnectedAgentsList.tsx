@@ -9,7 +9,7 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Plug, Wifi, WifiOff, ShieldAlert, Globe, Monitor, ArrowRight } from 'lucide-react';
+import { Plug, Wifi, WifiOff, ShieldAlert, Globe, Monitor, ArrowRight, Ban } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ExternalAgent, ExternalAgentStatus } from '@/lib/types';
 
@@ -33,18 +33,18 @@ const statusConfig: Record<
   },
   inactive: {
     label: 'Inactive',
-    color: 'text-text-muted bg-surface-hover',
+    color: 'text-slate-400 bg-slate-800/50',
     icon: WifiOff,
   },
   revoked: {
     label: 'Revoked',
-    color: 'text-status-error bg-status-error/10',
-    icon: ShieldAlert,
+    color: 'text-red-500 bg-red-500/10',
+    icon: Ban,
   },
 };
 
 function ConnectedAgentCard({ agent }: ConnectedAgentCardProps) {
-  const status = statusConfig[agent.status] ?? statusConfig.inactive;
+  const status = statusConfig[agent.status as ExternalAgentStatus] ?? statusConfig.registered;
   const StatusIcon = status.icon;
   const TypeIcon = agent.type === 'remote' ? Globe : Monitor;
 
@@ -53,21 +53,21 @@ function ConnectedAgentCard({ agent }: ConnectedAgentCardProps) {
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        className="group bg-surface border border-border-light rounded-2xl p-5 hover:border-primary-200 transition-all cursor-pointer"
+        className="group bg-gradient-to-br from-slate-800/20 to-slate-900/20 border border-slate-700/50 rounded-2xl p-5 hover:border-cyan-500/30 transition-all cursor-pointer"
       >
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-primary-50 flex items-center justify-center">
-              <Plug className="w-[18px] h-[18px] text-primary-500" />
+            <div className="w-9 h-9 rounded-xl bg-cyan-500/20 flex items-center justify-center">
+              <Plug className="w-[18px] h-[18px] text-cyan-400" />
             </div>
             <div>
-              <h3 className="text-body font-medium text-text-primary group-hover:text-primary-600 transition-colors">
+              <h3 className="text-sm font-medium text-slate-50 group-hover:text-cyan-300 transition-colors">
                 {agent.name}
               </h3>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <TypeIcon className="w-3 h-3 text-text-muted" />
-                <span className="text-caption text-text-muted capitalize">{agent.type}</span>
+                <span className="text-xs text-slate-400 capitalize">{agent.type}</span>
               </div>
             </div>
           </div>
@@ -87,25 +87,19 @@ function ConnectedAgentCard({ agent }: ConnectedAgentCardProps) {
         <div className="space-y-2 text-sm">
           {agent.walletPublicKey && (
             <div className="flex items-center justify-between">
-              <span className="text-text-muted">Wallet</span>
-              <span className="text-text-secondary font-mono text-caption">
+              <span className="text-slate-400">Wallet</span>
+              <span className="text-slate-300 font-mono text-xs">
                 {agent.walletPublicKey.slice(0, 4)}...{agent.walletPublicKey.slice(-4)}
               </span>
             </div>
           )}
           <div className="flex items-center justify-between">
-            <span className="text-text-muted">Balance</span>
-            <span className="text-text-primary font-medium">
-              {(agent.balance ?? 0).toFixed(4)} SOL
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-text-muted">Intents</span>
+            <span className="text-slate-400">Intents</span>
             <div className="flex items-center gap-1 flex-wrap justify-end">
-              {agent.supportedIntents.map((intent) => (
+              {(agent.supportedIntents ?? []).map((intent: any) => (
                 <span
                   key={intent}
-                  className="text-micro px-1.5 py-0.5 rounded bg-surface-hover text-text-muted"
+                  className="text-xs px-1.5 py-0.5 rounded bg-slate-800/50 text-slate-400"
                 >
                   {intent}
                 </span>
@@ -114,8 +108,8 @@ function ConnectedAgentCard({ agent }: ConnectedAgentCardProps) {
           </div>
           {agent.lastActiveAt && (
             <div className="flex items-center justify-between">
-              <span className="text-text-muted">Last active</span>
-              <span className="text-caption text-text-secondary">
+              <span className="text-slate-400">Last active</span>
+              <span className="text-xs text-slate-300">
                 {new Date(agent.lastActiveAt).toLocaleTimeString()}
               </span>
             </div>
@@ -124,7 +118,7 @@ function ConnectedAgentCard({ agent }: ConnectedAgentCardProps) {
 
         {/* Footer arrow */}
         <div className="mt-4 flex justify-end">
-          <ArrowRight className="w-4 h-4 text-text-muted group-hover:text-primary-500 transition-colors" />
+          <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-cyan-400 transition-colors" />
         </div>
       </motion.div>
     </Link>

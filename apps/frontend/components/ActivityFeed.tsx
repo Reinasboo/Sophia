@@ -35,12 +35,13 @@ function getEventIcon(event: SystemEvent) {
     case 'agent_status_changed':
       return <Sparkles className="w-3.5 h-3.5" />;
     case 'agent_action':
-      return <Circle className="w-3.5 h-3.5" />;
+      return <CheckCircle2 className="w-3.5 h-3.5" />;
     case 'transaction':
-      if (event.transaction?.type === 'airdrop') {
-        return <ArrowDownLeft className="w-3.5 h-3.5" />;
-      }
       return <ArrowUpRight className="w-3.5 h-3.5" />;
+    case 'balance_changed':
+      return <ArrowDownLeft className="w-3.5 h-3.5" />;
+    case 'system_error':
+      return <XCircle className="w-3.5 h-3.5" />;
     default:
       return <Circle className="w-3.5 h-3.5" />;
   }
@@ -49,48 +50,40 @@ function getEventIcon(event: SystemEvent) {
 function getEventTitle(event: SystemEvent): string {
   switch (event.type) {
     case 'agent_created':
-      return `${event.agent?.name} created`;
+      return 'Agent created';
     case 'agent_status_changed':
-      return `Status changed to ${(event.details?.newStatus as string) ?? 'unknown'}`;
+      return 'Agent status changed';
     case 'agent_action':
-      return event.action === 'decided_to_act' ? 'Agent executing intent' : 'Agent waiting';
+      return 'Agent action';
     case 'transaction':
-      if (event.transaction?.type === 'airdrop') {
-        return `Airdrop received`;
-      }
-      return `Transfer sent`;
-    default:
-      return event.type.replace(/_/g, ' ');
+      return 'Transaction';
+    case 'balance_changed':
+      return 'Balance changed';
+    case 'system_error':
+      return 'System error';
   }
 }
 
 function getEventDetail(event: SystemEvent): string | null {
   switch (event.type) {
+    case 'agent_created':
+      return `Agent: ${(event as any).agent?.name || 'Unknown'}`;
+    case 'agent_status_changed':
+      return `Status: ${(event as any).previousStatus} → ${(event as any).newStatus}`;
     case 'agent_action':
-      return (event.details?.reasoning as string)?.slice(0, 60) ?? null;
+      return (event as any).action || null;
     case 'transaction':
-      if (event.transaction?.amount) {
-        return `${formatSol(event.transaction.amount)} SOL`;
-      }
-      return null;
+      return `Tx: ${(event as any).transaction?.signature?.slice(0, 20)}...`;
+    case 'balance_changed':
+      return `Balance updated`;
+    case 'system_error':
+      return (event as any).error || null;
     default:
       return null;
   }
 }
 
 function getEventStatusIcon(event: SystemEvent) {
-  if (event.type === 'transaction' && event.transaction) {
-    switch (event.transaction.status) {
-      case 'confirmed':
-      case 'finalized':
-        return <CheckCircle2 className="w-3 h-3 text-status-success" />;
-      case 'failed':
-        return <XCircle className="w-3 h-3 text-status-error" />;
-      case 'pending':
-      case 'submitted':
-        return <Clock className="w-3 h-3 text-status-warning animate-pulse-subtle" />;
-    }
-  }
   return null;
 }
 
@@ -107,18 +100,18 @@ export function ActivityFeed({
   const displayEvents = events.slice(0, maxItems);
 
   return (
-    <div className="card p-5">
+    <div className="bg-gradient-to-br from-slate-800/20 to-slate-900/20 border border-slate-700/50 rounded-lg p-5 backdrop-blur-sm">
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
-        <h3 className="text-label text-text-secondary">{title}</h3>
+        <h3 className="text-sm font-semibold text-slate-50">{title}</h3>
         <div className="flex items-center gap-2">
           <span
             className={cn(
               'w-1.5 h-1.5 rounded-full',
-              connected ? 'bg-status-success' : 'bg-status-error'
+              connected ? 'bg-cyan-500' : 'bg-red-500'
             )}
           />
-          <span className="text-micro text-text-muted">{connected ? 'Live' : 'Offline'}</span>
+          <span className="text-xs text-slate-400">{connected ? 'Live' : 'Offline'}</span>
         </div>
       </div>
 
@@ -127,19 +120,20 @@ export function ActivityFeed({
         <AnimatePresence initial={false}>
           {displayEvents.length === 0 ? (
             <div className="py-12 text-center">
-              <div className="w-10 h-10 mx-auto mb-3 rounded-full bg-background-secondary flex items-center justify-center">
-                <Clock className="w-5 h-5 text-text-muted" />
+              <div className="w-10 h-10 mx-auto mb-3 rounded-full bg-slate-700/30 flex items-center justify-center">
+                <Clock className="w-5 h-5 text-slate-500" />
               </div>
-              <p className="text-body-sm text-text-tertiary">No activity yet</p>
+              <p className="text-sm text-slate-400">No activity yet</p>
             </div>
           ) : (
             displayEvents.map((event) => {
               const detail = getEventDetail(event);
               const statusIcon = getEventStatusIcon(event);
+              const eventKey = event.timestamp + event.type; // Use timestamp + type as key
 
               return (
                 <motion.div
-                  key={event.id}
+                  key={eventKey}
                   initial={{ opacity: 0, y: -8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 8 }}
@@ -147,23 +141,23 @@ export function ActivityFeed({
                   className="list-item py-3 -mx-2 px-2"
                 >
                   {/* Icon */}
-                  <div className="w-7 h-7 rounded-md bg-background-secondary flex items-center justify-center text-text-tertiary flex-shrink-0">
+                  <div className="w-7 h-7 rounded-md bg-slate-700/30 flex items-center justify-center text-slate-400 flex-shrink-0">
                     {getEventIcon(event)}
                   </div>
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-body-sm text-text-primary">{getEventTitle(event)}</span>
+                      <span className="text-sm text-slate-50">{getEventTitle(event)}</span>
                       {statusIcon}
                     </div>
                     {detail && (
-                      <p className="text-caption text-text-muted truncate mt-0.5">{detail}</p>
+                      <p className="text-xs text-slate-400 truncate mt-0.5">{detail}</p>
                     )}
                   </div>
 
                   {/* Time */}
-                  <span className="text-micro text-text-muted flex-shrink-0">
+                  <span className="text-xs text-slate-500 flex-shrink-0">
                     {formatRelativeTime(event.timestamp)}
                   </span>
                 </motion.div>

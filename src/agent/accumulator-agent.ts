@@ -8,7 +8,6 @@
  */
 
 import { BaseAgent, AgentContext, AgentDecision } from './base-agent.js';
-import { AgentStrategy } from '../utils/types.js';
 import { createLogger } from '../utils/logger.js';
 
 const logger = createLogger('ACCUMULATOR');

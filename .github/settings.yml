@@ -1,7 +1,7 @@
 repository:
-  name: Agentic-wallet
+  name: Sophia
   description: 'Enterprise-grade autonomous AI wallet orchestration for Solana — intent-driven execution, AES-256-GCM key encryption, BYOA integration, and security-first governance.'
-  homepage: https://github.com/Reinasboo/Agentic-wallet
+  homepage: https://github.com/Reinasboo/Sophia
   private: false
   has_issues: true
   has_projects: true

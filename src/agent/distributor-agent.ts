@@ -10,6 +10,7 @@
 import { BaseAgent, AgentContext, AgentDecision } from './base-agent.js';
 import { createLogger } from '../utils/logger.js';
 import { ESTIMATED_SOL_TRANSFER_FEE } from '../utils/config.js';
+import { PublicKey } from '@solana/web3.js';
 
 const logger = createLogger('DISTRIBUTOR');
 
@@ -109,6 +110,18 @@ export class DistributorAgent extends BaseAgent {
       };
     }
 
+    // Validate recipient address
+    try {
+      new PublicKey(recipient);
+    } catch (error) {
+      logger.error('Recipient address is invalid, skipping', { recipient });
+      this.currentRecipientIndex = (this.currentRecipientIndex + 1) % this.params.recipients.length;
+      return {
+        shouldAct: false,
+        reasoning: `Invalid recipient address: ${recipient}`,
+      };
+    }
+
     logger.info('Distributor initiating transfer', {
       agentId: this.id,
       recipient,
@@ -131,6 +144,13 @@ export class DistributorAgent extends BaseAgent {
    * Add a recipient
    */
   addRecipient(address: string): void {
+    try {
+      // Validate it's a valid Solana address
+      new PublicKey(address);
+    } catch (error) {
+      throw new Error(`Invalid Solana address: ${address}`);
+    }
+
     if (!this.params.recipients.includes(address)) {
       this.params = {
         ...this.params,

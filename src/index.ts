@@ -14,9 +14,17 @@ const logger = createLogger('MAIN');
 // ── BigInt JSON serializer ──────────────────────────────────────────
 // Prevents "TypeError: Do not know how to serialize a BigInt" when
 // BalanceInfo.lamports or TokenBalance.amount reach JSON.stringify().
-(BigInt.prototype as any).toJSON = function () {
-  return this.toString();
-};
+declare global {
+  interface BigInt {
+    toJSON(): string;
+  }
+}
+
+Object.defineProperty(BigInt.prototype, 'toJSON', {
+  value: function () {
+    return this.toString();
+  },
+});
 
 // Catch unhandled rejections to prevent silent crashes
 process.on('unhandledRejection', (reason) => {

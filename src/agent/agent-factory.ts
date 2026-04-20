@@ -10,7 +10,8 @@ import { AccumulatorAgent, AccumulatorParams } from './accumulator-agent.js';
 import { DistributorAgent, DistributorParams } from './distributor-agent.js';
 import { BalanceGuardAgent, BalanceGuardParams } from './balance-guard-agent.js';
 import { ScheduledPayerAgent, ScheduledPayerParams } from './scheduled-payer-agent.js';
-import { AgentStrategy, AgentConfig, Result, success, failure } from '../utils/types.js';
+import { AgentStrategy, Result, success, failure } from '../types/shared.js';
+import { AgentConfig } from '../types/internal.js';
 import { getStrategyRegistry } from './strategy-registry.js';
 import { createLogger } from '../utils/logger.js';
 
@@ -57,41 +58,49 @@ export function createAgent(options: CreateAgentOptions): Result<BaseAgent, Erro
     let agent: BaseAgent;
 
     switch (config.strategy) {
-      case 'accumulator':
+      case 'accumulator': {
+        const params: Partial<AccumulatorParams> = validatedParams;
         agent = new AccumulatorAgent(
           config.name,
           walletId,
           walletPublicKey,
-          validatedParams as unknown as Partial<AccumulatorParams>
+          params
         );
         break;
 
-      case 'distributor':
+      }
+      case 'distributor': {
+        const params: Partial<DistributorParams> = validatedParams;
         agent = new DistributorAgent(
           config.name,
           walletId,
           walletPublicKey,
-          validatedParams as unknown as Partial<DistributorParams>
+          params
         );
         break;
 
-      case 'balance_guard':
+      }
+      case 'balance_guard': {
+        const params: Partial<BalanceGuardParams> = validatedParams;
         agent = new BalanceGuardAgent(
           config.name,
           walletId,
           walletPublicKey,
-          validatedParams as unknown as Partial<BalanceGuardParams>
+          params
         );
         break;
 
-      case 'scheduled_payer':
+      }
+      case 'scheduled_payer': {
+        const params: Partial<ScheduledPayerParams> = validatedParams;
         agent = new ScheduledPayerAgent(
           config.name,
           walletId,
           walletPublicKey,
-          validatedParams as unknown as Partial<ScheduledPayerParams>
+          params
         );
         break;
+      }
 
       default:
         return failure(

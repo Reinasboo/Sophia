@@ -12,7 +12,7 @@ config();
 const ConfigSchema = z.object({
   // Solana
   SOLANA_RPC_URL: z.string().url().default('https://api.devnet.solana.com'),
-  SOLANA_NETWORK: z.enum(['devnet', 'testnet', 'mainnet-beta']).default('devnet'),
+  SOLANA_NETWORK: z.enum(['devnet', 'testnet']).default('devnet'),
 
   // Server
   PORT: z.coerce.number().int().positive().default(3001),
@@ -35,6 +35,10 @@ const ConfigSchema = z.object({
 
   // Logging
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
+
+  // Privy (Optional - for enterprise wallet infrastructure)
+  PRIVY_APP_ID: z.string().optional(),
+  PRIVY_SECRET_KEY: z.string().optional(),
 });
 
 export type Config = z.infer<typeof ConfigSchema>;
@@ -55,13 +59,6 @@ export function getConfig(): Config {
   if (!result.success) {
     const errors = result.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`);
     throw new Error(`Invalid configuration:\n${errors.join('\n')}`);
-  }
-
-  // Validate network constraints
-  if (result.data.SOLANA_NETWORK === 'mainnet-beta') {
-    throw new Error(
-      'This system is designed for devnet only. Mainnet is not supported for safety.'
-    );
   }
 
   // Warn if using default encryption secret
@@ -119,7 +116,6 @@ export const ESTIMATED_TOKEN_TRANSFER_FEE = 0.01;
  */
 export function getExplorerUrl(signature: string): string {
   const config = getConfig();
-  const cluster =
-    config.SOLANA_NETWORK === 'mainnet-beta' ? '' : `?cluster=${config.SOLANA_NETWORK}`;
+  const cluster = `?cluster=${config.SOLANA_NETWORK}`;
   return `https://explorer.solana.com/tx/${signature}${cluster}`;
 }

@@ -33,10 +33,10 @@ import { cn } from '@/lib/utils';
 import type { ExternalAgentStatus } from '@/lib/types';
 
 const statusConfig: Record<ExternalAgentStatus, { label: string; color: string }> = {
-  registered: { label: 'Registered', color: 'text-blue-500 bg-blue-500/10' },
-  active: { label: 'Connected', color: 'text-status-success bg-status-success/10' },
-  inactive: { label: 'Inactive', color: 'text-text-muted bg-surface-hover' },
-  revoked: { label: 'Revoked', color: 'text-status-error bg-status-error/10' },
+  registered: { label: 'Registered', color: 'text-blue-400 bg-blue-500/10' },
+  active: { label: 'Connected', color: 'text-green-400 bg-green-500/10' },
+  inactive: { label: 'Inactive', color: 'text-slate-400 bg-slate-500/10' },
+  revoked: { label: 'Revoked', color: 'text-red-400 bg-red-500/10' },
 };
 
 function CopyButton({ text }: { text: string }) {
@@ -49,11 +49,11 @@ function CopyButton({ text }: { text: string }) {
   };
 
   return (
-    <button onClick={copy} className="p-1 hover:bg-surface-hover rounded transition-colors">
+    <button onClick={copy} className="p-1 hover:bg-slate-800/50 rounded transition-colors">
       {copied ? (
         <CheckCircle2 className="w-3.5 h-3.5 text-status-success" />
       ) : (
-        <Copy className="w-3.5 h-3.5 text-text-muted" />
+        <Copy className="w-3.5 h-3.5 text-slate-400" />
       )}
     </button>
   );
@@ -91,7 +91,7 @@ export default function ConnectedAgentDetailPage() {
     setConfirmRevoke(false);
   };
 
-  const agent = data?.agent;
+  const agent = data;
   const statusCfg = agent ? (statusConfig[agent.status] ?? statusConfig.inactive) : null;
   const TypeIcon = agent?.type === 'remote' ? Globe : Monitor;
 
@@ -113,15 +113,15 @@ export default function ConnectedAgentDetailPage() {
             {/* Back nav */}
             <Link
               href="/connected-agents"
-              className="inline-flex items-center gap-1.5 text-caption text-text-muted hover:text-text-secondary transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-300 transition-colors"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               Back to connected agents
             </Link>
 
-            {loading && <div className="text-center py-12 text-text-muted">Loading…</div>}
+            {loading && <div className="text-center py-12 text-slate-400">Loading…</div>}
 
-            {error && <div className="text-center py-12 text-status-error">{error}</div>}
+            {error && <div className="text-center py-12 text-red-400">{error}</div>}
 
             {agent && statusCfg && (
               <>
@@ -129,35 +129,30 @@ export default function ConnectedAgentDetailPage() {
                 <motion.div
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-surface border border-border-light rounded-2xl p-6 space-y-5"
+                  className="bg-gradient-brand-subtle rounded-2xl border border-surface-muted hover:border-secondary/50 p-6 space-y-5 transition-colors duration-200"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-primary-50 flex items-center justify-center">
-                      <Plug className="w-6 h-6 text-primary-500" />
+                    <div className="w-12 h-12 rounded-2xl bg-cyan-500/20 flex items-center justify-center">
+                      <Plug className="w-6 h-6 text-cyan-400" />
                     </div>
                     <div className="flex-1">
-                      <h2 className="text-heading-md text-text-primary">{agent.name}</h2>
+                      <h2 className="text-2xl font-bold text-slate-50">{agent.name}</h2>
                       <div className="flex items-center gap-2 mt-0.5">
-                        <TypeIcon className="w-3.5 h-3.5 text-text-muted" />
-                        <span className="text-caption text-text-muted capitalize">
+                        <TypeIcon className="w-3.5 h-3.5 text-slate-400" />
+                        <span className="text-xs text-slate-400 capitalize">
                           {agent.type}
                         </span>
-                        {agent.endpoint && (
-                          <span className="text-caption text-text-muted font-mono ml-2">
-                            {agent.endpoint}
-                          </span>
-                        )}
                       </div>
                     </div>
                     <span
                       className={cn(
-                        'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-caption font-medium',
+                        'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium',
                         statusCfg.color
                       )}
                     >
                       {agent.status === 'active' ? (
                         <Wifi className="w-3.5 h-3.5" />
-                      ) : agent.status === 'revoked' ? (
+                      ) : agent.status === 'inactive' ? (
                         <ShieldAlert className="w-3.5 h-3.5" />
                       ) : (
                         <WifiOff className="w-3.5 h-3.5" />
@@ -169,12 +164,12 @@ export default function ConnectedAgentDetailPage() {
                   {/* Grid details */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {/* Wallet */}
-                    <div className="bg-surface-hover rounded-xl p-4">
-                      <span className="text-caption text-text-muted block mb-1">
+                    <div className="bg-slate-800/50 rounded-xl p-4">
+                      <span className="text-xs text-slate-400 block mb-1">
                         Wallet Address
                       </span>
                       <div className="flex items-center gap-1.5">
-                        <span className="text-body font-mono text-text-primary truncate">
+                        <span className="text-sm font-mono text-slate-50 truncate">
                           {agent.walletPublicKey
                             ? `${agent.walletPublicKey.slice(0, 8)}...${agent.walletPublicKey.slice(-6)}`
                             : '—'}
@@ -183,24 +178,16 @@ export default function ConnectedAgentDetailPage() {
                       </div>
                     </div>
 
-                    {/* Balance */}
-                    <div className="bg-surface-hover rounded-xl p-4">
-                      <span className="text-caption text-text-muted block mb-1">Balance</span>
-                      <span className="text-body font-semibold text-text-primary">
-                        {(data.balance ?? 0).toFixed(4)} SOL
-                      </span>
-                    </div>
-
                     {/* Supported intents */}
-                    <div className="bg-surface-hover rounded-xl p-4">
-                      <span className="text-caption text-text-muted block mb-1">
+                    <div className="bg-slate-800/50 rounded-xl p-4">
+                      <span className="text-xs text-slate-400 block mb-1">
                         Supported Intents
                       </span>
                       <div className="flex flex-wrap gap-1 mt-0.5">
-                        {agent.supportedIntents.map((i) => (
+                        {(agent.supportedIntents ?? []).map((i) => (
                           <span
                             key={i}
-                            className="text-micro px-1.5 py-0.5 rounded bg-background text-text-secondary"
+                            className="text-xs px-1.5 py-0.5 rounded bg-slate-900 text-slate-300"
                           >
                             {i}
                           </span>
@@ -209,9 +196,9 @@ export default function ConnectedAgentDetailPage() {
                     </div>
 
                     {/* Created */}
-                    <div className="bg-surface-hover rounded-xl p-4">
-                      <span className="text-caption text-text-muted block mb-1">Registered</span>
-                      <span className="text-body text-text-primary">
+                    <div className="bg-slate-800/50 rounded-xl p-4">
+                      <span className="text-xs text-slate-400 block mb-1">Registered</span>
+                      <span className="text-sm text-slate-50">
                         {new Date(agent.createdAt).toLocaleString()}
                       </span>
                     </div>
@@ -219,12 +206,12 @@ export default function ConnectedAgentDetailPage() {
 
                   {/* Management Actions */}
                   {agent.status !== 'revoked' && (
-                    <div className="flex items-center gap-3 pt-2 border-t border-border-light">
+                    <div className="flex items-center gap-3 pt-2 border-t border-slate-700/50">
                       {agent.status === 'active' || agent.status === 'registered' ? (
                         <button
                           onClick={handleDeactivate}
                           disabled={actionLoading}
-                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-caption font-medium text-status-warning bg-status-warning/10 hover:bg-status-warning/20 transition-colors disabled:opacity-50"
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium text-yellow-300 bg-yellow-500/10 hover:bg-yellow-500/20 transition-colors disabled:opacity-50"
                         >
                           <PowerOff className="w-3.5 h-3.5" />
                           Deactivate
@@ -233,7 +220,7 @@ export default function ConnectedAgentDetailPage() {
                         <button
                           onClick={handleActivate}
                           disabled={actionLoading}
-                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-caption font-medium text-status-success bg-status-success/10 hover:bg-status-success/20 transition-colors disabled:opacity-50"
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium text-green-400 bg-green-500/10 hover:bg-green-500/20 transition-colors disabled:opacity-50"
                         >
                           <Power className="w-3.5 h-3.5" />
                           Activate
@@ -244,26 +231,26 @@ export default function ConnectedAgentDetailPage() {
                         <button
                           onClick={() => setConfirmRevoke(true)}
                           disabled={actionLoading}
-                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-caption font-medium text-status-error bg-status-error/10 hover:bg-status-error/20 transition-colors disabled:opacity-50"
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-colors disabled:opacity-50"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                           Revoke
                         </button>
                       ) : (
                         <div className="flex items-center gap-2">
-                          <span className="text-caption text-status-error">
+                          <span className="text-xs text-red-400">
                             Permanently revoke this agent?
                           </span>
                           <button
                             onClick={handleRevoke}
                             disabled={actionLoading}
-                            className="px-3 py-1.5 rounded-lg text-caption font-medium text-white bg-status-error hover:bg-status-error/90 transition-colors disabled:opacity-50"
+                            className="px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-red-600 hover:bg-red-700 transition-colors disabled:opacity-50"
                           >
                             Yes, revoke
                           </button>
                           <button
                             onClick={() => setConfirmRevoke(false)}
-                            className="px-3 py-1.5 rounded-lg text-caption font-medium text-text-muted hover:text-text-primary transition-colors"
+                            className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-50 transition-colors"
                           >
                             Cancel
                           </button>
@@ -272,9 +259,9 @@ export default function ConnectedAgentDetailPage() {
                     </div>
                   )}
 
-                  {agent.status === 'revoked' && (
-                    <div className="pt-2 border-t border-border-light">
-                      <span className="inline-flex items-center gap-2 text-caption text-status-error">
+                  {agent.status === 'inactive' && (
+                    <div className="pt-2 border-t border-slate-700/50">
+                      <span className="inline-flex items-center gap-2 text-xs text-red-400">
                         <ShieldAlert className="w-3.5 h-3.5" />
                         This agent has been permanently revoked and cannot be reactivated.
                       </span>
@@ -285,8 +272,8 @@ export default function ConnectedAgentDetailPage() {
                 {/* Intent history */}
                 <section>
                   <h3 className="text-label text-text-secondary mb-4">Intent History</h3>
-                  <div className="bg-surface border border-border-light rounded-2xl p-5">
-                    <IntentHistory intents={data.intents ?? []} maxItems={100} />
+                  <div className="bg-gradient-brand-subtle rounded-2xl border border-surface-muted hover:border-secondary/50 p-5 transition-colors duration-200">
+                    <IntentHistory intents={data.intentHistory ?? []} maxItems={100} />
                   </div>
                 </section>
               </>

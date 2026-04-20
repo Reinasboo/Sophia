@@ -1,10 +1,10 @@
-# Deep Dive: Agentic Wallet System
+# Deep Dive: Sophia System
 
-Why agentic wallets matter, design rationale, and the path forward.
+Why autonomous wallets matter, design rationale, and the path forward.
 
 ## The Vision
 
-### Why Agentic Wallets Matter
+### Why Sophia Matters
 
 The intersection of AI agents and blockchain creates unprecedented possibilities:
 
@@ -98,7 +98,7 @@ With BYOA, any developer with an existing AI agent can:
 3. Submit intents (semantic, validated)
 4. Observe execution (dashboard + API)
 
-This turns the Agentic Wallet into a **platform** rather than a **tool**:
+This turns Sophia into a **platform** rather than a **tool**:
 
 ```
 ┌────────────────────────┐
@@ -107,7 +107,7 @@ This turns the Agentic Wallet into a **platform** rather than a **tool**:
 ┌────────────────────────┐   │
 │  Trading Bot           │ ──┤
 └────────────────────────┘   │   ┌─────────────────────────┐
-┌────────────────────────┐   ├──►│  Agentic Wallet Platform │
+┌────────────────────────┐   ├──►│  Sophia Platform │
 │  Treasury Automation   │ ──┤   │  (BYOA Integration)      │
 └────────────────────────┘   │   └─────────────────────────┘
 ┌────────────────────────┐   │
@@ -215,7 +215,7 @@ Low Autonomy ◄─────────────────────�
 
 ### Our Position
 
-The Agentic Wallet System is designed for the **middle ground**:
+Sophia is designed for the **middle ground**:
 
 - **Automated execution** within policy bounds
 - **Autonomous mode** for advanced operators (AUTONOMOUS intent — skips policy)
@@ -415,7 +415,7 @@ Existing wallets are designed for human users. They require:
 - Browser extension interaction
 - Human-readable interfaces
 
-Agentic wallets are designed for **software users**:
+Sophia is designed for **software users**:
 
 - Programmatic APIs
 - Policy-based automation
@@ -468,7 +468,7 @@ The wallet layer adds ~50ms overhead for secure key handling.
 
 ## dApp / Protocol Interactions
 
-The Agentic Wallet System goes beyond basic SOL transfers — it interacts with
+Sophia goes beyond basic SOL transfers — it interacts with
 multiple deployed Solana programs, demonstrating real dApp/protocol composability.
 
 ### Programs Used
@@ -593,7 +593,7 @@ private keys or constructs raw transactions.
 
 ## Conclusion
 
-The Agentic Wallet System represents a new paradigm in blockchain interaction: **autonomous software actors operating within human-defined constraints**. By separating concerns—decision-making from execution, observation from control—we enable powerful automation while maintaining security.
+Sophia represents a new paradigm in blockchain interaction: **autonomous software actors operating within human-defined constraints**. By separating concerns—decision-making from execution, observation from control—we enable powerful automation while maintaining security.
 
 This is not just a wallet. It's a **programmable economic layer** for the AI-native future.
 

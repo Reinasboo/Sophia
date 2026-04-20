@@ -1,6 +1,6 @@
 <div align="center">
 
-# Agentic Wallet
+# Sophia
 
 ### Enterprise-Grade Autonomous Wallet Orchestration for Solana
 
@@ -209,6 +209,8 @@ npm run dev
 npm run dev:backend
 npm run dev:frontend
 ```
+
+Dashboard at `http://localhost:3000` · API at `http://localhost:3001` · WebSocket at `ws://localhost:3002`
 
 ### Register a BYOA Agent
 

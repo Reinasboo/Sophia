@@ -112,7 +112,7 @@ function encodeIx(ix: TransactionInstruction): {
 async function main() {
   console.log('');
   console.log('╔══════════════════════════════════════════════════════════════╗');
-  console.log('║   Agentic Wallet — DeFi Demo (Solana Devnet)                ║');
+  console.log('║   Sophia — DeFi Demo (Solana Devnet)                        ║');
   console.log('║   Wrapped SOL (wSOL): wrap → unwrap → transfer              ║');
   console.log('╚══════════════════════════════════════════════════════════════╝');
   console.log('');

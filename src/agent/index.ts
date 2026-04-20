@@ -19,7 +19,6 @@ export {
   getStrategyRegistry,
   StrategyDefinition,
   StrategyDefinitionDTO,
-  StrategyFieldDescriptor,
   ExecutionSettings as StrategyExecutionSettings,
   DEFAULT_EXECUTION_SETTINGS,
   ExecutionSettingsSchema,

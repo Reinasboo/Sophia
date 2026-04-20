@@ -2,7 +2,7 @@
 
 ## Overview
 
-Agentic Wallet is maintained by a core maintainer with community contributions
+Sophia is maintained by a core maintainer with community contributions
 following structured processes defined in [CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ---
@@ -12,7 +12,7 @@ following structured processes defined in [CONTRIBUTING.md](../CONTRIBUTING.md).
 | Role                | Person    | Contact                                                           |
 | ------------------- | --------- | ----------------------------------------------------------------- |
 | **Lead Maintainer** | Reinasboo | [@Reinasboo](https://github.com/Reinasboo)                        |
-| **Security Lead**   | Reinasboo | [security@agentic-wallet.dev](mailto:security@agentic-wallet.dev) |
+| **Security Lead**   | Reinasboo | [security@sophia.dev](mailto:security@sophia.dev) |
 
 ---
 

@@ -14,7 +14,12 @@
 import { randomBytes, createHash } from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 import { createLogger } from '../utils/logger.js';
-import { Result, success, failure } from '../utils/types.js';
+import { Result, success, failure } from '../types/index.js';
+import { 
+  ExternalAgentType, 
+  ExternalAgentStatus, 
+  SupportedIntentType,
+} from '../types/shared.js';
 import { saveState, loadState } from '../utils/store.js';
 
 const logger = createLogger('BYOA_REGISTRY');
@@ -22,16 +27,13 @@ const logger = createLogger('BYOA_REGISTRY');
 // ────────────────────────────────────────────
 // Types
 // ────────────────────────────────────────────
+// ExternalAgentType, ExternalAgentStatus, SupportedIntentType are re-exported from types/shared
 
-export type ExternalAgentType = 'local' | 'remote';
-export type ExternalAgentStatus = 'registered' | 'active' | 'inactive' | 'revoked';
-
-export type SupportedIntentType =
-  | 'REQUEST_AIRDROP'
-  | 'TRANSFER_SOL'
-  | 'TRANSFER_TOKEN'
-  | 'QUERY_BALANCE'
-  | 'AUTONOMOUS';
+export type {
+  ExternalAgentType,
+  ExternalAgentStatus,
+  SupportedIntentType,
+} from '../types/shared.js';
 
 export interface ExternalAgentRegistration {
   readonly agentName: string;
@@ -39,6 +41,7 @@ export interface ExternalAgentRegistration {
   readonly agentEndpoint?: string; // Required for remote agents
   readonly supportedIntents: SupportedIntentType[];
   readonly metadata?: Record<string, unknown>;
+  readonly verificationMethods?: string[]; // 'none' | 'challenge-response' | 'hmac-signature'
 }
 
 export interface ExternalAgentRecord {
@@ -54,9 +57,13 @@ export interface ExternalAgentRecord {
   readonly createdAt: Date;
   readonly lastActiveAt?: Date;
   readonly metadata?: Record<string, unknown>;
+  readonly verificationMethods?: string[]; // 'none' | 'challenge-response' | 'hmac-signature'
+  readonly challengeToken?: string; // Challenge to be verified for challenge-response
+  readonly challengeVerified?: boolean; // Whether challenge was completed
+  readonly hmacSecret?: string; // Secret for HMAC webhook signatures (shown once)
 }
 
-/** Public-safe view (no token hash) */
+/** Public-safe view (no token hash, no secrets) */
 export interface ExternalAgentInfo {
   readonly id: string;
   readonly name: string;
@@ -69,6 +76,8 @@ export interface ExternalAgentInfo {
   readonly createdAt: Date;
   readonly lastActiveAt?: Date;
   readonly metadata?: Record<string, unknown>;
+  readonly verificationMethods?: string[];
+  readonly challengeVerified?: boolean;
 }
 
 export interface RegistrationResult {
@@ -239,6 +248,8 @@ export class AgentRegistry {
       controlTokenHash,
       createdAt: new Date(),
       metadata: reg.metadata,
+      verificationMethods: reg.verificationMethods || ['none'],
+      challengeVerified: false,
     };
 
     this.agents.set(agentId, record);
@@ -391,6 +402,87 @@ export class AgentRegistry {
     return success(newToken);
   }
 
+  // ── Verification ─────────────────────────
+
+  /**
+   * Set a challenge for an agent to verify webhook endpoint ownership.
+   * Challenge expires after 5 minutes.
+   */
+  setChallenge(agentId: string, challenge: string): Result<true, Error> {
+    const agent = this.agents.get(agentId);
+    if (!agent) {
+      return failure(new Error(`External agent not found: ${agentId}`));
+    }
+
+    this.agents.set(agentId, {
+      ...agent,
+      challengeToken: challenge,
+      challengeVerified: false,
+    });
+    this.saveToStore();
+
+    logger.info('Challenge set for agent verification', { agentId });
+    return success(true);
+  }
+
+  /**
+   * Verify challenge response from agent.
+   * Agent must respond with the exact challenge that was set.
+   */
+  verifyChallengeResponse(agentId: string, response: string): Result<true, Error> {
+    const agent = this.agents.get(agentId);
+    if (!agent) {
+      return failure(new Error(`External agent not found: ${agentId}`));
+    }
+    if (!agent.challengeToken) {
+      return failure(new Error('No active challenge for this agent'));
+    }
+    if (response !== agent.challengeToken) {
+      return failure(new Error('Challenge response does not match'));
+    }
+
+    this.agents.set(agentId, {
+      ...agent,
+      challengeVerified: true,
+      challengeToken: undefined, // Clear the used challenge
+    });
+    this.saveToStore();
+
+    logger.info('Challenge verified for agent endpoint', { agentId });
+    return success(true);
+  }
+
+  /**
+   * Generate HMAC secret for webhook signature verification.
+   * This secret is returned once and must be stored securely by the agent.
+   */
+  generateHmacSecret(agentId: string): Result<string, Error> {
+    const agent = this.agents.get(agentId);
+    if (!agent) {
+      return failure(new Error(`External agent not found: ${agentId}`));
+    }
+
+    // Generate 32-byte random secret using cryptographically secure randomBytes
+    const secret = randomBytes(32).toString('hex');
+
+    this.agents.set(agentId, { ...agent, hmacSecret: secret });
+    this.saveToStore();
+
+    logger.info('HMAC secret generated for external agent', { agentId });
+    return success(secret);
+  }
+
+  /**
+   * Get HMAC secret for an agent (not shown to public — for internal use only).
+   */
+  getHmacSecret(agentId: string): Result<string | undefined, Error> {
+    const agent = this.agents.get(agentId);
+    if (!agent) {
+      return failure(new Error(`External agent not found: ${agentId}`));
+    }
+    return success(agent.hmacSecret);
+  }
+
   // ── Internal ─────────────────────────────
 
   private toPublicInfo(record: ExternalAgentRecord): ExternalAgentInfo {
@@ -406,6 +498,8 @@ export class AgentRegistry {
       createdAt: record.createdAt,
       lastActiveAt: record.lastActiveAt,
       metadata: record.metadata,
+      verificationMethods: record.verificationMethods,
+      challengeVerified: record.challengeVerified,
     };
   }
 }

@@ -4,7 +4,7 @@
  * Simple typed event emitter for system-wide events.
  */
 
-import { SystemEvent } from '../utils/types.js';
+import { SystemEvent } from '../types/shared.js';
 
 type EventHandler = (event: SystemEvent) => void;
 

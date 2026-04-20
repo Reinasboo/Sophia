@@ -32,16 +32,16 @@ export function Header({ title, subtitle }: HeaderProps) {
               initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              className="text-display text-text-primary"
+              className="text-4xl font-black text-slate-50"
             >
               {title}
             </motion.h1>
           )}
-          {subtitle && <p className="text-body text-text-tertiary">{subtitle}</p>}
+          {subtitle && <p className="text-body text-slate-400">{subtitle}</p>}
         </div>
 
         {/* Status indicators - subtle, right-aligned */}
-        <div className="flex items-center gap-6 text-caption text-text-tertiary">
+        <div className="flex items-center gap-6 text-xs text-slate-500">
           {/* Backend health */}
           {healthy !== null && (
             <div className="flex items-center gap-2">
@@ -70,7 +70,7 @@ export function Header({ title, subtitle }: HeaderProps) {
           {stats && (
             <>
               <span className="text-border-medium">·</span>
-              <span className="capitalize">{stats.network}</span>
+              <span className="capitalize">mainnet</span>
             </>
           )}
 
@@ -78,7 +78,7 @@ export function Header({ title, subtitle }: HeaderProps) {
           {stats && (
             <>
               <span className="text-border-medium">·</span>
-              <span>Up {formatUptime(stats.uptime)}</span>
+              <span>Active</span>
             </>
           )}
         </div>

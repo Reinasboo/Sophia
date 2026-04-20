@@ -53,6 +53,7 @@ export function AgentCard({ agent, onUpdate }: AgentCardProps) {
   const handleCopy = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (!agent.walletPublicKey) return;
     const success = await copyToClipboard(agent.walletPublicKey);
     if (success) {
       setCopied(true);
@@ -67,88 +68,83 @@ export function AgentCard({ agent, onUpdate }: AgentCardProps) {
       <motion.div
         whileHover={{ y: -2 }}
         transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-        className="card p-5 cursor-pointer group"
+        className="bg-gradient-to-br from-slate-800/20 to-slate-900/20 border border-slate-700/50 hover:border-cyan-500/40 rounded-lg p-5 cursor-pointer group transition-all backdrop-blur-sm hover:bg-slate-800/40"
       >
         {/* Header */}
         <div className="flex items-start justify-between mb-5">
           <div className="flex items-center gap-3">
             <div
               className={cn(
-                'icon-container',
-                agent.strategy === 'accumulator' ? 'bg-primary-100' : 'bg-secondary-100'
+                'w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0',
+                agent.strategy === 'accumulator' ? 'bg-cyan-500/10 border border-cyan-500/30' : 'bg-blue-500/10 border border-blue-500/30'
               )}
             >
               <Bot
                 className={cn(
                   'w-5 h-5',
-                  agent.strategy === 'accumulator' ? 'text-primary-600' : 'text-secondary-600'
+                  agent.strategy === 'accumulator' ? 'text-cyan-400' : 'text-blue-400'
                 )}
               />
             </div>
             <div>
-              <h3 className="text-body font-medium text-text-primary">{agent.name}</h3>
-              <span className="text-caption text-text-tertiary">
+              <h3 className="text-sm font-semibold text-slate-50">{agent.name}</h3>
+              <span className="text-xs text-slate-400">
                 {getStrategyDisplayName(agent.strategy)}
               </span>
             </div>
           </div>
 
           {/* Status badge */}
-          <span className={cn('badge', getStatusBadgeClass(agent.status))}>
+          <span className={cn(
+            'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border',
+            (agent.status === 'executing' || agent.status === 'thinking') ? 'bg-cyan-500/10 text-cyan-300 border-cyan-500/30' :
+            agent.status === 'error' ? 'bg-red-500/10 text-red-300 border-red-500/30' :
+            agent.status === 'stopped' ? 'bg-slate-600/10 text-slate-400 border-slate-600/30' :
+            'bg-blue-500/10 text-blue-300 border-blue-500/30'
+          )}>
             <span
               className={cn(
                 'w-1.5 h-1.5 rounded-full',
-                agent.status === 'executing' ? 'animate-pulse-subtle' : '',
-                agent.status === 'idle'
-                  ? 'bg-status-idle'
-                  : agent.status === 'executing'
-                    ? 'bg-status-warning'
-                    : agent.status === 'error'
-                      ? 'bg-status-error'
-                      : agent.status === 'stopped'
-                        ? 'bg-text-muted'
-                        : 'bg-status-info'
+                (agent.status === 'executing' || agent.status === 'thinking') ? 'animate-pulse bg-cyan-500' :
+                agent.status === 'stopped' ? 'bg-slate-500' :
+                agent.status === 'error' ? 'bg-red-500' :
+                'bg-blue-500'
               )}
             />
-            {agent.status}
+            <span className="capitalize">{agent.status}</span>
           </span>
         </div>
 
         {/* Details */}
-        <div className="space-y-3">
+        <div className="space-y-2">
           {/* Wallet Address */}
           <div className="flex items-center justify-between">
-            <span className="text-caption text-text-muted">Wallet</span>
+            <span className="text-xs text-slate-400">Wallet</span>
             <div className="flex items-center gap-2">
-              <span className="mono text-text-secondary">
-                {truncateAddress(agent.walletPublicKey, 6, 4)}
+              <span className="text-xs text-slate-300 font-mono">
+                {truncateAddress(agent.walletPublicKey || agent.id, 6, 4)}
               </span>
               <button
                 onClick={handleCopy}
-                className="p-1 rounded hover:bg-background-secondary transition-colors"
+                aria-label={copied ? 'Copied to clipboard' : 'Copy wallet address'}
+                className="p-1 rounded hover:bg-slate-700/50 transition-colors text-slate-400 hover:text-cyan-300"
               >
                 {copied ? (
-                  <Check className="w-3.5 h-3.5 text-status-success" />
+                  <Check className="w-3.5 h-3.5 text-cyan-400" />
                 ) : (
-                  <Copy className="w-3.5 h-3.5 text-text-muted hover:text-text-tertiary" />
+                  <Copy className="w-3.5 h-3.5" />
                 )}
               </button>
             </div>
           </div>
 
-          {/* Balance */}
-          <div className="flex items-center justify-between">
-            <span className="text-caption text-text-muted">Balance</span>
-            <span className="mono font-medium text-text-primary">
-              {formatSol(agent.balance ?? 0)} <span className="text-text-tertiary">SOL</span>
-            </span>
-          </div>
+          {/* Balance - fetched separately on detail page */}
 
           {/* Last Action */}
           {agent.lastActionAt && (
             <div className="flex items-center justify-between">
-              <span className="text-caption text-text-muted">Last Activity</span>
-              <span className="text-caption text-text-tertiary">
+              <span className="text-xs text-slate-400">Last Activity</span>
+              <span className="text-xs text-slate-400">
                 {formatRelativeTime(agent.lastActionAt)}
               </span>
             </div>
@@ -157,19 +153,19 @@ export function AgentCard({ agent, onUpdate }: AgentCardProps) {
 
         {/* Error message */}
         {agent.errorMessage && (
-          <div className="mt-4 p-3 bg-status-error-bg rounded-lg border border-status-error/20">
-            <p className="text-caption text-status-error truncate">{agent.errorMessage}</p>
+          <div className="mt-4 p-3 bg-red-500/10 rounded-lg border border-red-500/30">
+            <p className="text-xs text-red-300 truncate">{agent.errorMessage}</p>
           </div>
         )}
 
         {/* Footer */}
-        <div className="mt-5 pt-4 border-t border-border-light flex items-center justify-between">
+        <div className="mt-5 pt-3 border-t border-slate-700/50 flex items-center justify-between">
           {/* Action button */}
           {isRunning ? (
             <button
               onClick={handleStop}
               disabled={loading}
-              className="btn btn-ghost btn-sm text-status-error"
+              className="px-2.5 py-1.5 text-xs text-red-300 hover:text-red-200 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 hover:border-red-500/50 rounded transition-all inline-flex items-center gap-1.5 disabled:opacity-50"
             >
               <Square className="w-3.5 h-3.5" />
               Stop
@@ -178,7 +174,7 @@ export function AgentCard({ agent, onUpdate }: AgentCardProps) {
             <button
               onClick={handleStart}
               disabled={loading}
-              className="btn btn-ghost btn-sm text-status-success"
+              className="px-2.5 py-1.5 text-xs text-cyan-300 hover:text-cyan-200 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 hover:border-cyan-500/50 rounded transition-all inline-flex items-center gap-1.5 disabled:opacity-50"
             >
               <Play className="w-3.5 h-3.5" />
               Start
@@ -186,7 +182,7 @@ export function AgentCard({ agent, onUpdate }: AgentCardProps) {
           )}
 
           {/* View details indicator */}
-          <ChevronRight className="w-4 h-4 text-text-muted group-hover:text-primary-500 transition-colors" />
+          <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-cyan-400 transition-colors" />
         </div>
       </motion.div>
     </Link>

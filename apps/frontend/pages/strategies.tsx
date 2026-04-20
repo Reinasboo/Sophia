@@ -1,15 +1,8 @@
 'use client';
 
-/**
- * Strategy Browser Page
- *
- * Displays all available agent strategies with descriptions,
- * supported intents, and configurable parameters.
- * Feels like a strategy marketplace — calm, browsable.
- */
-
 import Head from 'next/head';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useMemo } from 'react';
 import {
   TrendingUp,
   Send,
@@ -18,9 +11,13 @@ import {
   Zap,
   Layers,
   ChevronDown,
-  ChevronUp,
+  Search,
+  Plus,
+  Copy,
+  Settings,
+  Download,
+  HelpCircle,
 } from 'lucide-react';
-import { useState } from 'react';
 import { Sidebar, Header } from '@/components';
 import { useStrategies } from '@/lib/hooks';
 import { cn } from '@/lib/utils';
@@ -44,27 +41,33 @@ const categoryLabels: Record<string, string> = {
 };
 
 const categoryColors: Record<string, string> = {
-  income: 'text-emerald-600 bg-emerald-50',
-  distribution: 'text-amber-600 bg-amber-50',
-  trading: 'text-blue-600 bg-blue-50',
-  utility: 'text-violet-600 bg-violet-50',
-  custom: 'text-text-secondary bg-background-tertiary',
+  income: 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/30',
+  distribution: 'bg-yellow-500/10 text-yellow-300 border border-yellow-500/30',
+  trading: 'bg-blue-500/10 text-blue-300 border border-blue-500/30',
+  utility: 'bg-slate-500/10 text-slate-300 border border-slate-500/30',
+  custom: 'bg-slate-600/10 text-slate-300 border border-slate-600/30',
 };
 
-function FieldRow({ field }: { field: StrategyFieldDescriptor }) {
+interface FieldRowProps {
+  field: StrategyFieldDescriptor;
+}
+
+function FieldRow({ field }: FieldRowProps) {
   return (
-    <div className="flex items-start justify-between py-2 border-b border-border-light last:border-b-0">
+    <div className="flex items-start justify-between py-3 border-b border-slate-700/50 last:border-b-0 hover:bg-slate-700/20 px-4 -mx-4 transition-colors">
       <div className="flex-1 min-w-0">
-        <span className="text-body-sm font-medium text-text-primary">{field.label}</span>
+        <span className="text-sm font-medium text-slate-50">{field.label}</span>
         {field.description && (
-          <p className="text-caption text-text-muted mt-0.5">{field.description}</p>
+          <p className="text-xs text-slate-400 mt-1">{field.description}</p>
         )}
       </div>
       <div className="flex items-center gap-3 ml-4 flex-shrink-0">
-        <span className="text-caption text-text-tertiary font-mono">{field.type}</span>
+        <code className="text-xs text-slate-400 font-mono bg-slate-900/50 rounded px-2 py-1">
+          {field.type}
+        </code>
         {field.default !== undefined && field.default !== '' && (
-          <span className="text-caption text-text-muted">
-            default: <span className="font-mono">{JSON.stringify(field.default)}</span>
+          <span className="text-xs text-slate-500 font-mono">
+            {JSON.stringify(field.default)}
           </span>
         )}
       </div>
@@ -72,81 +75,101 @@ function FieldRow({ field }: { field: StrategyFieldDescriptor }) {
   );
 }
 
-function StrategyCard({ strategy }: { strategy: StrategyDefinition }) {
-  const [expanded, setExpanded] = useState(false);
-  const Icon = iconMap[strategy.icon] ?? Zap;
-  const catColor = categoryColors[strategy.category] ?? categoryColors.custom;
+interface StrategyCardProps {
+  strategy: StrategyDefinition;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
+  onConfigure: (strategy: StrategyDefinition) => void;
+}
+
+function StrategyCard({ strategy, isExpanded, onToggleExpand, onConfigure }: StrategyCardProps) {
+  const Icon = strategy.icon ? (iconMap[strategy.icon] ?? Zap) : Zap;
+  const catColor = categoryColors.custom;
 
   return (
     <motion.div
+      layout
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-surface border border-border-light rounded-2xl overflow-hidden"
+      exit={{ opacity: 0, y: -8 }}
+      className="bg-gradient-brand-subtle border border-surface-muted hover:border-secondary/50 rounded-lg overflow-hidden transition-colors duration-200"
     >
-      <div className="p-6">
-        <div className="flex items-start gap-4">
-          <div className="w-11 h-11 rounded-xl bg-primary-50 flex items-center justify-center flex-shrink-0">
-            <Icon className="w-5 h-5 text-primary-500" />
+      <div className="px-6 py-5">
+        <div className="flex items-start gap-4 mb-3">
+          <div className="w-12 h-12 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center flex-shrink-0">
+            <Icon className="w-6 h-6 text-cyan-400" />
           </div>
 
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <h3 className="text-heading-sm text-text-primary">{strategy.label}</h3>
-              {strategy.builtIn && (
-                <span className="text-micro px-1.5 py-0.5 rounded bg-primary-50 text-primary-600 font-medium">
-                  Built-in
-                </span>
-              )}
-            </div>
-            <p className="text-body text-text-secondary mb-3">{strategy.description}</p>
-
-            <div className="flex items-center gap-3 flex-wrap">
-              <span className={cn('text-micro px-2 py-0.5 rounded-full font-medium', catColor)}>
-                {categoryLabels[strategy.category] ?? strategy.category}
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
+              <h3 className="text-base font-semibold text-slate-50">
+                {strategy.label}
+              </h3>
+              <span className="text-xs px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 font-medium border border-cyan-500/30">
+                Built-in
               </span>
-              {strategy.supportedIntents.map((intent) => (
-                <span
-                  key={intent}
-                  className="text-micro px-2 py-0.5 rounded bg-background text-text-muted font-mono"
-                >
-                  {intent}
-                </span>
-              ))}
             </div>
+            <p className="text-sm text-slate-400">{strategy.description}</p>
           </div>
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap mb-4">
+          <span className={cn('text-xs px-2.5 py-1 rounded-full font-medium', catColor)}>
+            Custom
+          </span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => onConfigure(strategy)}
+            className="flex-1 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 hover:border-cyan-500/50 text-cyan-300 rounded-lg px-3 py-2 text-sm font-medium transition-all inline-flex items-center justify-center gap-2 hover:bg-cyan-500/30"
+          >
+            <Settings className="w-4 h-4" />
+            Configure
+          </button>
+          <button className="bg-slate-800/50 border border-slate-700/50 hover:border-cyan-500/30 text-slate-300 hover:text-cyan-300 rounded-lg px-3 py-2 transition-all inline-flex items-center gap-2">
+            <Copy className="w-4 h-4" />
+          </button>
+          <button className="bg-slate-800/50 border border-slate-700/50 hover:border-cyan-500/30 text-slate-300 hover:text-cyan-300 rounded-lg px-3 py-2 transition-all inline-flex items-center gap-2">
+            <Download className="w-4 h-4" />
+          </button>
         </div>
       </div>
 
-      {/* Expandable params section */}
       {strategy.fields.length > 0 && (
         <>
           <button
-            onClick={() => setExpanded(!expanded)}
-            className="w-full flex items-center justify-between px-6 py-3 border-t border-border-light bg-background-secondary/30 hover:bg-background-secondary/60 transition-colors"
+            onClick={onToggleExpand}
+            className="w-full flex items-center justify-between px-6 py-3 border-t border-slate-700/50 bg-slate-800/20 hover:bg-slate-800/40 transition-colors"
           >
-            <span className="text-caption text-text-muted">
-              {strategy.fields.length} configurable parameter
-              {strategy.fields.length === 1 ? '' : 's'}
+            <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">
+              {strategy.fields.length} parameter{strategy.fields.length === 1 ? '' : 's'}
             </span>
-            {expanded ? (
-              <ChevronUp className="w-4 h-4 text-text-muted" />
-            ) : (
-              <ChevronDown className="w-4 h-4 text-text-muted" />
-            )}
+            <motion.div
+              animate={{ rotate: isExpanded ? 180 : 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <ChevronDown className="w-4 h-4 text-slate-400" />
+            </motion.div>
           </button>
 
-          {expanded && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              transition={{ duration: 0.2 }}
-              className="px-6 py-4 border-t border-border-light bg-background-secondary/20"
-            >
-              {strategy.fields.map((field) => (
-                <FieldRow key={field.key} field={field} />
-              ))}
-            </motion.div>
-          )}
+          <AnimatePresence>
+            {isExpanded && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="border-t border-slate-700/50 bg-slate-900/20 px-6 py-4"
+              >
+                <div className="space-y-0">
+                  {strategy.fields.map((field) => (
+                    <FieldRow key={field.key} field={field} />
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </>
       )}
     </motion.div>
@@ -155,58 +178,238 @@ function StrategyCard({ strategy }: { strategy: StrategyDefinition }) {
 
 export default function StrategiesPage() {
   const { strategies, loading, error } = useStrategies();
+  const [search, setSearch] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [expandedStrategy, setExpandedStrategy] = useState<string | null>(null);
+  const [selectedConfig, setSelectedConfig] = useState<StrategyDefinition | null>(null);
 
-  // Group by category
-  const grouped = strategies.reduce<Record<string, StrategyDefinition[]>>((acc, s) => {
-    const cat = s.category || 'custom';
-    if (!acc[cat]) acc[cat] = [];
-    acc[cat]!.push(s);
-    return acc;
-  }, {});
+  const filteredStrategies = useMemo(() => {
+    if (!strategies) return [];
+
+    let result = [...strategies];
+
+    if (search) {
+      const q = search.toLowerCase();
+      result = result.filter(
+        (s: StrategyDefinition) =>
+          s.label.toLowerCase().includes(q) ||
+          s.description.toLowerCase().includes(q)
+      );
+    }
+
+    if (categoryFilter !== 'all') {
+      // Category filter not applicable - all strategies shown
+    }
+
+    return result;
+  }, [strategies, search]);
+
+  const grouped = useMemo(() => {
+    return filteredStrategies.reduce<Record<string, StrategyDefinition[]>>((acc, s) => {
+      const cat = 'custom';
+      if (!acc[cat]) acc[cat] = [];
+      acc[cat]!.push(s);
+      return acc;
+    }, {});
+  }, [filteredStrategies]);
+
+  const categories = useMemo(() => {
+    return ['custom'];
+  }, []);
 
   return (
     <>
       <Head>
-        <title>Strategies | Agentic Wallet</title>
+        <title>Strategies | Sophia</title>
       </Head>
 
-      <div className="flex min-h-screen bg-background">
+      <div className="flex min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
         <Sidebar />
 
         <div className="flex-1 ml-60">
           <Header
             title="Strategies"
-            subtitle="Browse available agent strategies and their parameters"
+            subtitle="Browse and configure agent strategies"
           />
 
-          <main className="px-8 lg:px-12 pb-12 space-y-8">
-            {loading && (
-              <div className="text-center py-12 text-text-muted">Loading strategies…</div>
-            )}
+          <main className="px-8 lg:px-12 pb-12 space-y-6">
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-4"
+            >
+              <div className="flex items-center gap-3 flex-wrap">
+                <div className="relative flex-1 min-w-[240px]">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <input
+                    type="text"
+                    placeholder="Search strategies…"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="w-full bg-slate-800/50 border border-slate-700/50 hover:border-cyan-500/30 focus:border-cyan-500 text-slate-50 placeholder:text-slate-500 rounded-lg px-4 py-2.5 text-sm transition-all backdrop-blur-sm"
+                  />
+                </div>
 
-            {error && <div className="text-center py-12 text-status-error">{error}</div>}
+                <select
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                  className="bg-slate-800/50 border border-slate-700/50 hover:border-cyan-500/30 text-slate-50 rounded-lg px-3 py-2.5 text-sm transition-all backdrop-blur-sm cursor-pointer"
+                >
+                  <option value="all">All Categories</option>
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {categoryLabels[cat as keyof typeof categoryLabels] ?? cat}
+                    </option>
+                  ))}
+                </select>
 
-            {!loading &&
-              !error &&
-              Object.entries(grouped).map(([category, items]) => (
-                <section key={category}>
-                  <h2 className="text-label text-text-secondary mb-4">
-                    {categoryLabels[category] ?? category}
-                  </h2>
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                    {items.map((strategy) => (
-                      <StrategyCard key={strategy.name} strategy={strategy} />
-                    ))}
-                  </div>
-                </section>
-              ))}
+                <button className="bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 hover:border-cyan-500/50 text-cyan-300 rounded-lg px-4 py-2.5 text-sm font-medium transition-all inline-flex items-center gap-2 hover:bg-cyan-500/30">
+                  <Plus className="w-4 h-4" />
+                  New Strategy
+                </button>
+              </div>
 
-            {!loading && !error && strategies.length === 0 && (
-              <div className="text-center py-12 text-text-muted">No strategies available.</div>
+              {!loading && !error && (
+                <p className="text-xs text-slate-500 uppercase tracking-wider">
+                  Showing {filteredStrategies.length} of {strategies?.length || 0} strategies
+                </p>
+              )}
+            </motion.div>
+
+            {loading ? (
+              <div className="flex items-center justify-center py-16">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-700 border-t-cyan-500 mx-auto mb-4" />
+                  <p className="text-slate-400">Loading strategies…</p>
+                </div>
+              </div>
+            ) : error ? (
+              <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 text-red-300 backdrop-blur-sm">
+                {error}
+              </div>
+            ) : Object.keys(grouped).length === 0 ? (
+              <div className="text-center py-16">
+                <HelpCircle className="w-12 h-12 mx-auto text-slate-500 mb-4 opacity-50" />
+                <p className="text-slate-400 mb-2">No strategies found</p>
+                <p className="text-sm text-slate-500">Try adjusting your search or filters</p>
+              </div>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="space-y-8"
+              >
+                {Object.entries(grouped).map(([category, items]) => (
+                  <section key={category}>
+                    <div className="flex items-center gap-2 mb-4">
+                      <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                        {categoryLabels[category as keyof typeof categoryLabels] ?? category}
+                      </h2>
+                      <span className="text-xs text-slate-500 bg-slate-800/50 rounded-full px-2 py-1">
+                        {items.length}
+                      </span>
+                    </div>
+
+                    <AnimatePresence mode="popLayout">
+                      <motion.div
+                        layout
+                        className="grid grid-cols-1 lg:grid-cols-2 gap-4"
+                      >
+                        {items.map((strategy: StrategyDefinition) => (
+                          <StrategyCard
+                            key={strategy.name}
+                            strategy={strategy}
+                            isExpanded={expandedStrategy === strategy.name}
+                            onToggleExpand={() =>
+                              setExpandedStrategy(
+                                expandedStrategy === strategy.name ? null : strategy.name
+                              )
+                            }
+                            onConfigure={(s) => setSelectedConfig(s)}
+                          />
+                        ))}
+                      </motion.div>
+                    </AnimatePresence>
+                  </section>
+                ))}
+              </motion.div>
             )}
           </main>
         </div>
       </div>
+
+      {selectedConfig && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={() => setSelectedConfig(null)}
+        >
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.95, opacity: 0 }}
+            className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 rounded-xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto backdrop-blur-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-bold text-slate-50">
+                Configure {selectedConfig.label}
+              </h3>
+              <button
+                onClick={() => setSelectedConfig(null)}
+                className="p-1 hover:bg-slate-700 rounded-lg transition-colors text-slate-400"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4 mb-6">
+              <div>
+                <p className="text-xs text-slate-400 mb-2 uppercase tracking-wider">Description</p>
+                <p className="text-sm text-slate-50">{selectedConfig.description}</p>
+              </div>
+
+              {selectedConfig.fields.length > 0 && (
+                <div>
+                  <p className="text-xs text-slate-400 mb-3 uppercase tracking-wider">Parameters</p>
+                  <div className="space-y-3 bg-slate-900/50 rounded-lg p-4">
+                    {selectedConfig.fields.map((field) => (
+                      <div key={field.key}>
+                        <label className="text-xs text-slate-400 font-medium mb-1 block uppercase tracking-wider">
+                          {field.label}
+                        </label>
+                        <input
+                          type={field.type === 'number' ? 'number' : 'text'}
+                          placeholder={
+                            field.default !== undefined
+                              ? `Default: ${JSON.stringify(field.default)}`
+                              : field.description || field.label
+                          }
+                          className="w-full bg-slate-800/50 border border-slate-700/50 hover:border-cyan-500/30 focus:border-cyan-500 text-slate-50 placeholder:text-slate-500 rounded px-3 py-2 text-sm transition-all"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3 pt-4 border-t border-slate-700/50">
+              <button
+                onClick={() => setSelectedConfig(null)}
+                className="flex-1 bg-slate-800/50 border border-slate-700/50 hover:border-cyan-500/30 text-slate-300 hover:text-cyan-300 rounded-lg px-4 py-2.5 transition-all"
+              >
+                Cancel
+              </button>
+              <button className="flex-1 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 hover:border-cyan-500/50 text-cyan-300 rounded-lg px-4 py-2.5 transition-all hover:bg-cyan-500/30 font-medium">
+                Create Agent
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
     </>
   );
 }

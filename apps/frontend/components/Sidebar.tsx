@@ -8,7 +8,7 @@
  */
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { useRouter } from 'next/router';
 import { motion } from 'framer-motion';
 import {
   LayoutDashboard,
@@ -24,7 +24,7 @@ import { cn } from '@/lib/utils';
 const navItems = [
   {
     name: 'Overview',
-    href: '/',
+    href: '/dashboard',
     icon: LayoutDashboard,
   },
   {
@@ -60,19 +60,20 @@ const navItems = [
 ];
 
 export function Sidebar() {
-  const pathname = usePathname();
+  const router = useRouter();
+  const pathname = router.pathname;
 
   return (
-    <aside className="fixed left-0 top-0 bottom-0 w-60 bg-surface border-r border-border-light flex flex-col">
+    <aside className="fixed left-0 top-0 bottom-0 w-60 bg-gradient-to-b from-slate-900 via-slate-900/80 to-slate-950 border-r border-slate-700/50 flex flex-col backdrop-blur-xl">
       {/* Logo */}
       <div className="h-18 flex items-center px-6 pt-6">
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-9 h-9 rounded-xl bg-primary-100 flex items-center justify-center transition-colors group-hover:bg-primary-200">
-            <span className="text-primary-600 font-semibold text-lg">A</span>
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center transition-all group-hover:shadow-lg group-hover:shadow-cyan-500/50">
+            <span className="text-slate-950 font-bold text-lg">Ⓢ</span>
           </div>
           <div>
-            <span className="font-semibold text-body-lg text-text-primary">Agentic</span>
-            <span className="block text-micro text-text-muted">Wallet System</span>
+            <span className="font-bold text-sm bg-gradient-to-r from-cyan-300 to-blue-400 bg-clip-text text-transparent">Sophia</span>
+            <span className="block text-xs text-slate-400">Agentic Wallet</span>
           </div>
         </Link>
       </div>
@@ -94,7 +95,7 @@ export function Sidebar() {
                   {isActive && (
                     <motion.div
                       layoutId="nav-indicator"
-                      className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-primary-500 rounded-full"
+                      className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-cyan-500 rounded-full"
                       initial={false}
                       transition={{
                         type: 'spring',
@@ -106,7 +107,7 @@ export function Sidebar() {
                   <Icon
                     className={cn(
                       'w-[18px] h-[18px]',
-                      isActive ? 'text-primary-600' : 'text-text-tertiary'
+                      isActive ? 'text-cyan-400' : 'text-slate-500'
                     )}
                   />
                   <span>{item.name}</span>
@@ -119,8 +120,8 @@ export function Sidebar() {
 
       {/* Footer - Network indicator, very subtle */}
       <div className="p-4 mx-4 mb-4">
-        <div className="flex items-center gap-2 text-caption text-text-muted">
-          <span className="w-1.5 h-1.5 rounded-full bg-status-success" />
+        <div className="flex items-center gap-2 text-xs text-slate-400">
+          <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
           <span>Solana Devnet</span>
         </div>
       </div>

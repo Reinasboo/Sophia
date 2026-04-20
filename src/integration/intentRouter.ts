@@ -23,10 +23,18 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
 import { createLogger } from '../utils/logger.js';
-import { Result, success, failure, Intent, BalanceInfo } from '../utils/types.js';
-import { getWalletManager, WalletManager } from '../wallet/index.js';
+import { getRateLimiter } from '../utils/rate-limiter.js';
+import { 
+  Result, 
+  success, 
+  failure,
+  IntentHistoryRecord as SharedIntentHistoryRecord,
+  SupportedIntentType,
+} from '../types/shared.js';
+import { ServicePaymentIntent } from '../types/internal.js';
+import { getWalletManager, WalletManager, getServicePolicyManager } from '../wallet/index.js';
 import {
   getSolanaClient,
   buildSolTransfer,
@@ -36,12 +44,11 @@ import {
   KNOWN_PROGRAMS,
   SolanaClient,
 } from '../rpc/index.js';
-import type { InstructionDescriptor } from '../rpc/index.js';
+import type { InstructionDescriptor } from '../types/internal.js';
 import {
   getAgentRegistry,
   AgentRegistry,
   ExternalAgentRecord,
-  SupportedIntentType,
 } from './agentRegistry.js';
 import { eventBus } from '../orchestrator/event-emitter.js';
 
@@ -56,6 +63,18 @@ const logger = createLogger('BYOA_INTENT');
 // External intent payload (what the caller sends)
 // ────────────────────────────────────────────
 
+/**
+ * External intent with strongly-documented parameter requirements.
+ * 
+ * Supported intent types and their params:
+ * 
+ * - REQUEST_AIRDROP: { amount: number } - Request devnet SOL
+ * - TRANSFER_SOL: { recipient: string, amount: number, memo?: string } - Transfer SOL
+ * - TRANSFER_TOKEN: { mint: string, recipient: string, amount: number, decimals?: number, memo?: string } - Transfer SPL tokens
+ * - QUERY_BALANCE: {} - Query wallet balance (no params)
+ * - AUTONOMOUS: { action?: string, [key: string]: unknown } - Agent decides action
+ * - SERVICE_PAYMENT: { serviceId: string, recipient: string, amount: number, description?: string } - Service payment
+ */
 export interface ExternalIntent {
   readonly type: SupportedIntentType;
   readonly params: Record<string, unknown>;
@@ -76,16 +95,7 @@ export interface IntentResult {
 // Intent history record
 // ────────────────────────────────────────────
 
-export interface IntentHistoryRecord {
-  readonly intentId: string;
-  readonly agentId: string;
-  readonly type: SupportedIntentType;
-  readonly params: Record<string, unknown>;
-  readonly status: 'executed' | 'rejected';
-  readonly result?: Record<string, unknown>;
-  readonly error?: string;
-  readonly createdAt: Date;
-}
+export type IntentHistoryRecord = SharedIntentHistoryRecord;
 
 // ────────────────────────────────────────────
 // Rate limiter (simple sliding-window)
@@ -137,6 +147,124 @@ class RateLimiter {
 }
 
 // ────────────────────────────────────────────
+// Sanitization Helper for Logging
+// ────────────────────────────────────────────
+
+/**
+ * Sanitize intent params for safe logging.
+ * Redacts sensitive information: addresses, amounts, service IDs, memos.
+ */
+function sanitizeIntentParams(
+  type: SupportedIntentType,
+  params: Record<string, unknown>
+): Record<string, unknown> {
+  if (!params) return {};
+
+  const sanitized: Record<string, unknown> = {};
+
+  switch (type) {
+    case 'REQUEST_AIRDROP':
+      sanitized['amount'] = params['amount'] ? '***' : undefined;
+      break;
+
+    case 'TRANSFER_SOL':
+      sanitized['recipient'] = params['recipient'] ? truncateAddress(params['recipient'] as string) : undefined;
+      sanitized['amount'] = params['amount'] ? '***' : undefined;
+      sanitized['memo'] = params['memo'] ? '[REDACTED]' : undefined;
+      break;
+
+    case 'TRANSFER_TOKEN':
+      sanitized['mint'] = params['mint'] ? truncateAddress(params['mint'] as string) : undefined;
+      sanitized['recipient'] = params['recipient'] ? truncateAddress(params['recipient'] as string) : undefined;
+      sanitized['amount'] = params['amount'] ? '***' : undefined;
+      sanitized['decimals'] = params['decimals'];
+      sanitized['memo'] = params['memo'] ? '[REDACTED]' : undefined;
+      break;
+
+    case 'QUERY_BALANCE':
+      // No sensitive params
+      break;
+
+    case 'AUTONOMOUS':
+      sanitized['action'] = params['action'];
+      // Redact all other autonomous params for privacy
+      break;
+
+    case 'SERVICE_PAYMENT':
+      sanitized['serviceId'] = params['serviceId'] ? '[REDACTED]' : undefined;
+      sanitized['recipient'] = params['recipient'] ? truncateAddress(params['recipient'] as string) : undefined;
+      sanitized['amount'] = params['amount'] ? '***' : undefined;
+      sanitized['description'] = params['description'] ? '[REDACTED]' : undefined;
+      break;
+
+    default:
+      // For unknown types, redact everything except type
+      return {};
+  }
+
+  return sanitized;
+}
+
+/**
+ * Truncate a public key or address to first and last 4 characters.
+ * Safe to display in logs.
+ */
+function truncateAddress(address: string): string {
+  if (typeof address !== 'string' || address.length <= 8) {
+    return '[ADDR]';
+  }
+  return `${address.slice(0, 4)}...${address.slice(-4)}`;
+}
+
+// ────────────────────────────────────────────
+// Transaction Signature Validation
+// ────────────────────────────────────────────
+
+/**
+ * Validates that a transaction has been properly signed.
+ * Ensures all required signers are present before submission.
+ */
+function validateTransactionSignature(
+  tx: Transaction | VersionedTransaction,
+  expectedSigner: PublicKey
+): Result<true, Error> {
+  try {
+    // Check if transaction has signatures
+    if (!tx.signatures || tx.signatures.length === 0) {
+      return failure(new Error('Transaction was not signed: signatures array is empty'));
+    }
+
+    // Check if expected signer is in the signatures
+    // Handle both Transaction and VersionedTransaction types
+    const hasExpectedSigner = tx.signatures.some((sig) => {
+      // For Transaction: sig is { publicKey: PublicKey, signature: Buffer | null }
+      // For VersionedTransaction: sig is Uint8Array (just the signature bytes)
+      if (sig && typeof sig === 'object' && !ArrayBuffer.isView(sig)) {
+        const pubkeySig = sig as any;
+        return pubkeySig.publicKey?.equals?.(expectedSigner);
+      }
+      return false;
+    });
+
+    if (!hasExpectedSigner) {
+      return failure(
+        new Error(
+          `Expected signer ${expectedSigner.toBase58()} not found in transaction signatures`
+        )
+      );
+    }
+
+    return success(true);
+  } catch (error) {
+    return failure(
+      error instanceof Error
+        ? error
+        : new Error(`Transaction signature validation failed: ${String(error)}`)
+    );
+  }
+}
+
+// ────────────────────────────────────────────
 // Intent Router
 // ────────────────────────────────────────────
 
@@ -145,6 +273,7 @@ export class IntentRouter {
   private walletManager: WalletManager;
   private solanaClient: SolanaClient;
   private rateLimiter: RateLimiter;
+  private servicePolicyManager = getServicePolicyManager();
   private history: IntentHistoryRecord[] = [];
   private maxHistory: number = 5000;
 
@@ -197,13 +326,32 @@ export class IntentRouter {
       );
     }
 
-    // ── 4. Rate limit ──────────────────────
+    // ── 4. Rate limit (agent-level) ───────────
     if (!this.rateLimiter.check(agent.id)) {
       return this.reject(
         intentId,
         agent.id,
         externalIntent,
         'Rate limit exceeded (max 30 intents/min)',
+        createdAt
+      );
+    }
+
+    // ── 4b. Rate limit (wallet-level) ─────────
+    const walletRateLimiter = getRateLimiter();
+    const walletAddress = agent.walletPublicKey ?? '';
+    const walletRateLimitCheck = walletRateLimiter.canSubmitTransaction(walletAddress);
+    if (!walletRateLimitCheck.allowed) {
+      logger.warn('Wallet rate limit exceeded', {
+        wallet: walletAddress,
+        reason: walletRateLimitCheck.reason,
+        retryAfterMs: walletRateLimitCheck.retryAfterMs,
+      });
+      return this.reject(
+        intentId,
+        agent.id,
+        externalIntent,
+        walletRateLimitCheck.reason || 'Wallet rate limit exceeded',
         createdAt
       );
     }
@@ -222,6 +370,10 @@ export class IntentRouter {
     // ── 6. Execute ─────────────────────────
     try {
       const result = await this.executeIntent(agent, externalIntent, intentId);
+
+      // Record transaction in rate limiter (after successful submission)
+      walletRateLimiter.recordTransaction(walletAddress);
+      walletRateLimiter.recordRpcCall(); // Record the RPC call cost
 
       const record: IntentHistoryRecord = {
         intentId,
@@ -286,6 +438,8 @@ export class IntentRouter {
         return this.executeQueryBalance(walletId);
       case 'AUTONOMOUS':
         return this.executeAutonomous(walletId, agent.id, ext.params, intentId);
+      case 'SERVICE_PAYMENT':
+        return this.executeServicePayment(walletId, agent.id, ext.params, intentId);
       default:
         throw new Error(`Unsupported intent type: ${ext.type}`);
     }
@@ -333,7 +487,7 @@ export class IntentRouter {
 
   private async executeTransferSol(
     walletId: string,
-    agentId: string,
+    _agentId: string,
     params: Record<string, unknown>,
     _intentId: string
   ): Promise<Record<string, unknown>> {
@@ -362,12 +516,20 @@ export class IntentRouter {
     const signResult = this.walletManager.signTransaction(walletId, txResult.value);
     if (!signResult.ok) throw signResult.error;
 
+    const signedTx = signResult.value;
+
+    // Validate that transaction was actually signed with the fee payer
+    const sigValidation = validateTransactionSignature(signedTx, pubkeyResult.value);
+    if (!sigValidation.ok) {
+      throw sigValidation.error;
+    }
+
     // Simulate before sending to catch errors pre-fee
-    const simResult = await this.solanaClient.simulateTransaction(signResult.value);
+    const simResult = await this.solanaClient.simulateTransaction(signedTx);
     if (!simResult.ok) throw simResult.error;
 
     // Send
-    const sendResult = await this.solanaClient.sendTransaction(signResult.value);
+    const sendResult = await this.solanaClient.sendTransaction(signedTx);
     if (!sendResult.ok) throw sendResult.error;
 
     this.walletManager.recordTransfer(walletId);
@@ -479,12 +641,20 @@ export class IntentRouter {
     const signResult = this.walletManager.signTransaction(walletId, txResult.value);
     if (!signResult.ok) throw signResult.error;
 
+    const signedTx = signResult.value;
+
+    // Validate that transaction was actually signed with the fee payer
+    const sigValidation = validateTransactionSignature(signedTx, pubkeyResult.value);
+    if (!sigValidation.ok) {
+      throw sigValidation.error;
+    }
+
     // Simulate before sending to catch errors pre-fee
-    const simResult = await this.solanaClient.simulateTransaction(signResult.value);
+    const simResult = await this.solanaClient.simulateTransaction(signedTx);
     if (!simResult.ok) throw simResult.error;
 
     // Send
-    const sendResult = await this.solanaClient.sendTransaction(signResult.value);
+    const sendResult = await this.solanaClient.sendTransaction(signedTx);
     if (!sendResult.ok) throw sendResult.error;
 
     this.walletManager.recordTransfer(walletId);
@@ -654,11 +824,19 @@ export class IntentRouter {
     const signResult = this.walletManager.signTransaction(walletId, txResult.value);
     if (!signResult.ok) throw signResult.error;
 
+    const signedTx = signResult.value;
+
+    // Validate that transaction was actually signed with the fee payer
+    const sigValidation = validateTransactionSignature(signedTx, pubkeyResult.value);
+    if (!sigValidation.ok) {
+      throw sigValidation.error;
+    }
+
     // Simulate before sending to catch errors pre-fee
-    const simResult = await this.solanaClient.simulateTransaction(signResult.value);
+    const simResult = await this.solanaClient.simulateTransaction(signedTx);
     if (!simResult.ok) throw simResult.error;
 
-    const sendResult = await this.solanaClient.sendTransaction(signResult.value);
+    const sendResult = await this.solanaClient.sendTransaction(signedTx);
     if (!sendResult.ok) throw sendResult.error;
 
     this.walletManager.recordTransfer(walletId);
@@ -1105,6 +1283,122 @@ export class IntentRouter {
     };
   }
 
+  // ── SERVICE_PAYMENT ──────────────────────
+
+  /**
+   * Execute a service payment (x402/MPP pay-per-use).
+   *
+   * Enforces per-service spend caps, daily budgets, and cooldowns.
+   * This is the primary entry point for pay-per-use service billing.
+   *
+   * Params:
+   *   serviceId     – unique service identifier
+   *   amount        – SOL to pay
+   *   description   – optional description
+   *   metadata      – optional metadata
+   */
+  private async executeServicePayment(
+    walletId: string,
+    agentId: string,
+    params: Record<string, unknown>,
+    intentId: string
+  ): Promise<Record<string, unknown>> {
+    const serviceId = typeof params['serviceId'] === 'string' ? params['serviceId'] : '';
+    const amount = typeof params['amount'] === 'number' ? params['amount'] : 0;
+    const recipient = typeof params['recipient'] === 'string' ? params['recipient'] : '';
+    const description = typeof params['description'] === 'string' ? params['description'] : '';
+
+    if (!serviceId) throw new Error('serviceId is required for service payment');
+    if (amount <= 0) throw new Error('Payment amount must be positive');
+    if (!recipient) throw new Error('Recipient (service address) is required');
+
+    // ── 1. Validate service policy
+    const policyCheckResult = this.servicePolicyManager.validateServicePayment(
+      walletId,
+      {
+        id: intentId,
+        agentId,
+        timestamp: new Date(),
+        type: 'service_payment',
+        serviceId,
+        amount,
+      } as ServicePaymentIntent,
+      params['programId'] as string | undefined
+    );
+
+    if (!policyCheckResult.ok) {
+      throw new Error(`Service policy rejected: ${policyCheckResult.error.message}`);
+    }
+
+    // ── 2. Validate recipient address
+    let recipientPubkey: PublicKey;
+    try {
+      recipientPubkey = new PublicKey(recipient);
+    } catch {
+      throw new Error(`Invalid recipient address: ${recipient}`);
+    }
+
+    // ── 3. Get wallet public key
+    const pubkeyResult = this.walletManager.getPublicKey(walletId);
+    if (!pubkeyResult.ok) throw pubkeyResult.error;
+
+    // ── 4. Build and execute transfer
+    const txResult = await buildSolTransfer(
+      pubkeyResult.value,
+      recipientPubkey,
+      amount,
+      `AgenticWallet:service_payment:${serviceId}:${agentId}`
+    );
+    if (!txResult.ok) throw txResult.error;
+
+    const signResult = this.walletManager.signTransaction(walletId, txResult.value);
+    if (!signResult.ok) throw signResult.error;
+
+    const simResult = await this.solanaClient.simulateTransaction(signResult.value);
+    if (!simResult.ok) throw simResult.error;
+
+    const sendResult = await this.solanaClient.sendTransaction(signResult.value);
+    if (!sendResult.ok) throw sendResult.error;
+
+    this.walletManager.recordTransfer(walletId);
+
+    // ── 5. Record service payment in policy manager
+    this.servicePolicyManager.recordServicePayment(walletId, serviceId, amount, intentId);
+
+    // ── 6. Emit event
+    eventBus.emit({
+      id: uuidv4(),
+      type: 'transaction',
+      timestamp: new Date(),
+      transaction: {
+        id: uuidv4(),
+        walletId,
+        type: 'transfer_sol',
+        status: 'confirmed',
+        amount,
+        recipient,
+        signature: sendResult.value.signature,
+        createdAt: new Date(),
+        confirmedAt: new Date(),
+      },
+    });
+
+    logger.info('Service payment executed', {
+      agentId,
+      serviceId,
+      amount,
+      signature: sendResult.value.signature,
+    });
+
+    return {
+      signature: sendResult.value.signature,
+      amount,
+      recipient,
+      serviceId,
+      description,
+    };
+  }
+
   // ── History ──────────────────────────────
 
   getIntentHistory(agentId?: string, limit: number = 100): IntentHistoryRecord[] {
@@ -1135,7 +1429,13 @@ export class IntentRouter {
     };
     this.pushHistory(record);
 
-    logger.warn('BYOA intent rejected', { intentId, agentId, type: ext.type, reason });
+    logger.warn('BYOA intent rejected', {
+      intentId,
+      agentId,
+      type: ext.type,
+      params: sanitizeIntentParams(ext.type, ext.params),
+      reason,
+    });
 
     return success({
       intentId,

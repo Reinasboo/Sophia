@@ -1,6 +1,6 @@
 # System Architecture
 
-This document provides a deep dive into the Agentic Wallet System architecture, explaining the design decisions, layer responsibilities, and data flow patterns.
+This document provides a deep dive into the Sophia System architecture, explaining the design decisions, layer responsibilities, and data flow patterns.
 
 ## Design Principles
 

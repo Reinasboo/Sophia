@@ -53,8 +53,8 @@ async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<Api
         return {
           success: false,
           error: `HTTP ${response.status}: ${response.statusText}`,
-          timestamp: new Date().toISOString(),
-        };
+          timestamp: new Date(),
+        } as ApiResponse<T>;
       }
     }
 
@@ -64,8 +64,8 @@ async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<Api
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
-      timestamp: new Date().toISOString(),
-    };
+      timestamp: new Date(),
+    } as ApiResponse<T>;
   }
 }
 
@@ -167,7 +167,9 @@ export function createWebSocket(
   const ws = new WebSocket(wsUrl);
 
   ws.onopen = () => {
-    console.log('WebSocket connected');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('WebSocket connected');
+    }
     onConnect?.();
   };
 
@@ -176,17 +178,23 @@ export function createWebSocket(
       const data = JSON.parse(event.data);
       onMessage(data);
     } catch (error) {
-      console.error('Failed to parse WebSocket message:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Failed to parse WebSocket message:', error);
+      }
     }
   };
 
   ws.onclose = () => {
-    console.log('WebSocket disconnected');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('WebSocket disconnected');
+    }
     onDisconnect?.();
   };
 
   ws.onerror = (error) => {
-    console.error('WebSocket error:', error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error('WebSocket error:', error);
+    }
   };
 
   return ws;
@@ -211,6 +219,7 @@ export async function registerExternalAgent(data: {
   agentType: 'local' | 'remote';
   agentEndpoint?: string;
   supportedIntents: string[];
+  verificationMethods?: string[];
   metadata?: Record<string, unknown>;
 }): Promise<ApiResponse<BYOARegistrationResult>> {
   return fetchApi('/api/byoa/register', {
@@ -256,6 +265,28 @@ export async function deactivateExternalAgent(id: string): Promise<ApiResponse<v
 
 export async function activateExternalAgent(id: string): Promise<ApiResponse<void>> {
   return fetchApi(`/api/byoa/agents/${id}/activate`, { method: 'POST', headers: adminHeaders() });
+}
+
+export async function generateAgentChallenge(agentId: string): Promise<ApiResponse<{
+  challenge: string;
+  expiresIn: number;
+  instruction: string;
+}>> {
+  return fetchApi('/api/byoa/verify/challenge-generate', {
+    method: 'POST',
+    headers: adminHeaders(),
+    body: JSON.stringify({ agentId }),
+  });
+}
+
+export async function verifyChallengeResponse(agentId: string, challengeResponse: string): Promise<ApiResponse<{
+  verified: boolean;
+  message: string;
+}>> {
+  return fetchApi('/api/byoa/verify/challenge-submit', {
+    method: 'POST',
+    body: JSON.stringify({ agentId, challengeResponse }),
+  });
 }
 
 export async function revokeExternalAgent(id: string): Promise<ApiResponse<void>> {

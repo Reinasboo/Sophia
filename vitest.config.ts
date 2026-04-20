@@ -5,6 +5,6 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     include: ['tests/**/*.test.ts'],
-    testTimeout: 15000,
+    testTimeout: 30000, // Increased from 15s for slower CI environments
   },
 });

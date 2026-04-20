@@ -1,6 +1,6 @@
-# Contributing to Agentic Wallet
+# Contributing to Sophia
 
-Thank you for helping improve Agentic Wallet. This guide defines the development,
+Thank you for helping improve Sophia. This guide defines the development,
 collaboration, and review standards used for this repository.
 
 ---
@@ -24,7 +24,7 @@ collaboration, and review standards used for this repository.
 ## Code of Conduct
 
 This project adheres to the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md).
-Please report unacceptable behavior to [security@agentic-wallet.dev](mailto:security@agentic-wallet.dev).
+Please report unacceptable behavior to [security@sophia.dev](mailto:security@sophia.dev).
 
 ---
 
@@ -51,8 +51,8 @@ Please report unacceptable behavior to [security@agentic-wallet.dev](mailto:secu
 ### Installation
 
 ```bash
-git clone https://github.com/<your-username>/Agentic-wallet.git
-cd Agentic-wallet
+git clone https://github.com/<your-username>/Sophia.git
+cd Sophia
 npm install
 cd apps/frontend
 npm install
@@ -214,6 +214,6 @@ npm run build         # Build succeeds
 - Never commit secrets.
 - Never expose private keys.
 - Validate external input at boundaries.
-- Report vulnerabilities privately via `security@agentic-wallet.dev`.
+- Report vulnerabilities privately via `security@sophia.dev`.
 
 For full disclosure policy, see [SECURITY.md](SECURITY.md).

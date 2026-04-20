@@ -13,7 +13,8 @@
  */
 
 import { createLogger } from '../utils/logger.js';
-import { Result, success, failure, WalletInfo } from '../utils/types.js';
+import { Result, success, failure } from '../types/shared.js';
+import { WalletInfo } from '../types/internal.js';
 import { getWalletManager, WalletManager } from '../wallet/index.js';
 import { getAgentRegistry, AgentRegistry } from './agentRegistry.js';
 import { saveState, loadState } from '../utils/store.js';

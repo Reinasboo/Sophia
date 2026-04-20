@@ -1,13 +1,14 @@
 import type { Config } from 'tailwindcss';
 
 /**
- * Claude-Inspired Design System
+ * Bold Aggressive Design System
  *
- * A warm, calm, human-centered color palette with:
- * - Parchment backgrounds
- * - Muted amber accents
- * - Soft typography
- * - Premium feel without flashiness
+ * High-impact, modern palette:
+ * - Pure black backgrounds
+ * - Crisp white text
+ * - Electric magenta (#ff0080) primary
+ * - Neon cyan (#00d9ff) secondary
+ * - Maximum contrast and precision
  */
 
 const config: Config = {
@@ -19,86 +20,94 @@ const config: Config = {
   theme: {
     extend: {
       // ============================================
-      // COLOR PALETTE - Warm, calm, Claude-inspired
+      // COLOR PALETTE - Bold Aggressive
       // ============================================
       colors: {
-        // Background layers - warm parchment tones
+        // Background layers - pure black to dark charcoal
         background: {
-          DEFAULT: '#FAF9F7', // Warm off-white
-          secondary: '#F5F4F1', // Slightly darker
-          tertiary: '#EFEDE8', // Subtle depth
+          DEFAULT: '#000000', // Pure black
+          secondary: '#1a1a1a', // Very dark gray
+          tertiary: '#2d2d2d', // Dark gray
         },
-        // Surface cards - soft neutral
+        // Surface cards - deep black/charcoal
         surface: {
-          DEFAULT: '#FFFFFF', // Pure surface (only exception)
-          muted: '#F8F7F4', // Muted card
-          elevated: '#FEFEFE', // Elevated state
-          hover: '#F3F1ED', // Hover state
+          DEFAULT: '#0a0a0a', // Deep black
+          muted: '#000000', // Pure black
+          elevated: '#1a1a1a', // Charcoal
+          hover: '#2d2d2d', // Hover state
         },
-        // Primary accent - muted amber/terracotta
+        // Primary accent - electric magenta
         primary: {
-          DEFAULT: '#C4704B', // Warm terracotta
-          50: '#FDF8F6',
-          100: '#FAEFEB',
-          200: '#F5DED6',
-          300: '#EABFAD',
-          400: '#DA9A7C',
-          500: '#C4704B',
-          600: '#B25A3A',
-          700: '#954A30',
-          800: '#7A3F2B',
-          900: '#653628',
+          DEFAULT: '#ff0080',
+          50: '#ffe6f0',
+          100: '#ffcce1',
+          200: '#ff99c3',
+          300: '#ff66a5',
+          400: '#ff3387',
+          500: '#ff0080',
+          600: '#e60073',
+          700: '#cc0066',
+          800: '#b30059',
+          900: '#99004d',
         },
-        // Secondary accent - warm brown
+        // Secondary accent - neon cyan
         secondary: {
-          DEFAULT: '#8B7355', // Warm brown
-          50: '#FAF8F6',
-          100: '#F3EFE9',
-          200: '#E5DDD2',
-          300: '#D1C3B0',
-          400: '#B9A48A',
-          500: '#8B7355',
-          600: '#745D44',
-          700: '#5F4B38',
-          800: '#503F30',
-          900: '#44362A',
+          DEFAULT: '#00d9ff',
+          50: '#e0f7ff',
+          100: '#b3ecff',
+          200: '#80e1ff',
+          300: '#4dd6ff',
+          400: '#1acbff',
+          500: '#00d9ff',
+          600: '#00b8d4',
+          700: '#0097aa',
+          800: '#007680',
+          900: '#005560',
         },
-        // Border colors - soft warm grays
+        // Border colors - cyan and magenta with opacity
         border: {
-          DEFAULT: '#E8E5E0', // Subtle border
-          light: '#F0EDE8', // Very subtle
-          medium: '#D9D5CE', // Visible border
-          focus: '#C4704B40', // Focus ring
+          DEFAULT: '#333333', // Subtle border on black
+          light: '#1a1a1a', // Very subtle
+          medium: '#4d4d4d', // Visible border
+          focus: '#00d9ff40', // Cyan focus ring
         },
-        // Text colors - warm grays
+        // Text colors - white and grays
         text: {
-          primary: '#2D2A26', // Near-black warm
-          secondary: '#5C5650', // Medium emphasis
-          tertiary: '#8A847C', // Low emphasis
-          muted: '#B3ADA4', // Very low emphasis
-          inverse: '#FAF9F7', // On dark backgrounds
+          primary: '#ffffff', // Pure white
+          secondary: '#e0e0e0', // Light gray
+          tertiary: '#a0a0a0', // Medium gray
+          muted: '#606060', // Muted gray
+          inverse: '#000000', // On light backgrounds
         },
-        // Status colors - muted, not harsh
+        // Status colors - vibrant and contrasted
         status: {
-          success: '#6B8E6B', // Sage green
-          'success-bg': '#6B8E6B10',
-          warning: '#C2955C', // Muted gold
-          'warning-bg': '#C2955C10',
-          error: '#B87070', // Dusty rose
-          'error-bg': '#B8707010',
-          info: '#6B8A9A', // Slate blue
-          'info-bg': '#6B8A9A10',
-          idle: '#8A847C', // Neutral
-          'idle-bg': '#8A847C10',
+          success: '#00d964', // Bright green
+          'success-bg': '#00d96415',
+          warning: '#ffa500', // Bright orange
+          'warning-bg': '#ffa50015',
+          error: '#ff3b3b', // Bright red
+          'error-bg': '#ff3b3b15',
+          info: '#00d9ff', // Cyan
+          'info-bg': '#00d9ff15',
+          idle: '#808080', // Gray
+          'idle-bg': '#80808015',
         },
       },
       // ============================================
-      // TYPOGRAPHY - Editorial, humanist feel
+      // GRADIENTS - Brand spectrum (magenta → cyan)
+      // ============================================
+      backgroundImage: {
+        'gradient-brand-subtle': 'linear-gradient(135deg, rgba(255, 0, 128, 0.1) 0%, rgba(0, 217, 255, 0.1) 100%)',
+        'gradient-brand-accent': 'linear-gradient(135deg, #ff0080 0%, #00d9ff 100%)',
+        'gradient-brand-accent-dark': 'linear-gradient(135deg, rgba(255, 0, 128, 0.2) 0%, rgba(0, 217, 255, 0.2) 100%)',
+      },
+      // ============================================
+      // TYPOGRAPHY - Bold Modern: Syne + Space Mono
       // ============================================
       fontFamily: {
-        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+        sans: ['var(--font-sans)', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
         serif: ['Georgia', 'Cambria', 'Times New Roman', 'serif'],
-        mono: ['SF Mono', 'Consolas', 'Liberation Mono', 'monospace'],
+        mono: ['var(--font-mono)', 'SF Mono', 'Consolas', 'Liberation Mono', 'monospace'],
       },
       fontSize: {
         // Display sizes

@@ -19,7 +19,9 @@ import {
   TOKEN_PROGRAM_ID,
   ASSOCIATED_TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
-import { Result, success, failure } from '../utils/types.js';
+import { Result, success, failure } from '../types/index.js';
+import { InstructionDescriptor } from '../types/internal.js';
+import { toError } from '../utils/error-helpers.js';
 import { getSolanaClient } from './solana-client.js';
 import { createLogger } from '../utils/logger.js';
 
@@ -59,8 +61,13 @@ export async function buildMemoTransaction(
     const blockhashResult = await client.getRecentBlockhash();
     if (!blockhashResult.ok) return failure(blockhashResult.error);
 
+    const blockhash = blockhashResult.value;
+    if (!blockhash) {
+      return failure(new Error('Failed to fetch recent blockhash: returned empty'));
+    }
+
     const transaction = new Transaction({
-      recentBlockhash: blockhashResult.value,
+      recentBlockhash: blockhash,
       feePayer: signer,
     });
 
@@ -73,8 +80,8 @@ export async function buildMemoTransaction(
 
     return success(transaction);
   } catch (error) {
-    logger.error('Failed to build memo transaction', { error: String(error) });
-    return failure(error instanceof Error ? error : new Error(String(error)));
+    logger.error('Failed to build memo transaction', { error: toError(error).message });
+    return failure(toError(error));
   }
 }
 
@@ -95,10 +102,15 @@ export async function buildSolTransfer(
       return failure(blockhashResult.error);
     }
 
+    const blockhash = blockhashResult.value;
+    if (!blockhash) {
+      return failure(new Error('Failed to fetch recent blockhash: returned empty'));
+    }
+
     const lamports = Math.round(amount * LAMPORTS_PER_SOL);
 
     const transaction = new Transaction({
-      recentBlockhash: blockhashResult.value,
+      recentBlockhash: blockhash,
       feePayer: from,
     });
 
@@ -125,8 +137,8 @@ export async function buildSolTransfer(
 
     return success(transaction);
   } catch (error) {
-    logger.error('Failed to build SOL transfer', { error: String(error) });
-    return failure(error instanceof Error ? error : new Error(String(error)));
+    logger.error('Failed to build SOL transfer', { error: toError(error).message });
+    return failure(toError(error));
   }
 }
 
@@ -138,7 +150,7 @@ export async function buildTokenTransfer(
   mint: PublicKey,
   recipient: PublicKey,
   amount: bigint,
-  decimals: number,
+  _decimals: number,
   memo?: string
 ): Promise<Result<Transaction, Error>> {
   try {
@@ -148,6 +160,11 @@ export async function buildTokenTransfer(
     const blockhashResult = await client.getRecentBlockhash();
     if (!blockhashResult.ok) {
       return failure(blockhashResult.error);
+    }
+
+    const blockhash = blockhashResult.value;
+    if (!blockhash) {
+      return failure(new Error('Failed to fetch recent blockhash: returned empty'));
     }
 
     // Get source token account
@@ -169,7 +186,7 @@ export async function buildTokenTransfer(
     );
 
     const transaction = new Transaction({
-      recentBlockhash: blockhashResult.value,
+      recentBlockhash: blockhash,
       feePayer: owner,
     });
 
@@ -216,8 +233,8 @@ export async function buildTokenTransfer(
 
     return success(transaction);
   } catch (error) {
-    logger.error('Failed to build token transfer', { error: String(error) });
-    return failure(error instanceof Error ? error : new Error(String(error)));
+    logger.error('Failed to build token transfer', { error: toError(error).message });
+    return failure(toError(error));
   }
 }
 
@@ -239,6 +256,85 @@ export async function estimateFee(transaction: Transaction): Promise<Result<numb
     return success(fees.value / LAMPORTS_PER_SOL);
   } catch (error) {
     return failure(error instanceof Error ? error : new Error(String(error)));
+  }
+}
+
+/**
+ * Pre-flight transaction simulation
+ *
+ * Simulates a transaction before submission to catch errors early.
+ * Returns:
+ * - Success with logs if simulation passes
+ * - Failure with error details if simulation fails
+ *
+ * This prevents submitting transactions that will fail on-chain.
+ */
+export interface PreflightSimulationResult {
+  success: boolean;
+  logs: string[];
+  estimatedGasSol: number;
+  error?: string;
+}
+
+export async function preflightTransaction(
+  transaction: Transaction,
+  publicKey: PublicKey
+): Promise<Result<PreflightSimulationResult, Error>> {
+  try {
+    const client = getSolanaClient();
+    const connection = client.getConnection();
+
+    logger.debug('Running preflight simulation', {
+      signer: publicKey.toBase58(),
+    });
+
+    // Sign transaction for simulation
+    transaction.sign(publicKey as any); // Type coercion for simulation only
+
+    // Simulate the transaction
+    const simulationResult = await connection.simulateTransaction(transaction);
+
+    if (simulationResult.value.err) {
+      logger.warn('Preflight simulation failed', {
+        signer: publicKey.toBase58(),
+        error: simulationResult.value.err,
+      });
+
+      return success({
+        success: false,
+        logs: simulationResult.value.logs || [],
+        estimatedGasSol: 0,
+        error: JSON.stringify(simulationResult.value.err),
+      });
+    }
+
+    // Estimate fee from simulation
+    const feeEstimate = await estimateFee(transaction);
+    const estimatedGasSol = feeEstimate.ok ? feeEstimate.value : 0;
+
+    logger.debug('Preflight simulation passed', {
+      signer: publicKey.toBase58(),
+      logCount: simulationResult.value.logs?.length || 0,
+      estimatedGas: estimatedGasSol,
+    });
+
+    return success({
+      success: true,
+      logs: simulationResult.value.logs || [],
+      estimatedGasSol,
+    });
+  } catch (error) {
+    logger.error('Preflight simulation error', {
+      error: toError(error).message,
+    });
+
+    // Return as successful result with error flag (don't fail the entire operation)
+    return success({
+      success: false,
+      logs: [],
+      estimatedGasSol: 0,
+      error: toError(error).message,
+    });
   }
 }
 
@@ -307,20 +403,6 @@ export const KNOWN_PROGRAMS: Record<string, string> = {
 };
 
 /**
- * Instruction descriptor sent by the autonomous agent.
- * Each instruction targets a specific program with accounts and data.
- */
-export interface InstructionDescriptor {
-  programId: string; // base58 program address
-  keys: Array<{
-    pubkey: string; // base58
-    isSigner: boolean;
-    isWritable: boolean;
-  }>;
-  data: string; // base64-encoded instruction data
-}
-
-/**
  * Build a transaction from an array of arbitrary instruction descriptors.
  * The payer is the agent's wallet (set as feePayer).
  * This enables interaction with ANY Solana program — Pump.fun, Jupiter,
@@ -377,8 +459,8 @@ export async function buildArbitraryTransaction(
 
     return success(transaction);
   } catch (error) {
-    logger.error('Failed to build arbitrary transaction', { error: String(error) });
-    return failure(error instanceof Error ? error : new Error(String(error)));
+    logger.error('Failed to build arbitrary transaction', { error: toError(error).message });
+    return failure(toError(error));
   }
 }
 

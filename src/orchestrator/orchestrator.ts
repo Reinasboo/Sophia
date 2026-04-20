@@ -15,14 +15,14 @@ import { v4 as uuidv4 } from 'uuid';
 import {
   AgentInfo,
   AgentConfig,
+  AgentStatus,
   SystemStats,
   TransactionRecord,
-  TransactionType,
   Intent,
   Result,
   success,
   failure,
-} from '../utils/types.js';
+} from '../types/index.js';
 import { getConfig } from '../utils/config.js';
 import { createLogger } from '../utils/logger.js';
 import { getWalletManager, WalletManager } from '../wallet/index.js';
@@ -33,10 +33,6 @@ import {
   SolanaClient,
 } from '../rpc/index.js';
 import { BaseAgent, AgentContext, createAgent } from '../agent/index.js';
-import { AccumulatorAgent } from '../agent/accumulator-agent.js';
-import { DistributorAgent } from '../agent/distributor-agent.js';
-import { BalanceGuardAgent } from '../agent/balance-guard-agent.js';
-import { ScheduledPayerAgent } from '../agent/scheduled-payer-agent.js';
 import { getStrategyRegistry } from '../agent/strategy-registry.js';
 import { getIntentRouter } from '../integration/intentRouter.js';
 import type { SupportedIntentType } from '../integration/agentRegistry.js';
@@ -74,6 +70,8 @@ export class Orchestrator {
   private solanaClient: SolanaClient;
   private transactions: TransactionRecord[] = [];
   private readonly maxTransactions: number = 10000;
+  // Index for O(1) access to transactions by walletId
+  private transactionsByWalletId: Map<string, TransactionRecord[]> = new Map();
   private startTime: Date;
   private loopInterval: number;
   private maxAgents: number;
@@ -103,8 +101,9 @@ export class Orchestrator {
     setTimeout(() => {
       for (const managed of this.agents.values()) {
         const agent = managed.agent;
-        if (typeof (agent as any).resetDailyCounters === 'function') {
-          (agent as any).resetDailyCounters();
+        // Check if agent has resetDailyCounters method without unsafe casting
+        if ('resetDailyCounters' in agent && typeof agent.resetDailyCounters === 'function') {
+          agent.resetDailyCounters();
         }
       }
       logger.info('Agent daily counters reset');
@@ -223,11 +222,89 @@ export class Orchestrator {
   }
 
   /**
-   * Run a single agent cycle
+   * Pause an agent's decision cycles (reversible, doesn't stop the service)
+   */
+  pauseAgent(agentId: string): Result<true, Error> {
+    const managed = this.agents.get(agentId);
+    if (!managed) {
+      return failure(new Error(`Agent not found: ${agentId}`));
+    }
+
+    const currentStatus = managed.agent.getStatus();
+    if (currentStatus === 'paused') {
+      return failure(new Error('Agent is already paused'));
+    }
+
+    managed.agent.setStatus('paused');
+    logger.info('Agent paused', { agentId, previousStatus: currentStatus });
+
+    // Emit event
+    eventBus.emit({
+      id: require('uuid').v4(),
+      type: 'agent_status_changed',
+      timestamp: new Date(),
+      agentId,
+      previousStatus: currentStatus as AgentStatus,
+      newStatus: 'paused' as AgentStatus,
+    });
+
+    this.saveToStore();
+    return success(true);
+  }
+
+  /**
+   * Resume an agent's decision cycles from pause state
+   */
+  resumeAgent(agentId: string): Result<true, Error> {
+    const managed = this.agents.get(agentId);
+    if (!managed) {
+      return failure(new Error(`Agent not found: ${agentId}`));
+    }
+
+    const currentStatus = managed.agent.getStatus();
+    if (currentStatus !== 'paused') {
+      return failure(new Error(`Cannot resume agent with status "${currentStatus}" (must be "paused")`));
+    }
+
+    managed.agent.setStatus('idle');
+    logger.info('Agent resumed', { agentId, previousStatus: currentStatus });
+
+    // Emit event
+    eventBus.emit({
+      id: require('uuid').v4(),
+      type: 'agent_status_changed',
+      timestamp: new Date(),
+      agentId,
+      previousStatus: currentStatus as AgentStatus,
+      newStatus: 'idle' as AgentStatus,
+    });
+
+    this.saveToStore();
+    return success(true);
+  }
+
+  /**
+   * Execute a single agent decision cycle.
+   * 
+   * Performs the following steps:
+   * 1. Check if previous cycle is still running (prevent overlap)
+   * 2. Build execution context (balances, constraints, historical state)
+   * 3. Invoke agent.think() to get decision
+   * 4. If agent decided to act, execute the intent
+   * 5. Update agent status and record action
+   * 
+   * Handles errors gracefully by setting agent status to 'error'.
+   * Uses cycleInProgress flag to prevent concurrent cycles.
+   * 
+   * @param agentId - UUID of the agent to run
+   * @returns Promise that resolves when cycle completes or is skipped
    */
   private async runAgentCycle(agentId: string): Promise<void> {
     const managed = this.agents.get(agentId);
-    if (!managed) return;
+    if (!managed) {
+      logger.warn('Agent not found for cycle', { agentId });
+      return;
+    }
 
     // Prevent overlapping cycles if previous cycle is still running
     if (managed.cycleInProgress) {
@@ -237,7 +314,14 @@ export class Orchestrator {
 
     const { agent } = managed;
 
-    if (agent.getStatus() === 'stopped') {
+    const agentStatus = agent.getStatus();
+    if (agentStatus === 'stopped') {
+      return;
+    }
+
+    // Skip cycle if agent is paused (but don't mark as error)
+    if (agentStatus === 'paused') {
+      logger.debug('Agent cycle skipped, agent is paused', { agentId });
       return;
     }
 
@@ -251,11 +335,21 @@ export class Orchestrator {
       const context = await this.buildAgentContext(agent);
       if (!context.ok) {
         agent.setStatus('error', context.error.message);
+        agent.recordAction(false);
         return;
       }
 
-      // Let agent think
-      const decision = await agent.think(context.value);
+      // Let agent think - wrap in error boundary
+      let decision;
+      try {
+        decision = await agent.think(context.value);
+      } catch (thinkError) {
+        const errMsg = thinkError instanceof Error ? thinkError.message : String(thinkError);
+        logger.error('Agent think() threw error', { agentId, error: errMsg });
+        agent.setStatus('error', `Think failed: ${errMsg}`);
+        agent.recordAction(false);
+        return;
+      }
 
       // Emit action event
       eventBus.emit({
@@ -267,17 +361,28 @@ export class Orchestrator {
         details: { reasoning: decision.reasoning },
       });
 
+      // Execute intent if agent decided to act
       if (decision.shouldAct && decision.intent) {
         agent.setStatus('executing');
-        await this.executeIntent(agent, decision.intent, context.value.balance.sol);
+        
+        try {
+          await this.executeIntent(agent, decision.intent, context.value.balance.sol);
+          agent.recordAction(true);
+        } catch (executeError) {
+          const errMsg = executeError instanceof Error ? executeError.message : String(executeError);
+          logger.error('Intent execution threw error', { agentId, error: errMsg });
+          agent.setStatus('error', `Execution failed: ${errMsg}`);
+          agent.recordAction(false);
+        }
+      } else {
+        agent.recordAction(false);
       }
 
-      agent.recordAction(decision.shouldAct);
       agent.setStatus('idle');
     } catch (error) {
-      logger.error('Agent cycle failed', {
+      logger.error('Critical error in agent cycle', {
         agentId,
-        error: String(error),
+        error: error instanceof Error ? error.message : String(error),
       });
       agent.setStatus('error', String(error));
     } finally {
@@ -307,11 +412,9 @@ export class Orchestrator {
     const tokenBalancesResult = await this.solanaClient.getTokenBalances(publicKeyResult.value);
     const tokenBalances = tokenBalancesResult.ok ? tokenBalancesResult.value : [];
 
-    // Get recent transactions for this agent
-    const recentTxs = this.transactions
-      .filter((tx) => tx.walletId === walletId)
-      .slice(-10)
-      .map((tx) => tx.signature ?? tx.id);
+    // Get recent transactions for this agent using index (O(1) lookup + slice)
+    const walletTxs = this.transactionsByWalletId.get(walletId) ?? [];
+    const recentTxs = walletTxs.slice(-10).map((tx) => tx.signature ?? tx.id);
 
     return success({
       walletPublicKey: publicKeyResult.value.toBase58(),
@@ -336,6 +439,98 @@ export class Orchestrator {
     autonomous: 'AUTONOMOUS',
   };
 
+  /**
+   * Execute intent based on type and track transaction result
+   */
+  private async executeAndTrackIntent(
+    agent: BaseAgent,
+    intent: Intent,
+    intentId: string,
+    createdAt: Date
+  ): Promise<void> {
+    const txCountBefore = this.transactions.length;
+
+    // Execute based on intent type
+    switch (intent.type) {
+      case 'airdrop':
+        await this.executeAirdrop(agent, intent.amount);
+        break;
+
+      case 'transfer_sol':
+        await this.executeTransfer(agent, intent.recipient, intent.amount);
+        break;
+
+      case 'transfer_token':
+        await this.executeTokenTransfer(agent, intent.mint, intent.recipient, intent.amount);
+        break;
+
+      case 'check_balance': {
+        // Balance is already in context — record as executed
+        const context = await this.buildAgentContext(agent);
+        const balance = context.ok ? context.value.balance.sol : 0;
+        this.recordIntentHistory(
+          intentId,
+          agent.id,
+          intent,
+          'executed',
+          { balance },
+          undefined,
+          createdAt
+        );
+        return; // early return; no tx to inspect
+      }
+
+      case 'autonomous':
+        // Autonomous intent — delegate to the sub-action with NO policy gate.
+        await this.executeAutonomousIntent(agent, intent);
+        break;
+
+      default:
+        logger.warn('Unknown intent type', { intent });
+        return;
+    }
+
+    // Inspect the transaction that was created during execution and record result
+    this.trackTransactionResult(agent, intent, intentId, txCountBefore, createdAt);
+  }
+
+  /**
+   * Track and record transaction result for an executed intent
+   */
+  private trackTransactionResult(
+    agent: BaseAgent,
+    intent: Intent,
+    intentId: string,
+    txCountBefore: number,
+    createdAt: Date
+  ): void {
+    const newTxs = this.transactions.slice(txCountBefore);
+    const lastTx = newTxs.length > 0 ? newTxs[newTxs.length - 1] : undefined;
+
+    if (lastTx) {
+      const status = lastTx.status === 'confirmed' ? ('executed' as const) : ('rejected' as const);
+      const result =
+        lastTx.status === 'confirmed'
+          ? { signature: lastTx.signature, amount: lastTx.amount, recipient: lastTx.recipient }
+          : undefined;
+      const error = lastTx.status === 'failed' ? lastTx.error : undefined;
+      this.recordIntentHistory(intentId, agent.id, intent, status, result, error, createdAt);
+    } else {
+      this.recordIntentHistory(
+        intentId,
+        agent.id,
+        intent,
+        'rejected',
+        undefined,
+        'Execution failed — no transaction created',
+        createdAt
+      );
+    }
+  }
+
+  /**
+   * Execute a validated intent
+   */
   private async executeIntent(
     agent: BaseAgent,
     intent: Intent,
@@ -370,72 +565,8 @@ export class Orchestrator {
       return;
     }
 
-    // Snapshot transaction count so we can find the resulting tx after execution
-    const txCountBefore = this.transactions.length;
-
-    // Execute based on intent type
-    switch (intent.type) {
-      case 'airdrop':
-        await this.executeAirdrop(agent, intent.amount);
-        break;
-
-      case 'transfer_sol':
-        await this.executeTransfer(agent, intent.recipient, intent.amount);
-        break;
-
-      case 'transfer_token':
-        await this.executeTokenTransfer(agent, intent.mint, intent.recipient, intent.amount);
-        break;
-
-      case 'check_balance':
-        // Balance is already in context — record as executed
-        this.recordIntentHistory(
-          intentId,
-          agent.id,
-          intent,
-          'executed',
-          { balance: currentBalance },
-          undefined,
-          createdAt
-        );
-        return; // early return; no tx to inspect
-
-      case 'autonomous':
-        // Autonomous intent — delegate to the sub-action with NO policy gate.
-        // The wallet-manager already skips policy for type === 'autonomous'.
-        await this.executeAutonomousIntent(agent, intent, currentBalance);
-        break;
-
-      default:
-        logger.warn('Unknown intent type', { intent });
-        return;
-    }
-
-    // Inspect the transaction that was created during execution
-    const newTxs = this.transactions.slice(txCountBefore);
-    const lastTx = newTxs.length > 0 ? newTxs[newTxs.length - 1] : undefined;
-
-    if (lastTx) {
-      const status = lastTx.status === 'confirmed' ? ('executed' as const) : ('rejected' as const);
-      const result =
-        lastTx.status === 'confirmed'
-          ? { signature: lastTx.signature, amount: lastTx.amount, recipient: lastTx.recipient }
-          : undefined;
-      const error = lastTx.status === 'failed' ? lastTx.error : undefined;
-      this.recordIntentHistory(intentId, agent.id, intent, status, result, error, createdAt);
-    } else {
-      // Execution method returned early without creating a transaction
-      // (e.g. getPublicKey failure). Still record the intent so it isn't silently dropped.
-      this.recordIntentHistory(
-        intentId,
-        agent.id,
-        intent,
-        'rejected',
-        undefined,
-        'Execution failed — no transaction created',
-        createdAt
-      );
-    }
+    // Execute the intent and track the result
+    await this.executeAndTrackIntent(agent, intent, intentId, createdAt);
   }
 
   /**
@@ -452,11 +583,12 @@ export class Orchestrator {
     createdAt?: Date
   ): void {
     const mappedType = Orchestrator.INTENT_TYPE_MAP[intent.type] ?? 'QUERY_BALANCE';
+    const params: Record<string, unknown> = { ...intent };
     getIntentRouter().recordIntent({
       intentId,
       agentId,
       type: mappedType as SupportedIntentType,
-      params: { ...intent } as unknown as Record<string, unknown>,
+      params,
       status,
       result,
       error,
@@ -812,8 +944,7 @@ export class Orchestrator {
    */
   private async executeAutonomousIntent(
     agent: BaseAgent,
-    intent: import('../utils/types.js').AutonomousIntent,
-    currentBalance: number
+    intent: import('../utils/types.js').AutonomousIntent
   ): Promise<void> {
     const { action, params } = intent;
 
@@ -902,8 +1033,22 @@ export class Orchestrator {
   private trimTransactions(): void {
     if (this.transactions.length > this.maxTransactions) {
       this.transactions = this.transactions.slice(-this.maxTransactions);
+      // Rebuild index after pruning
+      this.rebuildTransactionIndex();
     }
     this.saveTransactions();
+  }
+
+  /**
+   * Rebuild the transactionsByWalletId index from the transactions array
+   */
+  private rebuildTransactionIndex(): void {
+    this.transactionsByWalletId.clear();
+    for (const tx of this.transactions) {
+      const walletTxs = this.transactionsByWalletId.get(tx.walletId) ?? [];
+      walletTxs.push(tx);
+      this.transactionsByWalletId.set(tx.walletId, walletTxs);
+    }
   }
 
   private saveTransactions(): void {
@@ -914,12 +1059,15 @@ export class Orchestrator {
     const saved = loadState<TransactionRecord[]>('transactions');
     if (!saved || saved.length === 0) return;
     for (const tx of saved) {
-      this.transactions.push({
+      const fullTx: TransactionRecord = {
         ...tx,
         createdAt: new Date(tx.createdAt),
         confirmedAt: tx.confirmedAt ? new Date(tx.confirmedAt) : undefined,
-      });
+      };
+      this.transactions.push(fullTx);
     }
+    // Rebuild index after loading
+    this.rebuildTransactionIndex();
     logger.info('Transaction history restored from disk', { count: this.transactions.length });
   }
 
@@ -1054,7 +1202,7 @@ export class Orchestrator {
   shutdown(): void {
     logger.info('Shutting down orchestrator');
 
-    for (const [agentId, managed] of this.agents) {
+    for (const [_agentId, managed] of this.agents) {
       if (managed.intervalId) {
         clearInterval(managed.intervalId);
       }

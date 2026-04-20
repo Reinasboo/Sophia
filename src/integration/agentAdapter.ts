@@ -15,8 +15,8 @@
  */
 
 import { createLogger } from '../utils/logger.js';
-import { Result, success, failure } from '../utils/types.js';
-import { ExternalAgentInfo, ExternalAgentType, SupportedIntentType } from './agentRegistry.js';
+import { Result, success, failure } from '../types/shared.js';
+import { ExternalAgentInfo, SupportedIntentType } from './agentRegistry.js';
 import { IntentResult } from './intentRouter.js';
 
 const logger = createLogger('BYOA_ADAPTER');

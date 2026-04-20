@@ -57,10 +57,10 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
           className={cn(
             'h-1.5 rounded-full transition-all duration-300',
             i + 1 === current
-              ? 'w-6 bg-primary-500'
+              ? 'w-6 bg-cyan-500'
               : i + 1 < current
-                ? 'w-1.5 bg-primary-300'
-                : 'w-1.5 bg-border-medium'
+                ? 'w-1.5 bg-cyan-400'
+                : 'w-1.5 bg-slate-600'
           )}
         />
       ))}
@@ -86,38 +86,41 @@ function FieldInput({
             type="checkbox"
             checked={Boolean(value)}
             onChange={(e) => onChange(e.target.checked)}
-            className="w-4 h-4 rounded border-border-medium text-primary-500 focus:ring-primary-300"
+            className="w-4 h-4 rounded border border-slate-600 text-cyan-500 focus:ring-cyan-500 accent-cyan-500"
           />
           <div>
-            <span className="text-body-sm text-text-primary">{field.label}</span>
-            {field.description && <p className="text-micro text-text-muted">{field.description}</p>}
+            <span className="text-sm font-medium text-slate-50">{field.label}</span>
+            {field.description && <p className="text-xs text-slate-400">{field.description}</p>}
           </div>
         </label>
       );
     case 'string':
       return (
         <div>
-          <label className="label">{field.label}</label>
+          <label htmlFor={`field-${field.key}`} className="block text-sm font-medium text-slate-50 mb-2">{field.label}</label>
           {field.description && (
-            <p className="text-micro text-text-muted mb-1">{field.description}</p>
+            <p id={`field-${field.key}-desc`} className="text-xs text-slate-400 mb-1">{field.description}</p>
           )}
           <input
+            id={`field-${field.key}`}
             type="text"
             value={String(value ?? '')}
             onChange={(e) => onChange(e.target.value)}
             placeholder={field.default !== undefined ? String(field.default) : ''}
-            className="input"
+            aria-describedby={field.description ? `field-${field.key}-desc` : undefined}
+            className="w-full bg-slate-800/50 border border-slate-700/50 hover:border-cyan-500/30 focus:border-cyan-500 text-slate-50 placeholder:text-slate-500 rounded-lg px-3 py-2 transition-all"
           />
         </div>
       );
     case 'string[]':
       return (
         <div>
-          <label className="label">{field.label}</label>
+          <label htmlFor={`field-${field.key}`} className="block text-sm font-medium text-slate-50 mb-2">{field.label}</label>
           {field.description && (
-            <p className="text-micro text-text-muted mb-1">{field.description}</p>
+            <p id={`field-${field.key}-desc`} className="text-xs text-slate-400 mb-1">{field.description}</p>
           )}
           <input
+            id={`field-${field.key}`}
             type="text"
             value={Array.isArray(value) ? (value as string[]).join(', ') : String(value ?? '')}
             onChange={(e) =>
@@ -128,8 +131,9 @@ function FieldInput({
                   .filter(Boolean)
               )
             }
+            aria-describedby={field.description ? `field-${field.key}-desc` : undefined}
             placeholder="Comma-separated values"
-            className="input"
+            className="w-full bg-slate-800/50 border border-slate-700/50 hover:border-cyan-500/30 focus:border-cyan-500 text-slate-50 placeholder:text-slate-500 rounded-lg px-3 py-2 transition-all"
           />
         </div>
       );
@@ -137,16 +141,18 @@ function FieldInput({
       // number (default)
       return (
         <div>
-          <label className="label">{field.label}</label>
+          <label htmlFor={`field-${field.key}`} className="block text-sm font-medium text-slate-50 mb-2">{field.label}</label>
           {field.description && (
-            <p className="text-micro text-text-muted mb-1">{field.description}</p>
+            <p id={`field-${field.key}-desc`} className="text-xs text-slate-400 mb-1">{field.description}</p>
           )}
           <input
+            id={`field-${field.key}`}
             type="number"
             value={value !== undefined && value !== '' ? Number(value) : ''}
             onChange={(e) => onChange(e.target.value === '' ? undefined : Number(e.target.value))}
             placeholder={field.default !== undefined ? String(field.default) : ''}
-            className="input"
+            aria-describedby={field.description ? `field-${field.key}-desc` : undefined}
+            className="w-full bg-slate-800/50 border border-slate-700/50 hover:border-cyan-500/30 focus:border-cyan-500 text-slate-50 placeholder:text-slate-500 rounded-lg px-3 py-2 transition-all"
             step="any"
           />
         </div>
@@ -198,6 +204,19 @@ export function CreateAgentModal({ isOpen, onClose, onCreated }: CreateAgentModa
     }
     setStrategyParams(defaults);
   }, [currentStrategyDef]);
+
+  // Handle Escape key to close modal
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   const canAdvance = useCallback((): boolean => {
     switch (step) {
@@ -267,7 +286,7 @@ export function CreateAgentModal({ isOpen, onClose, onCreated }: CreateAgentModa
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={onClose}
-            className="fixed inset-0 bg-text-primary/20 backdrop-blur-sm z-50"
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50"
           />
 
           {/* Modal */}
@@ -278,11 +297,11 @@ export function CreateAgentModal({ isOpen, onClose, onCreated }: CreateAgentModa
             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
             className="fixed left-1/2 top-[3vh] -translate-x-1/2 z-50 w-full max-w-lg px-4"
           >
-            <div className="bg-surface rounded-2xl shadow-lg border border-border flex flex-col max-h-[94vh]">
+            <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl shadow-2xl border border-slate-700/50 flex flex-col max-h-[94vh]">
               {/* Header */}
-              <div className="flex items-center justify-between px-6 py-5 border-b border-border-light shrink-0">
+              <div className="flex items-center justify-between px-6 py-5 border-b border-slate-700/50 shrink-0">
                 <div>
-                  <h2 className="text-heading-sm text-text-primary">
+                  <h2 className="text-lg font-semibold text-slate-50">
                     Create Agent &mdash; {stepTitles[step - 1]}
                   </h2>
                   <div className="mt-2">
@@ -291,9 +310,10 @@ export function CreateAgentModal({ isOpen, onClose, onCreated }: CreateAgentModa
                 </div>
                 <button
                   onClick={onClose}
-                  className="p-2 -mr-2 rounded-lg hover:bg-background-secondary transition-colors"
+                  aria-label="Close agent creation dialog"
+                  className="p-2 -mr-2 rounded-lg hover:bg-slate-700/50 transition-colors"
                 >
-                  <X className="w-5 h-5 text-text-tertiary" />
+                  <X className="w-5 h-5 text-slate-400 hover:text-slate-300" />
                 </button>
               </div>
 
@@ -310,17 +330,19 @@ export function CreateAgentModal({ isOpen, onClose, onCreated }: CreateAgentModa
                       transition={{ duration: 0.15 }}
                       className="space-y-4"
                     >
-                      <label className="label">Agent Name</label>
+                      <label htmlFor="agent-name" className="block text-sm font-medium text-slate-50 mb-2">Agent Name</label>
                       <input
+                        id="agent-name"
                         type="text"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && canAdvance() && next()}
                         placeholder="e.g., Treasury Manager"
-                        className="input"
+                        aria-describedby="agent-name-help"
+                        className="w-full bg-slate-800/50 border border-slate-700/50 hover:border-cyan-500/30 focus:border-cyan-500 text-slate-50 placeholder:text-slate-500 rounded-lg px-3 py-2 transition-all"
                         autoFocus
                       />
-                      <p className="text-caption text-text-muted">
+                      <p id="agent-name-help" className="text-xs text-slate-400 mt-2">
                         Choose a memorable name for your agent. You can change it later.
                       </p>
                     </motion.div>
@@ -336,11 +358,11 @@ export function CreateAgentModal({ isOpen, onClose, onCreated }: CreateAgentModa
                       transition={{ duration: 0.15 }}
                     >
                       {strategiesLoading ? (
-                        <p className="text-text-muted text-center py-8">Loading strategies…</p>
+                        <p className="text-slate-400 text-center py-8">Loading strategies…</p>
                       ) : (
                         <div className="grid grid-cols-2 gap-3">
                           {strategies.map((s) => {
-                            const Icon = iconMap[s.icon] ?? Zap;
+                            const Icon = iconMap[s.icon ?? ''] ?? Zap;
                             const isSelected = selectedStrategy === s.name;
                             return (
                               <button
@@ -353,32 +375,32 @@ export function CreateAgentModal({ isOpen, onClose, onCreated }: CreateAgentModa
                                 className={cn(
                                   'p-4 rounded-xl border-2 transition-all duration-200 text-left',
                                   isSelected
-                                    ? 'border-primary-400 bg-primary-50'
-                                    : 'border-border hover:border-border-medium bg-background'
+                                    ? 'border-cyan-500/50 bg-cyan-500/10'
+                                    : 'border-slate-700/50 hover:border-slate-600 bg-slate-800/30'
                                 )}
                               >
                                 <div
                                   className={cn(
                                     'w-8 h-8 rounded-lg flex items-center justify-center mb-3',
-                                    isSelected ? 'bg-primary-100' : 'bg-background-tertiary'
+                                    isSelected ? 'bg-cyan-500/20' : 'bg-slate-700/30'
                                   )}
                                 >
                                   <Icon
                                     className={cn(
                                       'w-4 h-4',
-                                      isSelected ? 'text-primary-600' : 'text-text-tertiary'
+                                      isSelected ? 'text-cyan-400' : 'text-slate-500'
                                     )}
                                   />
                                 </div>
                                 <h3
                                   className={cn(
-                                    'text-body-sm font-medium mb-0.5',
-                                    isSelected ? 'text-primary-700' : 'text-text-primary'
+                                    'text-sm font-medium mb-0.5',
+                                    isSelected ? 'text-cyan-300' : 'text-slate-50'
                                   )}
                                 >
                                   {s.label}
                                 </h3>
-                                <p className="text-micro text-text-muted line-clamp-2">
+                                <p className="text-xs text-slate-400 line-clamp-2">
                                   {s.description}
                                 </p>
                               </button>
@@ -400,7 +422,7 @@ export function CreateAgentModal({ isOpen, onClose, onCreated }: CreateAgentModa
                       className="space-y-4"
                     >
                       {currentStrategyDef && currentStrategyDef.fields.length > 0 ? (
-                        currentStrategyDef.fields.map((field) => (
+                        currentStrategyDef.fields.map((field: any) => (
                           <FieldInput
                             key={field.key}
                             field={field}
@@ -411,7 +433,7 @@ export function CreateAgentModal({ isOpen, onClose, onCreated }: CreateAgentModa
                           />
                         ))
                       ) : (
-                        <p className="text-text-muted text-center py-8">
+                        <p className="text-slate-400 text-center py-8">
                           This strategy has no configurable parameters.
                         </p>
                       )}
@@ -433,40 +455,40 @@ export function CreateAgentModal({ isOpen, onClose, onCreated }: CreateAgentModa
                           type="checkbox"
                           checked={execEnabled}
                           onChange={(e) => setExecEnabled(e.target.checked)}
-                          className="w-4 h-4 rounded border-border-medium text-primary-500 focus:ring-primary-300"
+                          className="w-4 h-4 rounded border border-slate-600 text-cyan-500 focus:ring-cyan-500 accent-cyan-500"
                         />
                         <div>
-                          <span className="text-body-sm font-medium text-text-primary">
+                          <span className="text-sm font-medium text-slate-50">
                             Start agent immediately
                           </span>
-                          <p className="text-micro text-text-muted">
+                          <p className="text-xs text-slate-400">
                             If unchecked the agent is created in a paused state.
                           </p>
                         </div>
                       </label>
 
                       <div>
-                        <label className="label">Cycle Interval (ms)</label>
+                        <label className="block text-sm font-medium text-slate-50 mb-2">Cycle Interval (ms)</label>
                         <input
                           type="number"
                           value={cycleInterval}
                           onChange={(e) => setCycleInterval(Number(e.target.value) || 0)}
-                          className="input"
+                          className="w-full bg-slate-800/50 border border-slate-700/50 hover:border-cyan-500/30 focus:border-cyan-500 text-slate-50 placeholder:text-slate-500 rounded-lg px-3 py-2 transition-all"
                           min={1000}
                           step={1000}
                         />
-                        <p className="text-micro text-text-muted mt-1">
+                        <p className="text-xs text-slate-400 mt-1">
                           How often the agent executes its strategy cycle.
                         </p>
                       </div>
 
                       <div>
-                        <label className="label">Max Actions Per Day</label>
+                        <label className="block text-sm font-medium text-slate-50 mb-2">Max Actions Per Day</label>
                         <input
                           type="number"
                           value={maxActions}
                           onChange={(e) => setMaxActions(Number(e.target.value) || 0)}
-                          className="input"
+                          className="w-full bg-slate-800/50 border border-slate-700/50 hover:border-cyan-500/30 focus:border-cyan-500 text-slate-50 placeholder:text-slate-500 rounded-lg px-3 py-2 transition-all"
                           min={1}
                         />
                       </div>
@@ -483,7 +505,7 @@ export function CreateAgentModal({ isOpen, onClose, onCreated }: CreateAgentModa
                       transition={{ duration: 0.15 }}
                       className="space-y-4"
                     >
-                      <div className="rounded-xl border border-border-light bg-background p-4 space-y-3">
+                      <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-4 space-y-3">
                         <Row label="Name" value={name} />
                         <Row
                           label="Strategy"
@@ -494,10 +516,10 @@ export function CreateAgentModal({ isOpen, onClose, onCreated }: CreateAgentModa
                         <Row label="Max actions/day" value={String(maxActions)} />
                         {currentStrategyDef && currentStrategyDef.fields.length > 0 && (
                           <>
-                            <div className="border-t border-border-light pt-2">
-                              <span className="text-micro text-text-tertiary">Parameters</span>
+                            <div className="border-t border-slate-700/50 pt-2">
+                              <span className="text-xs text-slate-400">Parameters</span>
                             </div>
-                            {currentStrategyDef.fields.map((f) => (
+                            {currentStrategyDef.fields.map((f: any) => (
                               <Row
                                 key={f.key}
                                 label={f.label}
@@ -517,21 +539,21 @@ export function CreateAgentModal({ isOpen, onClose, onCreated }: CreateAgentModa
 
                 {/* Error */}
                 {error && (
-                  <div className="mt-4 p-3 bg-status-error-bg rounded-lg border border-status-error/20">
-                    <p className="text-body-sm text-status-error">{error}</p>
+                  <div className="mt-4 p-3 bg-red-500/10 rounded-lg border border-red-500/30">
+                    <p className="text-sm text-red-300">{error}</p>
                   </div>
                 )}
               </div>
 
               {/* Actions — always pinned at bottom */}
-              <div className="flex items-center gap-3 px-6 py-4 border-t border-border-light bg-background-secondary/30 rounded-b-2xl shrink-0">
+              <div className="flex items-center gap-3 px-6 py-4 border-t border-slate-700/50 bg-slate-800/20 rounded-b-2xl shrink-0">
                 {step > 1 ? (
-                  <button onClick={back} className="btn btn-secondary" disabled={loading}>
+                  <button onClick={back} className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-slate-50 bg-slate-800/50 hover:bg-slate-700 border border-slate-700/50 hover:border-slate-600 rounded-lg transition-all inline-flex items-center gap-2 disabled:opacity-50" disabled={loading}>
                     <ChevronLeft className="w-4 h-4" />
                     Back
                   </button>
                 ) : (
-                  <button onClick={onClose} className="btn btn-secondary" disabled={loading}>
+                  <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-slate-50 bg-slate-800/50 hover:bg-slate-700 border border-slate-700/50 hover:border-slate-600 rounded-lg transition-all disabled:opacity-50" disabled={loading}>
                     Cancel
                   </button>
                 )}
@@ -540,11 +562,11 @@ export function CreateAgentModal({ isOpen, onClose, onCreated }: CreateAgentModa
 
                 <button
                   onClick={next}
-                  className="btn btn-primary"
+                  className="px-4 py-2 text-sm font-medium bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 hover:border-cyan-500/50 text-cyan-300 rounded-lg transition-all inline-flex items-center gap-2 hover:bg-cyan-500/30 disabled:opacity-50"
                   disabled={!canAdvance() || loading}
                 >
                   {loading ? (
-                    <div className="w-4 h-4 border-2 border-text-inverse/30 border-t-text-inverse rounded-full animate-spin" />
+                    <div className="w-4 h-4 border-2 border-cyan-400/30 border-t-cyan-400 rounded-full animate-spin" />
                   ) : step === TOTAL_STEPS ? (
                     <>
                       <Bot className="w-4 h-4" />
@@ -570,8 +592,8 @@ export function CreateAgentModal({ isOpen, onClose, onCreated }: CreateAgentModa
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-caption text-text-muted">{label}</span>
-      <span className="text-body-sm text-text-primary font-medium">{value}</span>
+      <span className="text-xs text-slate-400">{label}</span>
+      <span className="text-sm text-slate-50 font-medium">{value}</span>
     </div>
   );
 }

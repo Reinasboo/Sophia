@@ -15,10 +15,9 @@ import {
   VersionedTransaction,
   TransactionSignature,
   LAMPORTS_PER_SOL,
-  Commitment,
   SendOptions,
 } from '@solana/web3.js';
-import { getAssociatedTokenAddress, getAccount, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import {
   Result,
   success,
@@ -26,9 +25,11 @@ import {
   BalanceInfo,
   TokenBalance,
   TransactionStatus,
-} from '../utils/types.js';
+} from '../types/index.js';
 import { getConfig } from '../utils/config.js';
+import { toError } from '../utils/error-helpers.js';
 import { createLogger } from '../utils/logger.js';
+import { getAgentContextCache } from '../utils/agent-context-cache.js';
 
 const logger = createLogger('RPC');
 
@@ -45,7 +46,6 @@ interface TransactionResult {
 export class SolanaClient {
   private connection: Connection;
   private maxRetries: number;
-  private confirmationTimeout: number;
 
   constructor() {
     const config = getConfig();
@@ -56,7 +56,6 @@ export class SolanaClient {
     });
 
     this.maxRetries = config.MAX_RETRIES;
-    this.confirmationTimeout = config.CONFIRMATION_TIMEOUT_MS;
 
     logger.info('Solana client initialized', {
       rpcUrl: config.SOLANA_RPC_URL,
@@ -65,7 +64,61 @@ export class SolanaClient {
   }
 
   /**
-   * Get connection for advanced operations
+   * Retry helper with exponential backoff + jitter
+   * Attempts an operation multiple times with increasing delays and random jitter
+   * to prevent thundering herd problem in distributed scenarios
+   */
+  private async withRetry<T>(
+    operation: () => Promise<T>,
+    operationName: string
+  ): Promise<Result<T, Error>> {
+    let lastError: Error | null = null;
+
+    for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
+      try {
+        const result = await operation();
+        if (attempt > 1) {
+          logger.info(`${operationName} succeeded after ${attempt} attempts`);
+        }
+        return success(result);
+      } catch (error) {
+        lastError = toError(error);
+        const isLastAttempt = attempt === this.maxRetries;
+
+        if (isLastAttempt) {
+          logger.error(
+            `${operationName} failed (attempt ${attempt}/${this.maxRetries})`,
+            { error: lastError.message }
+          );
+        } else {
+          logger.warn(
+            `${operationName} failed (attempt ${attempt}/${this.maxRetries})`,
+            { error: lastError.message }
+          );
+        }
+
+        if (!isLastAttempt) {
+          // Exponential backoff with jitter: prevents thundering herd
+          // Base: 100ms, 200ms, 400ms, 800ms...
+          // Jitter: +/- 20% randomization
+          const baseDelayMs = 100 * Math.pow(2, attempt - 1);
+          const jitterRange = baseDelayMs * 0.2; // 20% jitter
+          const jitter = Math.random() * jitterRange - jitterRange / 2;
+          const delayMs = Math.max(baseDelayMs + jitter, 50); // Minimum 50ms
+          await new Promise(resolve => setTimeout(resolve, delayMs));
+        }
+      }
+    }
+
+    return failure(
+      lastError ||
+        new Error(`${operationName} failed after ${this.maxRetries} attempts`)
+    );
+  }
+
+  /**
+   * Get singleton connection for advanced operations.
+   * Reuses the same Connection instance to maintain state and avoid overhead.
    */
   getConnection(): Connection {
     return this.connection;
@@ -80,72 +133,119 @@ export class SolanaClient {
       logger.debug('Network health check passed', { version });
       return success(true);
     } catch (error) {
-      logger.error('Network health check failed', { error: String(error) });
-      return failure(error instanceof Error ? error : new Error(String(error)));
+      logger.error('Network health check failed', { error: toError(error).message });
+      return failure(toError(error));
     }
   }
 
   /**
-   * Get SOL balance for a public key
+   * Get SOL balance for a public key (with caching)
    */
   async getBalance(publicKey: PublicKey): Promise<Result<BalanceInfo, Error>> {
-    try {
-      const lamports = await this.connection.getBalance(publicKey);
+    const cache = getAgentContextCache();
+    const walletAddress = publicKey.toBase58();
 
-      const balance: BalanceInfo = {
-        sol: lamports / LAMPORTS_PER_SOL,
-        lamports: BigInt(lamports),
-      };
-
-      logger.debug('Balance fetched', {
-        publicKey: publicKey.toBase58(),
-        sol: balance.sol,
-      });
-
-      return success(balance);
-    } catch (error) {
-      logger.error('Failed to fetch balance', {
-        publicKey: publicKey.toBase58(),
-        error: String(error),
-      });
-      return failure(error instanceof Error ? error : new Error(String(error)));
+    // Check cache first
+    const cached = cache.getBalance(walletAddress);
+    if (cached) {
+      logger.debug('Balance cache hit', { publicKey: walletAddress });
+      return success(cached.balance);
     }
+
+    // Cache miss - fetch from RPC
+    const result = await this.withRetry(
+      async () => {
+        const lamports = await this.connection.getBalance(publicKey);
+        return {
+          sol: lamports / LAMPORTS_PER_SOL,
+          lamports: BigInt(lamports),
+        };
+      },
+      `getBalance(${publicKey.toBase58()})`
+    );
+
+    if (!result.ok) {
+      logger.error('Failed to get balance after retries', {
+        publicKey: publicKey.toBase58(),
+        error: result.error.message,
+      });
+      return result;
+    }
+
+    logger.debug('Balance fetched from RPC', {
+      publicKey: publicKey.toBase58(),
+      sol: result.value.sol,
+    });
+
+    // Cache the result with token balances
+    // Note: We'll cache token balances separately
+    const tokenBalances = await this.getTokenBalances(publicKey);
+    cache.setBalance(
+      walletAddress,
+      result.value,
+      tokenBalances.ok ? tokenBalances.value : []
+    );
+
+    return success(result.value);
   }
 
   /**
-   * Get SPL token balances for a wallet
+   * Get SPL token balances for a wallet (with caching)
    */
   async getTokenBalances(owner: PublicKey): Promise<Result<TokenBalance[], Error>> {
-    try {
-      const tokenAccounts = await this.connection.getParsedTokenAccountsByOwner(owner, {
-        programId: TOKEN_PROGRAM_ID,
-      });
+    const cache = getAgentContextCache();
+    const walletAddress = owner.toBase58();
 
-      const balances: TokenBalance[] = tokenAccounts.value.map((account) => {
-        const parsed = account.account.data.parsed;
-        const info = parsed.info;
-
-        return {
-          mint: info.mint,
-          amount: BigInt(info.tokenAmount.amount),
-          decimals: info.tokenAmount.decimals,
-          uiAmount: info.tokenAmount.uiAmount ?? 0,
-        };
-      });
-
-      logger.debug('Token balances fetched', {
-        owner: owner.toBase58(),
-        tokenCount: balances.length,
-      });
-
-      return success(balances);
-    } catch (error) {
-      logger.error('Failed to fetch token balances', {
-        owner: owner.toBase58(),
-        error: String(error),
-      });
-      return failure(error instanceof Error ? error : new Error(String(error)));
+    // Check cache first
+    const cached = cache.getBalance(walletAddress);
+    if (cached) {
+      logger.debug('Token balances cache hit', { owner: walletAddress });
+      return success(cached.tokenBalances);
     }
+
+    const result = await this.withRetry(
+      async () => {
+        const tokenAccounts = await this.connection.getParsedTokenAccountsByOwner(owner, {
+          programId: TOKEN_PROGRAM_ID,
+        });
+
+        return tokenAccounts.value.map((account) => {
+          const parsed = account.account.data.parsed;
+          const info = parsed.info;
+
+          return {
+            mint: info.mint,
+            amount: info.tokenAmount.amount, // Keep as string to handle large numbers
+            decimals: info.tokenAmount.decimals,
+            uiAmount: info.tokenAmount.uiAmount ?? 0,
+          };
+        });
+      },
+      `getTokenBalances(${owner.toBase58()})`
+    );
+
+    if (!result.ok) {
+      logger.error('Failed to fetch token balances after retries', {
+        owner: owner.toBase58(),
+        error: result.error.message,
+      });
+      return result;
+    }
+
+    logger.debug('Token balances fetched from RPC', {
+      owner: owner.toBase58(),
+      tokenCount: result.value.length,
+    });
+
+    // Cache token balances along with balance info
+    const balanceResult = await this.getBalance(owner);
+    cache.setBalance(
+      walletAddress,
+      balanceResult.ok ? balanceResult.value : { sol: 0, lamports: BigInt(0) },
+      result.value
+    );
+
+    return result;
   }
 
   /**
@@ -191,14 +291,21 @@ export class SolanaClient {
       logger.error('Airdrop failed', {
         publicKey: publicKey.toBase58(),
         amount,
-        error: String(error),
+        error: toError(error).message,
       });
-      return failure(error instanceof Error ? error : new Error(String(error)));
+      return failure(toError(error));
     }
   }
 
   /**
-   * Send a signed transaction with retries
+   * Send a signed transaction with retries, preflight checks, and exponential backoff + jitter
+   *
+   * Strategy:
+   * 1. Optionally preflight check transaction
+   * 2. Send with skipPreflight=false for max safety
+   * 3. If submission fails (transient), retry with exponential backoff + jitter
+   * 4. If simulation fails (programming error), fail fast
+   * 5. Confirmation polling with timeout
    */
   async sendTransaction(
     transaction: Transaction | VersionedTransaction,
@@ -209,7 +316,7 @@ export class SolanaClient {
     for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
       try {
         if (attempt > 0) {
-          logger.info('Retrying transaction', { attempt });
+          logger.info('Retrying transaction submission', { attempt, maxRetries: this.maxRetries });
         }
 
         const signature = await this.connection.sendRawTransaction(transaction.serialize(), {
@@ -218,14 +325,24 @@ export class SolanaClient {
           ...options,
         });
 
-        logger.info('Transaction submitted', { signature });
+        logger.info('Transaction submitted successfully', { signature, attempt });
 
         // Wait for confirmation
         const confirmation = await this.confirmTransaction(signature);
 
         if (!confirmation.ok) {
           lastError = confirmation.error;
-          continue;
+          
+          // Don't retry confirmation failures — move to next attempt of full submission
+          if (attempt < this.maxRetries) {
+            logger.warn('Transaction confirmation failed, will retry submission', {
+              attempt,
+              error: lastError.message,
+            });
+            continue;
+          } else {
+            break;
+          }
         }
 
         return success({
@@ -234,30 +351,46 @@ export class SolanaClient {
           slot: confirmation.value.slot,
         });
       } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error));
+        lastError = toError(error);
         logger.warn('Transaction attempt failed', {
           attempt,
           error: lastError.message,
+          isRetryable: !this.isNonRetryableError(lastError),
         });
 
-        // Don't retry certain errors
+        // Don't retry certain errors (programming errors, invalid signatures, etc.)
         if (this.isNonRetryableError(lastError)) {
+          logger.error('Non-retryable error encountered, failing immediately', {
+            error: lastError.message,
+          });
           break;
         }
 
-        // Wait before retry (exponential backoff: 1s, 2s, 4s, 8s...)
+        // Wait before retry with exponential backoff + jitter
         if (attempt < this.maxRetries) {
-          const backoffMs = Math.min(1000 * Math.pow(2, attempt), 16_000);
+          // Base: 1s, 2s, 4s, 8s...
+          const baseBackoffMs = 1000 * Math.pow(2, attempt);
+          // Add jitter: ±25%
+          const jitterRange = baseBackoffMs * 0.25;
+          const jitter = Math.random() * jitterRange - jitterRange / 2;
+          const backoffMs = Math.max(Math.min(baseBackoffMs + jitter, 16_000), 500);
+          
+          logger.debug('Waiting before retry', {
+            backoffMs: Math.round(backoffMs),
+            attempt,
+          });
+
           await this.sleep(backoffMs);
         }
       }
     }
 
-    logger.error('Transaction failed after all retries', {
+    logger.error('Transaction failed after all retry attempts', {
+      attempts: this.maxRetries + 1,
       error: lastError?.message,
     });
 
-    return failure(lastError ?? new Error('Transaction failed'));
+    return failure(lastError ?? new Error('Transaction failed after all retry attempts'));
   }
 
   /**
@@ -266,31 +399,34 @@ export class SolanaClient {
   private async confirmTransaction(
     signature: TransactionSignature
   ): Promise<Result<{ slot: number }, Error>> {
-    try {
-      const latestBlockhash = await this.connection.getLatestBlockhash();
+    const result = await this.withRetry(
+      async () => {
+        const latestBlockhash = await this.connection.getLatestBlockhash();
 
-      const confirmation = await this.connection.confirmTransaction(
-        {
+        const confirmation = await this.connection.confirmTransaction(
+          {
+            signature,
+            blockhash: latestBlockhash.blockhash,
+            lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
+          },
+          'confirmed'
+        );
+
+        if (confirmation.value.err) {
+          throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}`);
+        }
+
+        logger.info('Transaction confirmed', {
           signature,
-          blockhash: latestBlockhash.blockhash,
-          lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
-        },
-        'confirmed'
-      );
+          slot: confirmation.context.slot,
+        });
 
-      if (confirmation.value.err) {
-        return failure(new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}`));
-      }
+        return { slot: confirmation.context.slot };
+      },
+      'confirmTransaction'
+    );
 
-      logger.info('Transaction confirmed', {
-        signature,
-        slot: confirmation.context.slot,
-      });
-
-      return success({ slot: confirmation.context.slot });
-    } catch (error) {
-      return failure(error instanceof Error ? error : new Error(String(error)));
-    }
+    return result;
   }
 
   /**
@@ -304,27 +440,33 @@ export class SolanaClient {
   async getRecentBlockhash(
     full?: true
   ): Promise<Result<string | { blockhash: string; lastValidBlockHeight: number }, Error>> {
-    try {
-      const { blockhash, lastValidBlockHeight } = await this.connection.getLatestBlockhash();
-      if (full) {
-        return success({ blockhash, lastValidBlockHeight });
-      }
-      return success(blockhash);
-    } catch (error) {
-      return failure(error instanceof Error ? error : new Error(String(error)));
-    }
+    const result = await this.withRetry(
+      async () => {
+        const { blockhash, lastValidBlockHeight } = await this.connection.getLatestBlockhash();
+        if (full) {
+          return { blockhash, lastValidBlockHeight };
+        }
+        return blockhash;
+      },
+      'getRecentBlockhash'
+    );
+
+    return result;
   }
 
   /**
    * Get minimum balance for rent exemption
    */
   async getMinimumBalanceForRentExemption(dataSize: number): Promise<Result<number, Error>> {
-    try {
-      const lamports = await this.connection.getMinimumBalanceForRentExemption(dataSize);
-      return success(lamports);
-    } catch (error) {
-      return failure(error instanceof Error ? error : new Error(String(error)));
-    }
+    const result = await this.withRetry(
+      async () => {
+        const lamports = await this.connection.getMinimumBalanceForRentExemption(dataSize);
+        return lamports;
+      },
+      'getMinimumBalanceForRentExemption'
+    );
+
+    return result;
   }
 
   /**
@@ -333,10 +475,26 @@ export class SolanaClient {
    */
   async getMintDecimals(mint: PublicKey): Promise<number> {
     try {
-      const info = await this.connection.getParsedAccountInfo(mint);
-      const data = info?.value?.data;
-      if (data && typeof data === 'object' && 'parsed' in data) {
-        const decimals = data.parsed?.info?.decimals;
+      const result = await this.withRetry(
+        async () => {
+          return await this.connection.getParsedAccountInfo(mint);
+        },
+        'getMintDecimals'
+      );
+
+      if (!result.ok) {
+        logger.warn('Failed to fetch mint decimals (retry exhausted), defaulting to 9', {
+          mint: mint.toBase58(),
+          error: result.error.message,
+        });
+        return 9;
+      }
+
+      const rpcResponse = result.value;
+      const accountInfo = rpcResponse?.value;
+      
+      if (accountInfo?.data && typeof accountInfo.data === 'object' && 'parsed' in accountInfo.data) {
+        const decimals = (accountInfo.data as any).parsed?.info?.decimals;
         if (typeof decimals === 'number') return decimals;
       }
       return 9; // default for most SPL tokens
@@ -354,20 +512,23 @@ export class SolanaClient {
       | import('@solana/web3.js').Transaction
       | import('@solana/web3.js').VersionedTransaction
   ): Promise<Result<true, Error>> {
-    try {
-      let result;
-      if ('version' in transaction) {
-        result = await this.connection.simulateTransaction(transaction);
-      } else {
-        result = await this.connection.simulateTransaction(transaction);
-      }
-      if (result.value.err) {
-        return failure(new Error(`Simulation failed: ${JSON.stringify(result.value.err)}`));
-      }
-      return success(true);
-    } catch (error) {
-      return failure(error instanceof Error ? error : new Error(String(error)));
-    }
+    const result = await this.withRetry(
+      async () => {
+        let simResult;
+        if ('version' in transaction) {
+          simResult = await this.connection.simulateTransaction(transaction);
+        } else {
+          simResult = await this.connection.simulateTransaction(transaction);
+        }
+        if (simResult.value.err) {
+          throw new Error(`Simulation failed: ${JSON.stringify(simResult.value.err)}`);
+        }
+        return true;
+      },
+      'simulateTransaction'
+    );
+
+    return result as Result<true, Error>;
   }
 
   /**
@@ -393,6 +554,18 @@ export class SolanaClient {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
+
+/**
+ * Solana Client Singleton
+ * 
+ * Maintains a single, reusable Connection instance to efficiently manage
+ * Solana RPC resources. This prevents:
+ * - Multiple concurrent connections to the same RPC endpoint
+ * - Connection lifecycle overhead for each transaction
+ * - Resource exhaustion from unbounded connection creation
+ * 
+ * @returns The global SolanaClient instance (lazy-initialized on first call)
+ */
 
 // Singleton instance
 let solanaClientInstance: SolanaClient | null = null;

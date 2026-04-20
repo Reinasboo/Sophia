@@ -92,6 +92,7 @@ class Logger {
         console.warn(formatted);
         break;
       default:
+        // eslint-disable-next-line no-console
         console.log(formatted);
     }
   }

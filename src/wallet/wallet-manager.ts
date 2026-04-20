@@ -10,7 +10,6 @@
  */
 
 import { Keypair, PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
-import { v4 as uuidv4 } from 'uuid';
 import {
   WalletInfo,
   InternalWallet,
@@ -20,8 +19,9 @@ import {
   Policy,
   DEFAULT_POLICY,
   Intent,
-} from '../utils/types.js';
+} from '../types/index.js';
 import { encrypt, decrypt, generateSecureId } from '../utils/encryption.js';
+import { toError, notFoundError } from '../utils/error-helpers.js';
 import {
   getConfig,
   ESTIMATED_SOL_TRANSFER_FEE,
@@ -45,6 +45,7 @@ export class WalletManager {
   private policies: Map<string, Policy> = new Map();
   private dailyTransfers: Map<string, number> = new Map();
   private encryptionSecret: string;
+  private dailyResetTimer: NodeJS.Timeout | null = null;
 
   constructor() {
     const config = getConfig();
@@ -54,7 +55,23 @@ export class WalletManager {
     this.scheduleDailyReset();
   }
 
+  /**
+   * Cleanup: Cancel the daily reset timer (for graceful shutdown)
+   */
+  destroy(): void {
+    if (this.dailyResetTimer) {
+      clearTimeout(this.dailyResetTimer);
+      this.dailyResetTimer = null;
+      logger.info('Daily reset timer cancelled');
+    }
+  }
+
   private scheduleDailyReset(): void {
+    // Cancel any existing timer
+    if (this.dailyResetTimer) {
+      clearTimeout(this.dailyResetTimer);
+    }
+
     const now = new Date();
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -62,9 +79,11 @@ export class WalletManager {
 
     const msUntilMidnight = tomorrow.getTime() - now.getTime();
 
-    setTimeout(() => {
+    this.dailyResetTimer = setTimeout(() => {
       this.dailyTransfers.clear();
       logger.info('Daily transfer counters reset');
+      this.saveToStore(); // Persist the reset state
+      this.dailyResetTimer = null;
       this.scheduleDailyReset();
     }, msUntilMidnight);
   }
@@ -102,8 +121,9 @@ export class WalletManager {
       // Return only public information
       return success(this.toWalletInfo(wallet));
     } catch (error) {
-      logger.error('Failed to create wallet', { error: String(error) });
-      return failure(error instanceof Error ? error : new Error(String(error)));
+      const err = toError(error);
+      logger.error('Failed to create wallet', { error: err.message });
+      return failure(err);
     }
   }
 
@@ -114,7 +134,7 @@ export class WalletManager {
     const wallet = this.wallets.get(walletId);
 
     if (!wallet) {
-      return failure(new Error(`Wallet not found: ${walletId}`));
+      return failure(notFoundError('Wallet', walletId));
     }
 
     return success(this.toWalletInfo(wallet));
@@ -134,13 +154,13 @@ export class WalletManager {
     const wallet = this.wallets.get(walletId);
 
     if (!wallet) {
-      return failure(new Error(`Wallet not found: ${walletId}`));
+      return failure(notFoundError('Wallet', walletId));
     }
 
     try {
       return success(new PublicKey(wallet.publicKey));
     } catch (error) {
-      return failure(error instanceof Error ? error : new Error(String(error)));
+      return failure(toError(error));
     }
   }
 
@@ -157,7 +177,7 @@ export class WalletManager {
     const wallet = this.wallets.get(walletId);
 
     if (!wallet) {
-      return failure(new Error(`Wallet not found: ${walletId}`));
+      return failure(notFoundError('Wallet', walletId));
     }
 
     try {
@@ -182,9 +202,9 @@ export class WalletManager {
     } catch (error) {
       logger.error('Failed to sign transaction', {
         walletId,
-        error: String(error),
+        error: toError(error).message,
       });
-      return failure(error instanceof Error ? error : new Error(String(error)));
+      return failure(toError(error));
     }
   }
 
@@ -224,7 +244,8 @@ export class WalletManager {
       const autonomousIntent = intent as import('../utils/types.js').AutonomousIntent;
       const action = autonomousIntent.action;
       if (action === 'transfer_sol' || action === 'transfer_token') {
-        const amount = (intent as unknown as Record<string, unknown>)['amount'];
+        // @ts-expect-error: Intent params are validated at submission time
+        const amount: unknown = intent.params?.amount;
         if (typeof amount === 'number' && amount > policy.maxTransferAmount * 2) {
           return failure(
             new Error(
