@@ -240,7 +240,7 @@ export class Orchestrator {
 
     // Emit event
     eventBus.emit({
-      id: require('uuid').v4(),
+      id: uuidv4(),
       type: 'agent_status_changed',
       timestamp: new Date(),
       agentId,
@@ -271,7 +271,7 @@ export class Orchestrator {
 
     // Emit event
     eventBus.emit({
-      id: require('uuid').v4(),
+      id: uuidv4(),
       type: 'agent_status_changed',
       timestamp: new Date(),
       agentId,

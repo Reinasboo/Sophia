@@ -59,12 +59,10 @@ export interface TransactionRecord extends TransactionShared {
 // ============================================
 
 /**
- * Complete agent info — extends shared Agent with creation time.
+ * Complete agent info — backend alias for shared Agent.
+ * Re-exported here for consistent internal imports.
  */
-export interface AgentInfo extends Agent {
-  // Inherits from shared Agent; no additional backend-only fields needed
-  // All agent info is already safe to expose
-}
+export type AgentInfo = Agent;
 
 /**
  * Agent configuration for creation and updates.

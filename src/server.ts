@@ -26,6 +26,7 @@ import {
   SupportedIntentType,
 } from './integration/index.js';
 import { getStrategyRegistry } from './agent/strategy-registry.js';
+import { openAPISpec } from './openapi.js';
 import {
   sendSuccess,
   sendMessage,
@@ -273,7 +274,6 @@ app.get('/api/health', async (_req: Request, res: Response) => {
  * Serves the API documentation in OpenAPI 3.0 format
  */
 app.get('/api/openapi.json', (_req: Request, res: Response) => {
-  const { openAPISpec } = require('./openapi.js') as { openAPISpec: any };
   res.json(openAPISpec);
 });
 
