@@ -63,8 +63,8 @@
 ## Quick Start
 
 ```bash
-git clone https://github.com/Reinasboo/Agentic-wallet.git
-cd Agentic-wallet
+git clone https://github.com/Reinasboo/Sophia.git
+cd Sophia
 npm install
 cd apps/frontend && npm install && cd ../..
 cp .env.example .env  # or use the provided .env
