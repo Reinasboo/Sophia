@@ -21,7 +21,7 @@ following structured processes defined in [CONTRIBUTING.md](../CONTRIBUTING.md).
 ### Code Decisions
 
 - **Minor changes** (docs, tests, small fixes): Reviewed and approved by maintainer.
-- **Features**: Discussed in [GitHub Discussions](https://github.com/Reinasboo/Agentic-wallet/discussions) before implementation.
+- **Features**: Discussed in [GitHub Discussions](https://github.com/Reinasboo/Sophia/discussions) before implementation.
 - **Breaking changes**: RFC required with maintainer agreement before work begins.
 
 ### Security Decisions
@@ -87,6 +87,6 @@ following structured processes defined in [CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Community
 
-- **Discussions**: [GitHub Discussions](https://github.com/Reinasboo/Agentic-wallet/discussions)
+- **Discussions**: [GitHub Discussions](https://github.com/Reinasboo/Sophia/discussions)
 - **Code of Conduct**: [CODE_OF_CONDUCT.md](../CODE_OF_CONDUCT.md)
-- **Issues**: [GitHub Issues](https://github.com/Reinasboo/Agentic-wallet/issues)
+- **Issues**: [GitHub Issues](https://github.com/Reinasboo/Sophia/issues)

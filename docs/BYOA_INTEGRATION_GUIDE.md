@@ -479,7 +479,7 @@ Response:
 
 ## Support
 
-- **GitHub Issues**: https://github.com/Reinasboo/Agentic-wallet/issues
+- **GitHub Issues**: https://github.com/Reinasboo/Sophia/issues
 - **Discord**: [Join our community](https://discord.gg/sophia)
 - **Email**: support@sophia.dev
 

@@ -7,11 +7,11 @@
 **Intent-driven · Security-first · BYOA-ready**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![CI](https://github.com/Reinasboo/Agentic-wallet/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Reinasboo/Agentic-wallet/actions/workflows/ci.yml)
-[![Security Scan](https://github.com/Reinasboo/Agentic-wallet/actions/workflows/security.yml/badge.svg?branch=main)](https://github.com/Reinasboo/Agentic-wallet/actions/workflows/security.yml)
-[![Last Commit](https://img.shields.io/github/last-commit/Reinasboo/Agentic-wallet)](https://github.com/Reinasboo/Agentic-wallet/commits/main)
-[![Open Issues](https://img.shields.io/github/issues/Reinasboo/Agentic-wallet)](https://github.com/Reinasboo/Agentic-wallet/issues)
-[![GitHub Stars](https://img.shields.io/github/stars/Reinasboo/Agentic-wallet?style=social)](https://github.com/Reinasboo/Agentic-wallet/stargazers)
+[![CI](https://github.com/Reinasboo/Sophia/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Reinasboo/Sophia/actions/workflows/ci.yml)
+[![Security Scan](https://github.com/Reinasboo/Sophia/actions/workflows/security.yml/badge.svg?branch=main)](https://github.com/Reinasboo/Sophia/actions/workflows/security.yml)
+[![Last Commit](https://img.shields.io/github/last-commit/Reinasboo/Sophia)](https://github.com/Reinasboo/Sophia/commits/main)
+[![Open Issues](https://img.shields.io/github/issues/Reinasboo/Sophia)](https://github.com/Reinasboo/Sophia/issues)
+[![GitHub Stars](https://img.shields.io/github/stars/Reinasboo/Sophia?style=social)](https://github.com/Reinasboo/Sophia/stargazers)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Solana](https://img.shields.io/badge/Solana-Devnet-blueviolet?logo=solana&logoColor=white)](https://solana.com)
