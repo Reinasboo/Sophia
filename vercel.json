@@ -3,7 +3,6 @@
   "devCommand": "cd apps/frontend && npm run dev",
   "installCommand": "cd apps/frontend && npm install",
   "framework": "nextjs",
-  "nodeVersion": "22.x",
   "rootDirectory": "apps/frontend",
   "env": {
     "NEXT_PUBLIC_API_URL": "@next_public_api_url",
