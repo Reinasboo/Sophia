@@ -2,9 +2,5 @@
   "buildCommand": "cd apps/frontend && npm install && npm run build",
   "devCommand": "cd apps/frontend && npm run dev",
   "installCommand": "cd apps/frontend && npm install",
-  "framework": "nextjs",
-  "env": {
-    "NEXT_PUBLIC_API_URL": "@next_public_api_url",
-    "NEXT_PUBLIC_WS_URL": "@next_public_ws_url"
-  }
+  "framework": "nextjs"
 }
