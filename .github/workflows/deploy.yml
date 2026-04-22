@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   deploy:
-    name: Deploy to Railway (sophia service)
+    name: Deploy Backend to Railway
     runs-on: ubuntu-latest
     environment: production
     steps:
@@ -18,8 +18,16 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
       - name: Install Railway CLI
         run: npm install -g @railway/cli
+
+      - name: Build application
+        run: npm run build
 
       - name: Deploy to Railway
         run: railway up --service sophia
