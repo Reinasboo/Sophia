@@ -123,19 +123,19 @@ export default function AgentsPage() {
                     label: 'Active',
                     value: stats.active,
                     icon: Activity,
-                    color: 'text-emerald-600',
+                    color: 'text-status-success',
                   },
                   {
                     label: 'Stopped',
                     value: stats.stopped,
                     icon: Power,
-                    color: 'text-slate-600',
+                    color: 'text-text-muted',
                   },
                   {
                     label: 'Volume (24h)',
                     value: `${stats.totalVolumeToday.toFixed(2)} SOL`,
                     icon: TrendingUp,
-                    color: 'text-blue-600',
+                    color: 'text-primary',
                   },
                 ].map((stat) => {
                   const Icon = stat.icon;
@@ -203,14 +203,14 @@ export default function AgentsPage() {
                 {/* Create */}
                 <button
                   onClick={() => setShowCreateModal(true)}
-                  className="px-4 py-2 text-sm font-medium bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 hover:border-cyan-500/50 text-cyan-300 rounded-lg transition-all inline-flex items-center gap-2 hover:bg-cyan-500/30"
+                  className="px-4 py-2 text-sm font-medium bg-gradient-to-r from-primary/20 to-secondary/20 border border-primary/30 hover:border-primary/50 text-primary rounded-lg transition-all inline-flex items-center gap-2 hover:bg-primary/30"
                 >
                   <Plus className="w-4 h-4" />
                   New Agent
                 </button>
               </div>
 
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-text-secondary">
                 {filteredAgents.length === agents.length
                   ? `${agents.length} agents`
                   : `${filteredAgents.length} of ${agents.length} agents`}
@@ -221,26 +221,26 @@ export default function AgentsPage() {
             {agentsLoading ? (
               <div className="flex items-center justify-center py-16">
                 <div className="text-center">
-                  <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-700 border-t-cyan-500 mx-auto mb-4" />
-                  <p className="text-slate-400">Loading agents…</p>
+                  <div className="animate-spin rounded-full h-12 w-12 border-4 border-surface-elevated border-t-primary mx-auto mb-4" />
+                  <p className="text-text-secondary">Loading agents…</p>
                 </div>
               </div>
             ) : filteredAgents.length === 0 ? (
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-center py-16 bg-gradient-to-br from-slate-800/20 to-slate-900/20 border border-slate-700/50 rounded-xl backdrop-blur-sm"
+                className="text-center py-16 bg-surface-elevated/50 border border-primary/20 rounded-xl backdrop-blur-sm"
               >
                 {agents.length === 0 ? (
                   <>
-                    <Zap className="w-12 h-12 mx-auto text-slate-500 mb-4 opacity-50" />
-                    <p className="text-slate-400 mb-2">No agents yet</p>
-                    <p className="text-xs text-slate-500 mb-6">
+                    <Zap className="w-12 h-12 mx-auto text-text-secondary mb-4 opacity-50" />
+                    <p className="text-text-secondary mb-2">No agents yet</p>
+                    <p className="text-xs text-text-muted mb-6">
                       Create your first agent to get started
                     </p>
                     <button
                       onClick={() => setShowCreateModal(true)}
-                      className="px-4 py-2 text-sm font-medium bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 hover:border-cyan-500/50 text-cyan-300 rounded-lg transition-all inline-flex items-center gap-2 hover:bg-cyan-500/30"
+                      className="px-4 py-2 text-sm font-medium bg-gradient-to-r from-primary/20 to-secondary/20 border border-primary/30 hover:border-primary/50 text-primary rounded-lg transition-all inline-flex items-center gap-2 hover:bg-primary/30"
                     >
                       <Plus className="w-4 h-4" />
                       Create Agent

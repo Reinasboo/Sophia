@@ -171,7 +171,7 @@ export default function ByoaRegisterPage() {
         <title>BYOA Agent Registration | Sophia</title>
       </Head>
 
-      <div className="flex min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+      <div className="flex min-h-screen bg-black">
         <Sidebar />
 
         <div className="flex-1 ml-60">
@@ -188,7 +188,7 @@ export default function ByoaRegisterPage() {
             >
               <div className="mb-8">
                 <div className="flex items-center gap-2 mb-6">
-                  <div className="flex-1 h-1 bg-gradient-to-r from-cyan-500 via-slate-700 to-slate-700 rounded-full" />
+                  <div className="flex-1 h-1 bg-gradient-to-r from-primary via-surface-elevated to-surface-elevated rounded-full" />
                 </div>
 
                 <div className="flex items-start justify-between mb-8">
