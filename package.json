@@ -55,7 +55,8 @@
     "tweetnacl": "^1.0.3",
     "uuid": "^9.0.1",
     "ws": "^8.16.0",
-    "zod": "^3.22.4"
+    "zod": "^3.22.4",
+    "express-rate-limit": "^8.4.0"
   },
   "devDependencies": {
     "@eslint/js": "^8.57.0",

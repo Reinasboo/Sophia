@@ -7,6 +7,7 @@
 
 import crypto from 'crypto';
 import express, { Request, Response, NextFunction } from 'express';
+import rateLimit from 'express-rate-limit';
 import cors from 'cors';
 import { WebSocketServer, WebSocket } from 'ws';
 import { z } from 'zod';
@@ -38,6 +39,13 @@ import {
 } from './utils/api-response.js';
 
 const logger = createLogger('API');
+
+const challengeSubmitRateLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 10, // limit each IP to 10 challenge submissions per window
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 const app = express();
 
@@ -859,6 +867,7 @@ app.post(
  */
 app.post(
   '/api/byoa/verify/challenge-submit',
+  challengeSubmitRateLimiter,
   asyncHandler(async (req: Request, res: Response) => {
     const { agentId, challengeResponse } = req.body;
     if (
