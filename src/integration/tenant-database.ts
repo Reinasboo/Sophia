@@ -11,7 +11,12 @@
  * - Single-server deployment only
  */
 
-import type { Tenant, ApiToken, TenantStorageRecord, ApiTokenStorageRecord } from '../types/tenant.js';
+import type {
+  Tenant,
+  ApiToken,
+  TenantStorageRecord,
+  ApiTokenStorageRecord,
+} from '../types/tenant.js';
 import { createLogger } from '../utils/logger.js';
 import { saveState, loadState } from '../utils/store.js';
 import { generateSecureId } from '../utils/encryption.js';
@@ -72,11 +77,7 @@ export class TenantDatabase {
   /**
    * Issue a new API token for a tenant
    */
-  issueApiToken(
-    tenantId: string,
-    label?: string,
-    expiresInDays: number = 30
-  ): ApiToken | null {
+  issueApiToken(tenantId: string, label?: string, expiresInDays: number = 30): ApiToken | null {
     const tenant = this.tenants.get(tenantId);
     if (!tenant) {
       logger.warn(`Attempted to issue token for non-existent tenant: ${tenantId}`);

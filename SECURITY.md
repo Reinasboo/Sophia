@@ -139,6 +139,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) and [DEEP_DIVE.md](DEEP_DIVE.md) for full
 For detailed advisories, risk assessment, and mitigation strategies, see [SECURITY_ADVISORIES.md](SECURITY_ADVISORIES.md).
 
 **Quick Summary:**
+
 - ✅ Fixed: lodash (code injection), path-to-regexp (ReDoS)
 - ⚠️ Remaining: bigint-buffer (HIGH), esbuild (MODERATE) require Solana SPL Token upgrade
 - 📍 Production Impact: LOW (dev/transitive dependencies only)

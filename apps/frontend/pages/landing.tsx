@@ -58,7 +58,8 @@ export default function Landing() {
                 </span>
               </h1>
               <p className="text-xl lg:text-2xl text-slate-300 max-w-3xl mx-auto">
-                The autonomous wallet ecosystem where AI agents execute transactions, manage finances, and build wealth on Solana—with zero human intervention required.
+                The autonomous wallet ecosystem where AI agents execute transactions, manage
+                finances, and build wealth on Solana—with zero human intervention required.
               </p>
             </div>
 
@@ -99,7 +100,9 @@ export default function Landing() {
           <div className="max-w-7xl mx-auto space-y-12">
             <div className="text-center space-y-4">
               <h2 className="text-4xl font-bold">Autonomous. Secure. Unstoppable.</h2>
-              <p className="text-slate-400 text-lg">Everything an autonomous agent needs to operate independently</p>
+              <p className="text-slate-400 text-lg">
+                Everything an autonomous agent needs to operate independently
+              </p>
             </div>
 
             <div className="grid md:grid-cols-3 gap-6">
@@ -108,7 +111,8 @@ export default function Landing() {
                 <Zap className="w-12 h-12 text-cyan-400 mb-4" />
                 <h3 className="text-xl font-bold mb-2">100% Autonomous</h3>
                 <p className="text-slate-400">
-                  Agents execute transactions, manage portfolios, and interact with any Solana program—no human required.
+                  Agents execute transactions, manage portfolios, and interact with any Solana
+                  program—no human required.
                 </p>
               </div>
 
@@ -117,7 +121,8 @@ export default function Landing() {
                 <Shield className="w-12 h-12 text-cyan-400 mb-4" />
                 <h3 className="text-xl font-bold mb-2">Enterprise Security</h3>
                 <p className="text-slate-400">
-                  AES-256-GCM encryption, scrypt key derivation, and isolated signing—your funds are untouchable.
+                  AES-256-GCM encryption, scrypt key derivation, and isolated signing—your funds are
+                  untouchable.
                 </p>
               </div>
 
@@ -126,7 +131,8 @@ export default function Landing() {
                 <Code2 className="w-12 h-12 text-cyan-400 mb-4" />
                 <h3 className="text-xl font-bold mb-2">Bring Your Own Agent</h3>
                 <p className="text-slate-400">
-                  Register any external AI agent via REST API. We handle the crypto, you focus on the intelligence.
+                  Register any external AI agent via REST API. We handle the crypto, you focus on
+                  the intelligence.
                 </p>
               </div>
 
@@ -135,7 +141,8 @@ export default function Landing() {
                 <Lock className="w-12 h-12 text-cyan-400 mb-4" />
                 <h3 className="text-xl font-bold mb-2">Policy Engine</h3>
                 <p className="text-slate-400">
-                  Set spending caps, daily budgets, cooldowns, and allowlists. Agents stay within guardrails—always.
+                  Set spending caps, daily budgets, cooldowns, and allowlists. Agents stay within
+                  guardrails—always.
                 </p>
               </div>
 
@@ -144,7 +151,8 @@ export default function Landing() {
                 <BarChart3 className="w-12 h-12 text-cyan-400 mb-4" />
                 <h3 className="text-xl font-bold mb-2">Real-Time Dashboard</h3>
                 <p className="text-slate-400">
-                  Live agent activity, transaction history, policy monitoring, and WebSocket-powered updates.
+                  Live agent activity, transaction history, policy monitoring, and WebSocket-powered
+                  updates.
                 </p>
               </div>
 
@@ -153,7 +161,8 @@ export default function Landing() {
                 <Rocket className="w-12 h-12 text-cyan-400 mb-4" />
                 <h3 className="text-xl font-bold mb-2">Scale to Infinity</h3>
                 <p className="text-slate-400">
-                  Built for 1 agent or 10,000. Horizontal scaling, batched txs, and optimized policy validation.
+                  Built for 1 agent or 10,000. Horizontal scaling, batched txs, and optimized policy
+                  validation.
                 </p>
               </div>
             </div>
@@ -165,7 +174,9 @@ export default function Landing() {
           <div className="max-w-7xl mx-auto space-y-12">
             <div className="text-center space-y-4">
               <h2 className="text-4xl font-bold">Built for the Autonomous Economy</h2>
-              <p className="text-slate-400 text-lg">From DeFi strategies to supply chain optimization</p>
+              <p className="text-slate-400 text-lg">
+                From DeFi strategies to supply chain optimization
+              </p>
             </div>
 
             <div className="grid md:grid-cols-2 gap-8">
@@ -173,7 +184,8 @@ export default function Landing() {
               <div className="bg-gradient-to-br from-slate-800/40 to-slate-900/40 border border-slate-700 rounded-xl p-8">
                 <h3 className="text-2xl font-bold mb-3">DeFi Trading Bots</h3>
                 <p className="text-slate-300 mb-4">
-                  Deploy agents that execute market-making strategies, arbitrage, and yield farming—24/7 with zero downtime.
+                  Deploy agents that execute market-making strategies, arbitrage, and yield
+                  farming—24/7 with zero downtime.
                 </p>
                 <ul className="space-y-2 text-sm text-slate-400">
                   <li>✓ Raydium, Orca, Jupiter integration</li>
@@ -186,7 +198,8 @@ export default function Landing() {
               <div className="bg-gradient-to-br from-slate-800/40 to-slate-900/40 border border-slate-700 rounded-xl p-8">
                 <h3 className="text-2xl font-bold mb-3">API Monetization</h3>
                 <p className="text-slate-300 mb-4">
-                  Services earn per-call via x402 payment protocol. Agents pay only for what they use, instantly.
+                  Services earn per-call via x402 payment protocol. Agents pay only for what they
+                  use, instantly.
                 </p>
                 <ul className="space-y-2 text-sm text-slate-400">
                   <li>✓ Per-request pricing</li>
@@ -199,7 +212,8 @@ export default function Landing() {
               <div className="bg-gradient-to-br from-slate-800/40 to-slate-900/40 border border-slate-700 rounded-xl p-8">
                 <h3 className="text-2xl font-bold mb-3">Autonomous Treasury</h3>
                 <p className="text-slate-300 mb-4">
-                  DAOs deploy agents to manage funds, vote on proposals, and execute multi-sig transactions.
+                  DAOs deploy agents to manage funds, vote on proposals, and execute multi-sig
+                  transactions.
                 </p>
                 <ul className="space-y-2 text-sm text-slate-400">
                   <li>✓ Multi-agent orchestration</li>
@@ -212,7 +226,8 @@ export default function Landing() {
               <div className="bg-gradient-to-br from-slate-800/40 to-slate-900/40 border border-slate-700 rounded-xl p-8">
                 <h3 className="text-2xl font-bold mb-3">Agent Reputation System</h3>
                 <p className="text-slate-300 mb-4">
-                  On-chain reputation scores unlock lending, insurance, and collateral-free access to capital.
+                  On-chain reputation scores unlock lending, insurance, and collateral-free access
+                  to capital.
                 </p>
                 <ul className="space-y-2 text-sm text-slate-400">
                   <li>✓ Reputation oracles</li>
@@ -229,7 +244,9 @@ export default function Landing() {
           <div className="max-w-7xl mx-auto space-y-12">
             <div className="text-center space-y-4">
               <h2 className="text-4xl font-bold">How Sophia Works</h2>
-              <p className="text-slate-400 text-lg">Enterprise-grade architecture, designed for autonomy</p>
+              <p className="text-slate-400 text-lg">
+                Enterprise-grade architecture, designed for autonomy
+              </p>
             </div>
 
             <div className="grid md:grid-cols-2 gap-8">
@@ -242,7 +259,8 @@ export default function Landing() {
                   <h3 className="text-xl font-bold">Agent Registration</h3>
                 </div>
                 <p className="text-slate-300 ml-16">
-                  Register your AI agent (Claude, GPT-4, or custom) via our REST API. Get instant access to Solana wallet capabilities.
+                  Register your AI agent (Claude, GPT-4, or custom) via our REST API. Get instant
+                  access to Solana wallet capabilities.
                 </p>
               </div>
 
@@ -255,7 +273,8 @@ export default function Landing() {
                   <h3 className="text-xl font-bold">Policy Definition</h3>
                 </div>
                 <p className="text-slate-300 ml-16">
-                  Define spending limits, allowlists, and execution rules. Sophia enforces policies at every transaction.
+                  Define spending limits, allowlists, and execution rules. Sophia enforces policies
+                  at every transaction.
                 </p>
               </div>
 
@@ -268,7 +287,8 @@ export default function Landing() {
                   <h3 className="text-xl font-bold">Intent Emission</h3>
                 </div>
                 <p className="text-slate-300 ml-16">
-                  Agents emit high-level intents (e.g., "swap 100 SOL for USDC"). Sophia validates and executes safely.
+                  Agents emit high-level intents (e.g., "swap 100 SOL for USDC"). Sophia validates
+                  and executes safely.
                 </p>
               </div>
 
@@ -281,7 +301,8 @@ export default function Landing() {
                   <h3 className="text-xl font-bold">On-Chain Settlement</h3>
                 </div>
                 <p className="text-slate-300 ml-16">
-                  Transactions are built, signed, and submitted to Solana. Settlement is instant and immutable.
+                  Transactions are built, signed, and submitted to Solana. Settlement is instant and
+                  immutable.
                 </p>
               </div>
             </div>
@@ -293,7 +314,8 @@ export default function Landing() {
           <div className="max-w-4xl mx-auto bg-gradient-to-r from-cyan-500/20 to-blue-600/20 border border-cyan-500/50 rounded-2xl p-12 text-center space-y-8">
             <h2 className="text-4xl font-bold">Ready to Deploy Your Autonomous Agent?</h2>
             <p className="text-xl text-slate-300">
-              Join the autonomous economy. Agents earn, agents grow, agents build wealth. No human required.
+              Join the autonomous economy. Agents earn, agents grow, agents build wealth. No human
+              required.
             </p>
             <button
               onClick={handleGetStarted}
@@ -310,7 +332,10 @@ export default function Landing() {
           <div className="max-w-7xl mx-auto text-center text-slate-400">
             <p>
               © 2026 Sophia. Built for the autonomous economy on Solana.{' '}
-              <a href="https://github.com/Reinasboo/Sophia" className="text-cyan-400 hover:text-cyan-300">
+              <a
+                href="https://github.com/Reinasboo/Sophia"
+                className="text-cyan-400 hover:text-cyan-300"
+              >
                 Open Source
               </a>
             </p>

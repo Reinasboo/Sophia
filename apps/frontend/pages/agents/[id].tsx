@@ -97,7 +97,10 @@ export default function AgentDetailPage() {
           <main className="px-8 lg:px-12 py-8">
             <div className="bg-slate-800/20 border border-slate-700/50 rounded-lg p-8 text-center backdrop-blur-sm">
               <p className="text-red-300 mb-4">{error || 'Agent not found'}</p>
-              <Link href="/agents" className="px-4 py-2 text-sm font-medium bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 hover:border-cyan-500/50 text-cyan-300 rounded-lg transition-all inline-flex items-center gap-2 hover:bg-cyan-500/30">
+              <Link
+                href="/agents"
+                className="px-4 py-2 text-sm font-medium bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 hover:border-cyan-500/50 text-cyan-300 rounded-lg transition-all inline-flex items-center gap-2 hover:bg-cyan-500/30"
+              >
                 Back to Agents
               </Link>
             </div>
@@ -154,8 +157,28 @@ export default function AgentDetailPage() {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <span className={cn('inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border', getStatusBadgeClass(agent.status))}>
-                    <span className={cn('w-2 h-2 rounded-full', agent.status === 'idle' ? 'bg-slate-400' : agent.status === 'thinking' ? 'bg-yellow-400' : agent.status === 'executing' ? 'bg-blue-400' : agent.status === 'waiting' ? 'bg-cyan-400' : agent.status === 'error' ? 'bg-red-400' : 'bg-slate-400')} />
+                  <span
+                    className={cn(
+                      'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border',
+                      getStatusBadgeClass(agent.status)
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        'w-2 h-2 rounded-full',
+                        agent.status === 'idle'
+                          ? 'bg-slate-400'
+                          : agent.status === 'thinking'
+                            ? 'bg-yellow-400'
+                            : agent.status === 'executing'
+                              ? 'bg-blue-400'
+                              : agent.status === 'waiting'
+                                ? 'bg-cyan-400'
+                                : agent.status === 'error'
+                                  ? 'bg-red-400'
+                                  : 'bg-slate-400'
+                      )}
+                    />
                     {agent.status}
                   </span>
 
@@ -293,7 +316,10 @@ export default function AgentDetailPage() {
                 <h3 className="text-base font-medium text-slate-50 mb-4">Token Balances</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {(tokenBalances ?? []).map((token) => (
-                    <div key={token.mint} className="p-4 bg-slate-800/30 rounded-lg border border-slate-700/50">
+                    <div
+                      key={token.mint}
+                      className="p-4 bg-slate-800/30 rounded-lg border border-slate-700/50"
+                    >
                       <div className="text-xs text-slate-500 mb-1">
                         {truncateAddress(token.mint, 4, 4)}
                       </div>
@@ -313,9 +339,7 @@ export default function AgentDetailPage() {
                 transition={{ delay: 0.3, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
                 className="xl:col-span-2"
               >
-                <h3 className="text-base font-medium text-slate-50 mb-4">
-                  Transaction History
-                </h3>
+                <h3 className="text-base font-medium text-slate-50 mb-4">Transaction History</h3>
                 <TransactionList transactions={transactions ?? []} />
               </motion.div>
 

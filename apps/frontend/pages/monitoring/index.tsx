@@ -206,10 +206,18 @@ export default function PerformanceMonitoring() {
                       <tr className="border-b border-gray-700 bg-gray-800/30">
                         <th className="text-left py-3 px-6 text-gray-400 font-semibold">Agent</th>
                         <th className="text-right py-3 px-6 text-gray-400 font-semibold">Status</th>
-                        <th className="text-right py-3 px-6 text-gray-400 font-semibold">Success %</th>
-                        <th className="text-right py-3 px-6 text-gray-400 font-semibold">TX Count</th>
-                        <th className="text-right py-3 px-6 text-gray-400 font-semibold">Gas (SOL)</th>
-                        <th className="text-right py-3 px-6 text-gray-400 font-semibold">Cycle Time</th>
+                        <th className="text-right py-3 px-6 text-gray-400 font-semibold">
+                          Success %
+                        </th>
+                        <th className="text-right py-3 px-6 text-gray-400 font-semibold">
+                          TX Count
+                        </th>
+                        <th className="text-right py-3 px-6 text-gray-400 font-semibold">
+                          Gas (SOL)
+                        </th>
+                        <th className="text-right py-3 px-6 text-gray-400 font-semibold">
+                          Cycle Time
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
@@ -282,15 +290,21 @@ export default function PerformanceMonitoring() {
                     <div className="space-y-3">
                       <div className="flex justify-between items-center pb-2 border-b border-gray-700">
                         <span className="text-gray-400">Hit Rate</span>
-                        <span className="text-cyan-400 font-bold">{cacheStats.cache?.hitRate || 'N/A'}</span>
+                        <span className="text-cyan-400 font-bold">
+                          {cacheStats.cache?.hitRate || 'N/A'}
+                        </span>
                       </div>
                       <div className="flex justify-between items-center pb-2 border-b border-gray-700">
                         <span className="text-gray-400">Total Entries</span>
-                        <span className="text-cyan-400 font-bold">{cacheStats.cache?.totalEntries || 0}</span>
+                        <span className="text-cyan-400 font-bold">
+                          {cacheStats.cache?.totalEntries || 0}
+                        </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-gray-400">Estimated RPC Savings</span>
-                        <span className="text-green-400 font-bold">{cacheStats.cache?.estimatedRpcSavings || 'N/A'}</span>
+                        <span className="text-green-400 font-bold">
+                          {cacheStats.cache?.estimatedRpcSavings || 'N/A'}
+                        </span>
                       </div>
                     </div>
                   ) : (
@@ -308,15 +322,21 @@ export default function PerformanceMonitoring() {
                     <div className="space-y-3">
                       <div className="flex justify-between items-center pb-2 border-b border-gray-700">
                         <span className="text-gray-400">RPC Utilization</span>
-                        <span className="text-magenta-500 font-bold">{rateLimitStats.rpc?.utilization || 'N/A'}</span>
+                        <span className="text-magenta-500 font-bold">
+                          {rateLimitStats.rpc?.utilization || 'N/A'}
+                        </span>
                       </div>
                       <div className="flex justify-between items-center pb-2 border-b border-gray-700">
                         <span className="text-gray-400">RPC Budget Used</span>
-                        <span className="text-magenta-500 font-bold">{rateLimitStats.rpc?.used || 0} / {rateLimitStats.rpc?.limit || 'Unknown'}</span>
+                        <span className="text-magenta-500 font-bold">
+                          {rateLimitStats.rpc?.used || 0} / {rateLimitStats.rpc?.limit || 'Unknown'}
+                        </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-gray-400">Blocked Requests</span>
-                        <span className={`font-bold ${rateLimitStats.rpc?.blocked > 0 ? 'text-red-400' : 'text-green-400'}`}>
+                        <span
+                          className={`font-bold ${rateLimitStats.rpc?.blocked > 0 ? 'text-red-400' : 'text-green-400'}`}
+                        >
                           {rateLimitStats.rpc?.blocked || 0}
                         </span>
                       </div>

@@ -97,9 +97,16 @@ function FieldInput({
     case 'string':
       return (
         <div>
-          <label htmlFor={`field-${field.key}`} className="block text-sm font-medium text-slate-50 mb-2">{field.label}</label>
+          <label
+            htmlFor={`field-${field.key}`}
+            className="block text-sm font-medium text-slate-50 mb-2"
+          >
+            {field.label}
+          </label>
           {field.description && (
-            <p id={`field-${field.key}-desc`} className="text-xs text-slate-400 mb-1">{field.description}</p>
+            <p id={`field-${field.key}-desc`} className="text-xs text-slate-400 mb-1">
+              {field.description}
+            </p>
           )}
           <input
             id={`field-${field.key}`}
@@ -115,9 +122,16 @@ function FieldInput({
     case 'string[]':
       return (
         <div>
-          <label htmlFor={`field-${field.key}`} className="block text-sm font-medium text-slate-50 mb-2">{field.label}</label>
+          <label
+            htmlFor={`field-${field.key}`}
+            className="block text-sm font-medium text-slate-50 mb-2"
+          >
+            {field.label}
+          </label>
           {field.description && (
-            <p id={`field-${field.key}-desc`} className="text-xs text-slate-400 mb-1">{field.description}</p>
+            <p id={`field-${field.key}-desc`} className="text-xs text-slate-400 mb-1">
+              {field.description}
+            </p>
           )}
           <input
             id={`field-${field.key}`}
@@ -141,9 +155,16 @@ function FieldInput({
       // number (default)
       return (
         <div>
-          <label htmlFor={`field-${field.key}`} className="block text-sm font-medium text-slate-50 mb-2">{field.label}</label>
+          <label
+            htmlFor={`field-${field.key}`}
+            className="block text-sm font-medium text-slate-50 mb-2"
+          >
+            {field.label}
+          </label>
           {field.description && (
-            <p id={`field-${field.key}-desc`} className="text-xs text-slate-400 mb-1">{field.description}</p>
+            <p id={`field-${field.key}-desc`} className="text-xs text-slate-400 mb-1">
+              {field.description}
+            </p>
           )}
           <input
             id={`field-${field.key}`}
@@ -330,7 +351,12 @@ export function CreateAgentModal({ isOpen, onClose, onCreated }: CreateAgentModa
                       transition={{ duration: 0.15 }}
                       className="space-y-4"
                     >
-                      <label htmlFor="agent-name" className="block text-sm font-medium text-slate-50 mb-2">Agent Name</label>
+                      <label
+                        htmlFor="agent-name"
+                        className="block text-sm font-medium text-slate-50 mb-2"
+                      >
+                        Agent Name
+                      </label>
                       <input
                         id="agent-name"
                         type="text"
@@ -468,7 +494,9 @@ export function CreateAgentModal({ isOpen, onClose, onCreated }: CreateAgentModa
                       </label>
 
                       <div>
-                        <label className="block text-sm font-medium text-slate-50 mb-2">Cycle Interval (ms)</label>
+                        <label className="block text-sm font-medium text-slate-50 mb-2">
+                          Cycle Interval (ms)
+                        </label>
                         <input
                           type="number"
                           value={cycleInterval}
@@ -483,7 +511,9 @@ export function CreateAgentModal({ isOpen, onClose, onCreated }: CreateAgentModa
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-slate-50 mb-2">Max Actions Per Day</label>
+                        <label className="block text-sm font-medium text-slate-50 mb-2">
+                          Max Actions Per Day
+                        </label>
                         <input
                           type="number"
                           value={maxActions}
@@ -548,12 +578,20 @@ export function CreateAgentModal({ isOpen, onClose, onCreated }: CreateAgentModa
               {/* Actions — always pinned at bottom */}
               <div className="flex items-center gap-3 px-6 py-4 border-t border-slate-700/50 bg-slate-800/20 rounded-b-2xl shrink-0">
                 {step > 1 ? (
-                  <button onClick={back} className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-slate-50 bg-slate-800/50 hover:bg-slate-700 border border-slate-700/50 hover:border-slate-600 rounded-lg transition-all inline-flex items-center gap-2 disabled:opacity-50" disabled={loading}>
+                  <button
+                    onClick={back}
+                    className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-slate-50 bg-slate-800/50 hover:bg-slate-700 border border-slate-700/50 hover:border-slate-600 rounded-lg transition-all inline-flex items-center gap-2 disabled:opacity-50"
+                    disabled={loading}
+                  >
                     <ChevronLeft className="w-4 h-4" />
                     Back
                   </button>
                 ) : (
-                  <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-slate-50 bg-slate-800/50 hover:bg-slate-700 border border-slate-700/50 hover:border-slate-600 rounded-lg transition-all disabled:opacity-50" disabled={loading}>
+                  <button
+                    onClick={onClose}
+                    className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-slate-50 bg-slate-800/50 hover:bg-slate-700 border border-slate-700/50 hover:border-slate-600 rounded-lg transition-all disabled:opacity-50"
+                    disabled={loading}
+                  >
                     Cancel
                   </button>
                 )}

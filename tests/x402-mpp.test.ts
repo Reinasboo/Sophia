@@ -160,10 +160,7 @@ describe('MPP (Micropayment Protocol) Handler', () => {
 
       expect(signResult.ok).toBe(true);
 
-      const verifyResult = handler.verifySignature(
-        signResult.value,
-        walletPublicKey
-      );
+      const verifyResult = handler.verifySignature(signResult.value, walletPublicKey);
 
       expect(verifyResult.ok).toBe(true);
     });

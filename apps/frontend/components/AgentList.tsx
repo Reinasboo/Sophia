@@ -22,7 +22,10 @@ export function AgentList({ onCreateClick }: AgentListProps) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="bg-gradient-to-br from-slate-800/20 to-slate-900/20 border border-slate-700/50 rounded-lg p-5 animate-pulse backdrop-blur-sm">
+          <div
+            key={i}
+            className="bg-gradient-to-br from-slate-800/20 to-slate-900/20 border border-slate-700/50 rounded-lg p-5 animate-pulse backdrop-blur-sm"
+          >
             <div className="flex items-center gap-3 mb-5">
               <div className="w-10 h-10 rounded-lg bg-slate-700/30" />
               <div className="flex-1">
@@ -44,7 +47,10 @@ export function AgentList({ onCreateClick }: AgentListProps) {
     return (
       <div className="bg-gradient-to-br from-slate-800/20 to-slate-900/20 border border-slate-700/50 rounded-lg p-8 text-center backdrop-blur-sm">
         <p className="text-red-300 mb-4">{error}</p>
-        <button onClick={refetch} className="px-4 py-2 text-sm font-medium bg-slate-800/50 hover:bg-slate-700 border border-slate-700/50 hover:border-slate-600 text-slate-300 hover:text-slate-50 rounded-lg transition-all">
+        <button
+          onClick={refetch}
+          className="px-4 py-2 text-sm font-medium bg-slate-800/50 hover:bg-slate-700 border border-slate-700/50 hover:border-slate-600 text-slate-300 hover:text-slate-50 rounded-lg transition-all"
+        >
           Retry
         </button>
       </div>
@@ -68,7 +74,10 @@ export function AgentList({ onCreateClick }: AgentListProps) {
             Create your first agent to start autonomous wallet management.
           </p>
           {onCreateClick && (
-            <button onClick={onCreateClick} className="px-4 py-2 text-sm font-medium bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 hover:border-cyan-500/50 text-cyan-300 rounded-lg transition-all inline-flex items-center gap-2 hover:bg-cyan-500/30">
+            <button
+              onClick={onCreateClick}
+              className="px-4 py-2 text-sm font-medium bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 hover:border-cyan-500/50 text-cyan-300 rounded-lg transition-all inline-flex items-center gap-2 hover:bg-cyan-500/30"
+            >
               <Plus className="w-4 h-4" />
               Create Agent
             </button>

@@ -57,18 +57,14 @@ function FieldRow({ field }: FieldRowProps) {
     <div className="flex items-start justify-between py-3 border-b border-slate-700/50 last:border-b-0 hover:bg-slate-700/20 px-4 -mx-4 transition-colors">
       <div className="flex-1 min-w-0">
         <span className="text-sm font-medium text-slate-50">{field.label}</span>
-        {field.description && (
-          <p className="text-xs text-slate-400 mt-1">{field.description}</p>
-        )}
+        {field.description && <p className="text-xs text-slate-400 mt-1">{field.description}</p>}
       </div>
       <div className="flex items-center gap-3 ml-4 flex-shrink-0">
         <code className="text-xs text-slate-400 font-mono bg-slate-900/50 rounded px-2 py-1">
           {field.type}
         </code>
         {field.default !== undefined && field.default !== '' && (
-          <span className="text-xs text-slate-500 font-mono">
-            {JSON.stringify(field.default)}
-          </span>
+          <span className="text-xs text-slate-500 font-mono">{JSON.stringify(field.default)}</span>
         )}
       </div>
     </div>
@@ -102,9 +98,7 @@ function StrategyCard({ strategy, isExpanded, onToggleExpand, onConfigure }: Str
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <h3 className="text-base font-semibold text-slate-50">
-                {strategy.label}
-              </h3>
+              <h3 className="text-base font-semibold text-slate-50">{strategy.label}</h3>
               <span className="text-xs px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 font-medium border border-cyan-500/30">
                 Built-in
               </span>
@@ -145,10 +139,7 @@ function StrategyCard({ strategy, isExpanded, onToggleExpand, onConfigure }: Str
             <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">
               {strategy.fields.length} parameter{strategy.fields.length === 1 ? '' : 's'}
             </span>
-            <motion.div
-              animate={{ rotate: isExpanded ? 180 : 0 }}
-              transition={{ duration: 0.2 }}
-            >
+            <motion.div animate={{ rotate: isExpanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
               <ChevronDown className="w-4 h-4 text-slate-400" />
             </motion.div>
           </button>
@@ -192,8 +183,7 @@ export default function StrategiesPage() {
       const q = search.toLowerCase();
       result = result.filter(
         (s: StrategyDefinition) =>
-          s.label.toLowerCase().includes(q) ||
-          s.description.toLowerCase().includes(q)
+          s.label.toLowerCase().includes(q) || s.description.toLowerCase().includes(q)
       );
     }
 
@@ -227,10 +217,7 @@ export default function StrategiesPage() {
         <Sidebar />
 
         <div className="flex-1 ml-60">
-          <Header
-            title="Strategies"
-            subtitle="Browse and configure agent strategies"
-          />
+          <Header title="Strategies" subtitle="Browse and configure agent strategies" />
 
           <main className="px-8 lg:px-12 pb-12 space-y-6">
             <motion.div
@@ -294,11 +281,7 @@ export default function StrategiesPage() {
                 <p className="text-sm text-slate-500">Try adjusting your search or filters</p>
               </div>
             ) : (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="space-y-8"
-              >
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
                 {Object.entries(grouped).map(([category, items]) => (
                   <section key={category}>
                     <div className="flex items-center gap-2 mb-4">
@@ -311,10 +294,7 @@ export default function StrategiesPage() {
                     </div>
 
                     <AnimatePresence mode="popLayout">
-                      <motion.div
-                        layout
-                        className="grid grid-cols-1 lg:grid-cols-2 gap-4"
-                      >
+                      <motion.div layout className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                         {items.map((strategy: StrategyDefinition) => (
                           <StrategyCard
                             key={strategy.name}
@@ -354,9 +334,7 @@ export default function StrategiesPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-bold text-slate-50">
-                Configure {selectedConfig.label}
-              </h3>
+              <h3 className="text-lg font-bold text-slate-50">Configure {selectedConfig.label}</h3>
               <button
                 onClick={() => setSelectedConfig(null)}
                 className="p-1 hover:bg-slate-700 rounded-lg transition-colors text-slate-400"

@@ -51,10 +51,7 @@ export function PageLayout({ children, title, subtitle, actions }: PageLayoutPro
             <li>
               <Link
                 href="/dashboard"
-                className={cn(
-                  'nav-link',
-                  router.pathname === '/dashboard' && 'nav-link-active'
-                )}
+                className={cn('nav-link', router.pathname === '/dashboard' && 'nav-link-active')}
               >
                 <Home className="w-4 h-4" />
                 <span>Dashboard</span>
@@ -73,10 +70,7 @@ export function PageLayout({ children, title, subtitle, actions }: PageLayoutPro
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  className={cn(
-                    'nav-link',
-                    router.pathname === item.href && 'nav-link-active'
-                  )}
+                  className={cn('nav-link', router.pathname === item.href && 'nav-link-active')}
                 >
                   <span className="text-lg">{item.icon}</span>
                   <span>{item.name}</span>
@@ -122,9 +116,7 @@ export function PageLayout({ children, title, subtitle, actions }: PageLayoutPro
 
         {/* Page Content */}
         <div className="flex-1 overflow-auto">
-          <div className="p-8 lg:p-12">
-            {children}
-          </div>
+          <div className="p-8 lg:p-12">{children}</div>
         </div>
       </main>
     </div>

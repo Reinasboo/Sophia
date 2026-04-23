@@ -51,8 +51,7 @@ export default function AgentsPage() {
         (filter === 'stopped' && agent.status === 'stopped');
 
       const matchesSearch =
-        search === '' ||
-        agent.name.toLowerCase().includes(search.toLowerCase());
+        search === '' || agent.name.toLowerCase().includes(search.toLowerCase());
 
       return matchesFilter && matchesSearch;
     });
@@ -99,10 +98,7 @@ export default function AgentsPage() {
         <Sidebar />
 
         <div className="flex-1 ml-60">
-          <Header
-            title="Agents"
-            subtitle="Manage your autonomous agents and monitor activity"
-          />
+          <Header title="Agents" subtitle="Manage your autonomous agents and monitor activity" />
 
           <main className="px-8 lg:px-12 pb-12 space-y-6">
             {/* Statistics Row */}
@@ -150,10 +146,10 @@ export default function AgentsPage() {
                         <Icon className={cn('w-5 h-5', stat.color)} />
                       </div>
                       <div>
-                        <p className="text-xs text-text-tertiary font-mono uppercase">{stat.label}</p>
-                        <p className="text-lg font-bold text-white">
-                          {stat.value}
+                        <p className="text-xs text-text-tertiary font-mono uppercase">
+                          {stat.label}
                         </p>
+                        <p className="text-lg font-bold text-white">{stat.value}</p>
                       </div>
                     </motion.div>
                   );
@@ -266,10 +262,7 @@ export default function AgentsPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.05 }}
                   >
-                    <AgentCard
-                      agent={agent}
-                      onUpdate={refetch}
-                    />
+                    <AgentCard agent={agent} onUpdate={refetch} />
                   </motion.div>
                 ))}
               </motion.div>

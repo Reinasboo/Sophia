@@ -22,7 +22,10 @@ import { useIntentHistory } from '@/lib/hooks';
 import { cn } from '@/lib/utils';
 import type { IntentHistoryRecord } from '@/lib/types';
 
-const statusColors: Record<string, { bg: string; text: string; border: string; icon: React.ElementType }> = {
+const statusColors: Record<
+  string,
+  { bg: string; text: string; border: string; icon: React.ElementType }
+> = {
   executed: {
     bg: 'bg-cyan-500/10',
     text: 'text-cyan-300',
@@ -41,7 +44,14 @@ function StatusBadge({ status }: { status: string }) {
   const config = statusColors[status] || statusColors.rejected;
   const Icon = config.icon;
   return (
-    <span className={cn('flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border', config.bg, config.text, config.border)}>
+    <span
+      className={cn(
+        'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border',
+        config.bg,
+        config.text,
+        config.border
+      )}
+    >
       <Icon className="w-3 h-3" />
       {status.charAt(0).toUpperCase() + status.slice(1)}
     </span>
@@ -71,9 +81,7 @@ function IntentRow({ IntentHistoryRecord, isExpanded, onToggle }: IntentRowProps
           <Zap className="w-5 h-5 text-slate-500 flex-shrink-0 mt-1" />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2 flex-wrap">
-              <span className="font-medium text-slate-50 truncate">
-                {IntentHistoryRecord.type}
-              </span>
+              <span className="font-medium text-slate-50 truncate">{IntentHistoryRecord.type}</span>
               <StatusBadge status={IntentHistoryRecord.status} />
             </div>
             <div className="text-xs text-slate-400 space-y-1">
@@ -106,13 +114,17 @@ function IntentRow({ IntentHistoryRecord, isExpanded, onToggle }: IntentRowProps
             <div className="space-y-4">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div>
-                  <p className="text-xs text-slate-400 font-medium uppercase tracking-wider mb-2">Intent ID</p>
+                  <p className="text-xs text-slate-400 font-medium uppercase tracking-wider mb-2">
+                    Intent ID
+                  </p>
                   <code className="text-xs text-slate-300 bg-slate-800/50 rounded px-3 py-1.5 block font-mono break-all">
                     {IntentHistoryRecord.intentId}
                   </code>
                 </div>
                 <div>
-                  <p className="text-xs text-slate-400 font-medium uppercase tracking-wider mb-2">Created</p>
+                  <p className="text-xs text-slate-400 font-medium uppercase tracking-wider mb-2">
+                    Created
+                  </p>
                   <p className="text-sm text-slate-300">
                     {new Date(IntentHistoryRecord.createdAt).toLocaleString()}
                   </p>
@@ -121,7 +133,9 @@ function IntentRow({ IntentHistoryRecord, isExpanded, onToggle }: IntentRowProps
 
               {params && Object.keys(params).length > 0 && (
                 <div>
-                  <p className="text-xs text-slate-400 font-medium uppercase tracking-wider mb-3">Parameters</p>
+                  <p className="text-xs text-slate-400 font-medium uppercase tracking-wider mb-3">
+                    Parameters
+                  </p>
                   <div className="bg-slate-800/50 rounded-lg p-4 text-xs">
                     <pre className="text-slate-300 font-mono overflow-x-auto whitespace-pre-wrap break-words">
                       {JSON.stringify(params, null, 2)}
@@ -132,7 +146,9 @@ function IntentRow({ IntentHistoryRecord, isExpanded, onToggle }: IntentRowProps
 
               {IntentHistoryRecord.result && Object.keys(IntentHistoryRecord.result).length > 0 && (
                 <div>
-                  <p className="text-xs text-slate-400 font-medium uppercase tracking-wider mb-3">Result</p>
+                  <p className="text-xs text-slate-400 font-medium uppercase tracking-wider mb-3">
+                    Result
+                  </p>
                   <div className="bg-slate-800/50 rounded-lg p-4 text-xs">
                     <pre className="text-slate-300 font-mono overflow-x-auto whitespace-pre-wrap break-words">
                       {JSON.stringify(IntentHistoryRecord.result, null, 2)}
@@ -143,7 +159,9 @@ function IntentRow({ IntentHistoryRecord, isExpanded, onToggle }: IntentRowProps
 
               {IntentHistoryRecord.error && (
                 <div>
-                  <p className="text-xs text-slate-400 font-medium uppercase tracking-wider mb-3">Error</p>
+                  <p className="text-xs text-slate-400 font-medium uppercase tracking-wider mb-3">
+                    Error
+                  </p>
                   <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 text-xs">
                     <p className="text-red-300">{IntentHistoryRecord.error}</p>
                   </div>
@@ -192,7 +210,9 @@ export default function IntentHistoryPage() {
     }
 
     if (statusFilter !== 'all') {
-      result = result.filter((IntentHistoryRecord: IntentHistoryRecord) => IntentHistoryRecord.status === statusFilter);
+      result = result.filter(
+        (IntentHistoryRecord: IntentHistoryRecord) => IntentHistoryRecord.status === statusFilter
+      );
     }
 
     return result;
@@ -235,7 +255,9 @@ export default function IntentHistoryPage() {
                 animate={{ opacity: 1, y: 0 }}
                 className="bg-gradient-to-br from-cyan-500/10 to-transparent border border-slate-700/50 hover:border-cyan-500/40 rounded-lg px-6 py-5 backdrop-blur-sm hover:bg-slate-800/40 transition-all"
               >
-                <p className="text-xs text-slate-400 uppercase tracking-wider mb-2">Total Intents</p>
+                <p className="text-xs text-slate-400 uppercase tracking-wider mb-2">
+                  Total Intents
+                </p>
                 <p className="text-2xl font-bold text-cyan-300">{stats.total}</p>
               </motion.div>
 
@@ -318,36 +340,37 @@ export default function IntentHistoryPage() {
                 <p className="text-sm text-slate-500">Try adjusting your search or filters</p>
               </div>
             ) : (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="space-y-3"
-              >
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3">
                 <p className="text-xs text-slate-500 uppercase tracking-wider">
-                  Showing {filteredIntents.length} IntentHistoryRecord{filteredIntents.length !== 1 ? 's' : ''}
+                  Showing {filteredIntents.length} IntentHistoryRecord
+                  {filteredIntents.length !== 1 ? 's' : ''}
                 </p>
 
                 <AnimatePresence mode="popLayout">
                   <motion.div layout className="space-y-3">
-                    {filteredIntents.map((IntentHistoryRecord: IntentHistoryRecord, index: number) => (
-                      <motion.div
-                        key={IntentHistoryRecord.intentId}
-                        initial={{ opacity: 0, y: -8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 8 }}
-                        transition={{ delay: index * 0.03 }}
-                      >
-                        <IntentRow
-                          IntentHistoryRecord={IntentHistoryRecord}
-                          isExpanded={expandedIntent === IntentHistoryRecord.intentId}
-                          onToggle={() =>
-                            setExpandedIntent(
-                              expandedIntent === IntentHistoryRecord.intentId ? null : IntentHistoryRecord.intentId
-                            )
-                          }
-                        />
-                      </motion.div>
-                    ))}
+                    {filteredIntents.map(
+                      (IntentHistoryRecord: IntentHistoryRecord, index: number) => (
+                        <motion.div
+                          key={IntentHistoryRecord.intentId}
+                          initial={{ opacity: 0, y: -8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 8 }}
+                          transition={{ delay: index * 0.03 }}
+                        >
+                          <IntentRow
+                            IntentHistoryRecord={IntentHistoryRecord}
+                            isExpanded={expandedIntent === IntentHistoryRecord.intentId}
+                            onToggle={() =>
+                              setExpandedIntent(
+                                expandedIntent === IntentHistoryRecord.intentId
+                                  ? null
+                                  : IntentHistoryRecord.intentId
+                              )
+                            }
+                          />
+                        </motion.div>
+                      )
+                    )}
                   </motion.div>
                 </AnimatePresence>
               </motion.div>

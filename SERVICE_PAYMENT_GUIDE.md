@@ -71,11 +71,13 @@ All endpoints use REST JSON with service policy manager singleton.
 ### Service Policy Management
 
 #### 1. Register Service Policy (POST)
+
 **Endpoint:** `POST /api/service-policies`
 
 **Description:** Register a new service policy for spend control.
 
 **Request Body:**
+
 ```json
 {
   "serviceId": "inference-service",
@@ -88,6 +90,7 @@ All endpoints use REST JSON with service policy manager singleton.
 ```
 
 **Response (201):**
+
 ```json
 {
   "status": "success",
@@ -103,17 +106,20 @@ All endpoints use REST JSON with service policy manager singleton.
 ```
 
 **Error Cases:**
+
 - `400` — Invalid serviceId, negative caps, invalid cooldown
 - `409` — Policy already exists for serviceId
 
 ---
 
 #### 2. Get Service Policy (GET)
+
 **Endpoint:** `GET /api/service-policies/:serviceId`
 
 **Description:** Retrieve policy configuration for a service.
 
 **Response (200):**
+
 ```json
 {
   "status": "success",
@@ -129,16 +135,19 @@ All endpoints use REST JSON with service policy manager singleton.
 ```
 
 **Error Cases:**
+
 - `404` — Service policy not found
 
 ---
 
 #### 3. Update Service Policy (PATCH)
+
 **Endpoint:** `PATCH /api/service-policies/:serviceId`
 
 **Description:** Update selected policy fields.
 
 **Request Body (optional fields):**
+
 ```json
 {
   "capPerTransaction": 200_000,
@@ -150,6 +159,7 @@ All endpoints use REST JSON with service policy manager singleton.
 ```
 
 **Response (200):**
+
 ```json
 {
   "status": "success",
@@ -165,17 +175,20 @@ All endpoints use REST JSON with service policy manager singleton.
 ```
 
 **Error Cases:**
+
 - `400` — Invalid update values
 - `404` — Service policy not found
 
 ---
 
 #### 4. List All Policies (GET)
+
 **Endpoint:** `GET /api/service-policies`
 
 **Description:** List all registered service policies (admin endpoint).
 
 **Response (200):**
+
 ```json
 {
   "status": "success",
@@ -206,15 +219,18 @@ All endpoints use REST JSON with service policy manager singleton.
 ### Usage Tracking
 
 #### 5. Get Usage Record (GET)
+
 **Endpoint:** `GET /api/service-policies/:serviceId/usage/:walletId`
 
 **Description:** View current usage for wallet + service pair.
 
 **Parameters:**
+
 - `serviceId` — Service identifier
 - `walletId` — Wallet public key (base58)
 
 **Response (200):**
+
 ```json
 {
   "status": "success",
@@ -234,6 +250,7 @@ All endpoints use REST JSON with service policy manager singleton.
 ```
 
 **Fields:**
+
 - `totalSpentToday` — Lamports spent today
 - `callCountToday` — Number of calls today
 - `lastCallAt` — Timestamp of last payment
@@ -241,21 +258,25 @@ All endpoints use REST JSON with service policy manager singleton.
 - `cooldownRemaining` — Seconds until next call allowed (derived)
 
 **Error Cases:**
+
 - `400` — Invalid wallet ID format
 - `404` — Service policy or usage record not found
 
 ---
 
 #### 6. Reset Usage (DELETE)
+
 **Endpoint:** `DELETE /api/service-policies/:serviceId/usage/:walletId`
 
 **Description:** Reset usage record (admin operation, e.g., for testing or reconciliation).
 
 **Parameters:**
+
 - `serviceId` — Service identifier
 - `walletId` — Wallet public key (base58)
 
 **Response (200):**
+
 ```json
 {
   "status": "success",
@@ -264,6 +285,7 @@ All endpoints use REST JSON with service policy manager singleton.
 ```
 
 **Error Cases:**
+
 - `400` — Invalid wallet ID format
 - `404` — Service policy not found
 
@@ -280,10 +302,10 @@ The `SERVICE_PAYMENT` intent enables agents to execute service payments with aut
 ```typescript
 interface ServicePaymentIntent extends BaseIntent {
   type: 'SERVICE_PAYMENT';
-  serviceId: string;           // Service identifier
-  amount: number;              // Lamports to transfer
-  recipient: string;           // Recipient public key (base58)
-  description?: string;        // Payment description
+  serviceId: string; // Service identifier
+  amount: number; // Lamports to transfer
+  recipient: string; // Recipient public key (base58)
+  description?: string; // Payment description
 }
 ```
 
@@ -315,6 +337,7 @@ Policy validation failures return descriptive errors:
 ```
 
 Common errors:
+
 - `"Amount exceeds cap per transaction"`
 - `"Would exceed daily budget"`
 - `"Cooldown not elapsed. Wait Xs"`
@@ -332,11 +355,11 @@ Common errors:
 
 ```typescript
 interface X402PaymentDescriptor {
-  paymentAddress: string;  // Service public key
-  amount: number;          // Lamports required
-  requestId: string;       // Unique request ID
-  expiresAt: Date;         // Descriptor expiration
-  accessToken?: string;    // Optional access token
+  paymentAddress: string; // Service public key
+  amount: number; // Lamports required
+  requestId: string; // Unique request ID
+  expiresAt: Date; // Descriptor expiration
+  accessToken?: string; // Optional access token
 }
 ```
 
@@ -347,8 +370,8 @@ const x402Handler = getX402Handler(servicePublicKey);
 
 // 1. Generate payment descriptor
 const descriptor = x402Handler.generatePaymentDescriptor(
-  1_000_000,  // Amount in lamports
-  300         // Validity duration in seconds
+  1_000_000, // Amount in lamports
+  300 // Validity duration in seconds
 );
 
 // 2. Encode as HTTP header
@@ -373,6 +396,7 @@ const verified = x402Handler.verifyDescriptor(parseResult.value);
 ### Message Types
 
 #### Payment Request
+
 ```typescript
 {
   version: "1.0",
@@ -387,6 +411,7 @@ const verified = x402Handler.verifyDescriptor(parseResult.value);
 ```
 
 #### Payment Proof
+
 ```typescript
 {
   version: "1.0",
@@ -411,10 +436,7 @@ const mppHandler = getMPPHandler(
 );
 
 // 1. Create payment request
-const request = mppHandler.createPaymentRequest(
-  1_000_000,
-  'AI inference call'
-);
+const request = mppHandler.createPaymentRequest(1_000_000, 'AI inference call');
 
 // 2. Sign request
 const signResult = mppHandler.signMessage(request);
@@ -431,11 +453,7 @@ if (verifyResult.ok) {
 
 // 5. Create payment proof
 const txSignature = '...'; // After transaction confirmation
-const proof = mppHandler.createPaymentProof(
-  txSignature,
-  1_000_000,
-  request.nonce
-);
+const proof = mppHandler.createPaymentProof(txSignature, 1_000_000, request.nonce);
 ```
 
 ## Security Considerations
@@ -464,6 +482,7 @@ const proof = mppHandler.createPaymentProof(
 ### Transaction Memoing
 
 Transactions include memo tag for audit trail:
+
 ```
 AgenticWallet:service_payment:${serviceId}:${agentId}
 ```
@@ -591,6 +610,7 @@ npm test -- --watch
 ### From Previous Wallet Version
 
 1. **Register service policies:**
+
    ```bash
    curl -X POST http://localhost:3000/api/service-policies \
      -H "Content-Type: application/json" \
@@ -603,12 +623,17 @@ npm test -- --watch
    ```
 
 2. **Update agents to use SERVICE_PAYMENT:**
+
    ```typescript
    // Old: Direct transfer intent
-   { type: 'TRANSFER', recipient, amount }
-   
+   {
+     type: ('TRANSFER', recipient, amount);
+   }
+
    // New: Service payment with policy enforcement
-   { type: 'SERVICE_PAYMENT', serviceId, recipient, amount }
+   {
+     type: ('SERVICE_PAYMENT', serviceId, recipient, amount);
+   }
    ```
 
 3. **Monitor usage:**
@@ -619,22 +644,27 @@ npm test -- --watch
 ## Troubleshooting
 
 ### "Service policy not found"
+
 - Verify service policy registered via `GET /api/service-policies`
 - Create policy if missing: `POST /api/service-policies`
 
 ### "Amount exceeds cap per transaction"
+
 - Check policy: `GET /api/service-policies/:serviceId`
 - Reduce payment amount or increase cap via `PATCH`
 
 ### "Cooldown not elapsed"
+
 - Check usage: `GET /api/service-policies/:serviceId/usage/:walletId`
 - See `cooldownRemaining` field for wait time
 
 ### "Would exceed daily budget"
+
 - Check `remainingBudget` in usage record
 - Wait until next UTC midnight for reset or manually reset via `DELETE`
 
 ### "Intent ID already used (replay attack)"
+
 - Each payment must use unique intent ID
 - Verify nonce generation in client code
 

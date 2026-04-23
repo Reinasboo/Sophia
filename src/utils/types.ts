@@ -11,8 +11,6 @@
  * Private keys are NEVER exposed in these interfaces.
  */
 
-
-
 // ============================================
 // RE-EXPORTS FROM CENTRALIZED TYPES MODULE
 // ============================================
@@ -49,10 +47,7 @@ export type {
   Result,
 } from '../types/shared.js';
 
-export {
-  success,
-  failure,
-} from '../types/shared.js';
+export { success, failure } from '../types/shared.js';
 
 // Internal types (Backend-only)
 export type {
@@ -78,6 +73,4 @@ export type {
   InstructionDescriptor,
 } from '../types/internal.js';
 
-export {
-  DEFAULT_POLICY,
-} from '../types/internal.js';
+export { DEFAULT_POLICY } from '../types/internal.js';

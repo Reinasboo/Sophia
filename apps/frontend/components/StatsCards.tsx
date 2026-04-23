@@ -91,9 +91,7 @@ export function StatsCards() {
                       ? card.format(card.value as number, card.total as number)
                       : card.value}
                   </span>
-                  {card.suffix && (
-                    <span className="text-sm text-slate-400">{card.suffix}</span>
-                  )}
+                  {card.suffix && <span className="text-sm text-slate-400">{card.suffix}</span>}
                 </div>
               )}
 

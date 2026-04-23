@@ -9,12 +9,7 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import {
-  AgentStatus,
-  AgentStrategy,
-  ExecutionSettings,
-  TokenBalance,
-} from '../types/shared.js';
+import { AgentStatus, AgentStrategy, ExecutionSettings, TokenBalance } from '../types/shared.js';
 import {
   AgentInfo,
   Intent,

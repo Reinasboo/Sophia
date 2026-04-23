@@ -49,7 +49,10 @@ export const openAPISpec = {
             type: 'string',
             enum: ['idle', 'thinking', 'executing', 'waiting', 'error', 'stopped', 'paused'],
           },
-          walletPublicKey: { type: 'string', example: '8WxCw9ULRkr4QHLtvyeHR7Q6yDwEF8qM8S5JpHJX7xRs' },
+          walletPublicKey: {
+            type: 'string',
+            example: '8WxCw9ULRkr4QHLtvyeHR7Q6yDwEF8qM8S5JpHJX7xRs',
+          },
           strategy: { type: 'string', example: 'balance-guard' },
           config: { type: 'object' },
           createdAt: { type: 'string', format: 'date-time' },
@@ -346,7 +349,9 @@ export const openAPISpec = {
         responses: {
           '200': {
             description: 'Transaction details',
-            content: { 'application/json': { schema: { $ref: '#/components/schemas/Transaction' } } },
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/Transaction' } },
+            },
           },
           '404': { description: 'Transaction not found' },
         },
@@ -379,7 +384,9 @@ export const openAPISpec = {
         responses: {
           '200': {
             description: 'Rate limit stats',
-            content: { 'application/json': { schema: { $ref: '#/components/schemas/RateLimitStats' } } },
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/RateLimitStats' } },
+            },
           },
         },
       },
@@ -391,7 +398,9 @@ export const openAPISpec = {
         responses: {
           '200': {
             description: 'Cache statistics',
-            content: { 'application/json': { schema: { $ref: '#/components/schemas/CacheStats' } } },
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/CacheStats' } },
+            },
           },
         },
       },
@@ -404,7 +413,9 @@ export const openAPISpec = {
         responses: {
           '200': {
             description: 'Wallet balance',
-            content: { 'application/json': { schema: { $ref: '#/components/schemas/BalanceInfo' } } },
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/BalanceInfo' } },
+            },
           },
         },
       },

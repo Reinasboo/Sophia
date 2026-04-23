@@ -5,7 +5,7 @@
  *
  * Full transaction history across all agents with:
  * - Advanced filtering and search
- * - Rich transaction details modal  
+ * - Rich transaction details modal
  * - Real-time status updates
  * - Export capabilities
  * - Transaction analytics
@@ -83,14 +83,17 @@ export default function TransactionsPage() {
 
   // Filter and sort transactions
   const filteredTxs = useMemo(() => {
-    let result = [...(transactions || [])].map(tx => ({
-      ...tx,
-      symbol: (tx as any).symbol || 'SOL',
-      timestamp: (tx as any).timestamp || tx.createdAt,
-      sender: (tx as any).sender,
-      agentName: (tx as any).agentName,
-      fee: (tx as any).fee,
-    } as any));
+    let result = [...(transactions || [])].map(
+      (tx) =>
+        ({
+          ...tx,
+          symbol: (tx as any).symbol || 'SOL',
+          timestamp: (tx as any).timestamp || tx.createdAt,
+          sender: (tx as any).sender,
+          agentName: (tx as any).agentName,
+          fee: (tx as any).fee,
+        }) as any
+    );
 
     // Search filter - check signature, recipient, sender
     if (search) {
@@ -115,7 +118,9 @@ export default function TransactionsPage() {
     }
 
     // Sort by newest first
-    result.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    result.sort(
+      (a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
 
     return result;
   }, [transactions, search, typeFilter, statusFilter]);
@@ -124,9 +129,14 @@ export default function TransactionsPage() {
   const stats = useMemo(() => {
     const total = transactions?.length || 0;
     const finalized = (transactions || []).filter((tx: any) => tx.status === 'finalized').length;
-    const pending = (transactions || []).filter((tx: any) => ['pending', 'submitted'].includes(tx.status)).length;
+    const pending = (transactions || []).filter((tx: any) =>
+      ['pending', 'submitted'].includes(tx.status)
+    ).length;
     const failed = (transactions || []).filter((tx: any) => tx.status === 'failed').length;
-    const volume = (transactions || []).reduce((sum: number, tx: any) => sum + parseFloat(tx.amount || '0'), 0);
+    const volume = (transactions || []).reduce(
+      (sum: number, tx: any) => sum + parseFloat(tx.amount || '0'),
+      0
+    );
 
     return { total, finalized, pending, failed, volume };
   }, [transactions]);
@@ -147,10 +157,7 @@ export default function TransactionsPage() {
         <Sidebar />
 
         <div className="flex-1 ml-60">
-          <Header
-            title="Transactions"
-            subtitle="Monitor and audit all wallet transactions"
-          />
+          <Header title="Transactions" subtitle="Monitor and audit all wallet transactions" />
 
           <main className="px-8 lg:px-12 pb-12 space-y-6">
             {/* Analytics Row */}
@@ -161,11 +168,42 @@ export default function TransactionsPage() {
                 className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3"
               >
                 {[
-                  { label: 'Total', value: stats.total, icon: TrendingUp, color: 'text-secondary', bgColor: 'from-secondary/10 to-transparent' },
-                  { label: 'Finalized', value: stats.finalized, icon: CheckCircle2, color: 'text-status-success', bgColor: 'from-status-success/10 to-transparent' },
-                  { label: 'Pending', value: stats.pending, icon: Clock, color: 'text-status-warning', bgColor: 'from-status-warning/10 to-transparent' },
-                  { label: 'Failed', value: stats.failed, icon: AlertCircle, color: 'text-status-error', bgColor: 'from-status-error/10 to-transparent' },
-                  { label: 'Volume', value: `${stats.volume.toFixed(2)}`, icon: TrendingUp, color: 'text-primary', unit: 'SOL', bgColor: 'from-primary/10 to-transparent' },
+                  {
+                    label: 'Total',
+                    value: stats.total,
+                    icon: TrendingUp,
+                    color: 'text-secondary',
+                    bgColor: 'from-secondary/10 to-transparent',
+                  },
+                  {
+                    label: 'Finalized',
+                    value: stats.finalized,
+                    icon: CheckCircle2,
+                    color: 'text-status-success',
+                    bgColor: 'from-status-success/10 to-transparent',
+                  },
+                  {
+                    label: 'Pending',
+                    value: stats.pending,
+                    icon: Clock,
+                    color: 'text-status-warning',
+                    bgColor: 'from-status-warning/10 to-transparent',
+                  },
+                  {
+                    label: 'Failed',
+                    value: stats.failed,
+                    icon: AlertCircle,
+                    color: 'text-status-error',
+                    bgColor: 'from-status-error/10 to-transparent',
+                  },
+                  {
+                    label: 'Volume',
+                    value: `${stats.volume.toFixed(2)}`,
+                    icon: TrendingUp,
+                    color: 'text-primary',
+                    unit: 'SOL',
+                    bgColor: 'from-primary/10 to-transparent',
+                  },
                 ].map((stat, idx) => {
                   const Icon = stat.icon;
                   return (
@@ -183,9 +221,12 @@ export default function TransactionsPage() {
                       <div className="flex items-center gap-3">
                         <Icon className={cn('w-5 h-5', stat.color)} />
                         <div>
-                          <p className="text-xs text-slate-400 uppercase tracking-wider">{stat.label}</p>
+                          <p className="text-xs text-slate-400 uppercase tracking-wider">
+                            {stat.label}
+                          </p>
                           <p className={cn('text-lg font-bold', stat.color)}>
-                            {stat.value}{stat.unit ? ` ${stat.unit}` : ''}
+                            {stat.value}
+                            {stat.unit ? ` ${stat.unit}` : ''}
                           </p>
                         </div>
                       </div>
@@ -306,7 +347,12 @@ export default function TransactionsPage() {
                               <h4 className="text-sm font-semibold text-slate-50">
                                 {typeLabels[tx.type]}
                               </h4>
-                              <span className={cn('text-xs px-2 py-0.5 rounded font-medium', statusColors[tx.status])}>
+                              <span
+                                className={cn(
+                                  'text-xs px-2 py-0.5 rounded font-medium',
+                                  statusColors[tx.status]
+                                )}
+                              >
                                 {tx.status.charAt(0).toUpperCase() + tx.status.slice(1)}
                               </span>
                               {tx.agentName && (
@@ -320,7 +366,11 @@ export default function TransactionsPage() {
                             <div className="text-xs text-slate-400 space-y-1">
                               <div className="flex items-center gap-2">
                                 <span>
-                                  {tx.recipient ? `To: ${tx.recipient.slice(0, 8)}…` : tx.sender ? `From: ${tx.sender.slice(0, 8)}…` : 'No recipient'}
+                                  {tx.recipient
+                                    ? `To: ${tx.recipient.slice(0, 8)}…`
+                                    : tx.sender
+                                      ? `From: ${tx.sender.slice(0, 8)}…`
+                                      : 'No recipient'}
                                 </span>
                               </div>
                               <div className="text-slate-500">
@@ -377,9 +427,7 @@ export default function TransactionsPage() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-bold text-slate-50">
-                  Transaction Details
-                </h3>
+                <h3 className="text-lg font-bold text-slate-50">Transaction Details</h3>
                 <button
                   onClick={() => setSelectedTx(null)}
                   className="p-1 hover:bg-slate-700 rounded-lg transition-colors text-slate-400"
@@ -415,7 +463,12 @@ export default function TransactionsPage() {
                   </div>
                   <div>
                     <p className="text-xs text-slate-400 mb-1 uppercase tracking-wider">Status</p>
-                    <span className={cn('text-xs px-2 py-1 rounded inline-block font-medium', statusColors[selectedTx.status])}>
+                    <span
+                      className={cn(
+                        'text-xs px-2 py-1 rounded inline-block font-medium',
+                        statusColors[selectedTx.status]
+                      )}
+                    >
                       {selectedTx.status.charAt(0).toUpperCase() + selectedTx.status.slice(1)}
                     </span>
                   </div>

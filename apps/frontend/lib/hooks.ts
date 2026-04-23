@@ -380,7 +380,7 @@ export function useConnectedAgents(pollInterval: number = 5000) {
   const revoke = useCallback(async (id: string) => {
     try {
       setError(null);
-      setAgents(agents => agents.filter(a => a.id !== id));
+      setAgents((agents) => agents.filter((a) => a.id !== id));
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to revoke agent';
       setError(errorMessage);

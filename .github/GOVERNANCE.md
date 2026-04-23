@@ -9,9 +9,9 @@ following structured processes defined in [CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Project Leadership
 
-| Role                | Person    | Contact                                                           |
-| ------------------- | --------- | ----------------------------------------------------------------- |
-| **Lead Maintainer** | Reinasboo | [@Reinasboo](https://github.com/Reinasboo)                        |
+| Role                | Person    | Contact                                           |
+| ------------------- | --------- | ------------------------------------------------- |
+| **Lead Maintainer** | Reinasboo | [@Reinasboo](https://github.com/Reinasboo)        |
 | **Security Lead**   | Reinasboo | [security@sophia.dev](mailto:security@sophia.dev) |
 
 ---

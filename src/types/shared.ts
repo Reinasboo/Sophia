@@ -10,7 +10,14 @@
 // AGENT TYPES (Frontend-safe)
 // ============================================
 
-export type AgentStatus = 'idle' | 'thinking' | 'executing' | 'waiting' | 'error' | 'stopped' | 'paused';
+export type AgentStatus =
+  | 'idle'
+  | 'thinking'
+  | 'executing'
+  | 'waiting'
+  | 'error'
+  | 'stopped'
+  | 'paused';
 
 export type AgentStrategy = string;
 

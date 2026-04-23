@@ -187,7 +187,12 @@ export class ServicePolicyManager {
    * Record a service payment (after execution)
    * Returns Result type for error handling (e.g., replay attack detection)
    */
-  recordServicePayment(walletId: string, serviceId: string, amount: number, nonce: string): Result<true, Error> {
+  recordServicePayment(
+    walletId: string,
+    serviceId: string,
+    amount: number,
+    nonce: string
+  ): Result<true, Error> {
     // Check for replay attack (nonce already used)
     if (this.nonces.has(nonce)) {
       return failure(new Error('Nonce already used - replay attack detected'));

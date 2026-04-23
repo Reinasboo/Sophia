@@ -139,9 +139,7 @@ export default function ConnectedAgentDetailPage() {
                       <h2 className="text-2xl font-bold text-slate-50">{agent.name}</h2>
                       <div className="flex items-center gap-2 mt-0.5">
                         <TypeIcon className="w-3.5 h-3.5 text-slate-400" />
-                        <span className="text-xs text-slate-400 capitalize">
-                          {agent.type}
-                        </span>
+                        <span className="text-xs text-slate-400 capitalize">{agent.type}</span>
                       </div>
                     </div>
                     <span
@@ -165,9 +163,7 @@ export default function ConnectedAgentDetailPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {/* Wallet */}
                     <div className="bg-slate-800/50 rounded-xl p-4">
-                      <span className="text-xs text-slate-400 block mb-1">
-                        Wallet Address
-                      </span>
+                      <span className="text-xs text-slate-400 block mb-1">Wallet Address</span>
                       <div className="flex items-center gap-1.5">
                         <span className="text-sm font-mono text-slate-50 truncate">
                           {agent.walletPublicKey
@@ -180,9 +176,7 @@ export default function ConnectedAgentDetailPage() {
 
                     {/* Supported intents */}
                     <div className="bg-slate-800/50 rounded-xl p-4">
-                      <span className="text-xs text-slate-400 block mb-1">
-                        Supported Intents
-                      </span>
+                      <span className="text-xs text-slate-400 block mb-1">Supported Intents</span>
                       <div className="flex flex-wrap gap-1 mt-0.5">
                         {(agent.supportedIntents ?? []).map((i) => (
                           <span

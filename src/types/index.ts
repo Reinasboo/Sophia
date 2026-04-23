@@ -13,22 +13,22 @@
 // SHARED TYPES (Frontend + Backend)
 // ============================================
 
-export type { 
+export type {
   // Agent types
   AgentStatus,
   AgentStrategy,
   ExecutionSettings,
   Agent,
-  
+
   // Transaction types
   TransactionStatus,
   TransactionType,
   Transaction,
-  
+
   // Balance types
   TokenBalance,
   SystemStats,
-  
+
   // Event types
   SystemEvent,
   BaseEvent,
@@ -38,29 +38,26 @@ export type {
   TransactionEvent,
   BalanceChangedEvent,
   SystemErrorEvent,
-  
+
   // API types
   ApiResponse,
-  
+
   // External/BYOA types
   ExternalAgentType,
   ExternalAgentStatus,
   SupportedIntentType,
   ExternalAgent,
   IntentHistoryRecord,
-  
+
   // Strategy types
   StrategyFieldDescriptor,
   StrategyDefinition,
-  
+
   // Helper types
   Result,
 } from './shared.js';
 
-export {
-  success,
-  failure,
-} from './shared.js';
+export { success, failure } from './shared.js';
 
 // ============================================
 // TENANT TYPES (Backend + Frontend)
@@ -85,14 +82,14 @@ export type {
   WalletInfo,
   BalanceInfo,
   InternalWallet,
-  
+
   // Agent types
   AgentInfo,
   AgentConfig,
-  
+
   // Transaction types
   TransactionRecord,
-  
+
   // Intent types
   Intent,
   BaseIntent,
@@ -102,20 +99,18 @@ export type {
   CheckBalanceIntent,
   AutonomousIntent,
   ServicePaymentIntent,
-  
+
   // Policy types
   Policy,
   ServicePolicy,
   ServiceUsageRecord,
-  
+
   // Payment protocol types
   X402PaymentDescriptor,
   MPPMessage,
-  
+
   // RPC types
   InstructionDescriptor,
 } from './internal.js';
 
-export {
-  DEFAULT_POLICY,
-} from './internal.js';
+export { DEFAULT_POLICY } from './internal.js';

@@ -263,7 +263,9 @@ export class Orchestrator {
 
     const currentStatus = managed.agent.getStatus();
     if (currentStatus !== 'paused') {
-      return failure(new Error(`Cannot resume agent with status "${currentStatus}" (must be "paused")`));
+      return failure(
+        new Error(`Cannot resume agent with status "${currentStatus}" (must be "paused")`)
+      );
     }
 
     managed.agent.setStatus('idle');
@@ -285,17 +287,17 @@ export class Orchestrator {
 
   /**
    * Execute a single agent decision cycle.
-   * 
+   *
    * Performs the following steps:
    * 1. Check if previous cycle is still running (prevent overlap)
    * 2. Build execution context (balances, constraints, historical state)
    * 3. Invoke agent.think() to get decision
    * 4. If agent decided to act, execute the intent
    * 5. Update agent status and record action
-   * 
+   *
    * Handles errors gracefully by setting agent status to 'error'.
    * Uses cycleInProgress flag to prevent concurrent cycles.
-   * 
+   *
    * @param agentId - UUID of the agent to run
    * @returns Promise that resolves when cycle completes or is skipped
    */
@@ -364,12 +366,13 @@ export class Orchestrator {
       // Execute intent if agent decided to act
       if (decision.shouldAct && decision.intent) {
         agent.setStatus('executing');
-        
+
         try {
           await this.executeIntent(agent, decision.intent, context.value.balance.sol);
           agent.recordAction(true);
         } catch (executeError) {
-          const errMsg = executeError instanceof Error ? executeError.message : String(executeError);
+          const errMsg =
+            executeError instanceof Error ? executeError.message : String(executeError);
           logger.error('Intent execution threw error', { agentId, error: errMsg });
           agent.setStatus('error', `Execution failed: ${errMsg}`);
           agent.recordAction(false);

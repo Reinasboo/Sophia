@@ -43,7 +43,7 @@ export default function Home() {
         {/* NAVIGATION */}
         <nav className="sticky top-0 z-50 bg-black/95 backdrop-blur-sm border-b border-surface-elevated">
           <div className="max-w-7xl mx-auto px-6 lg:px-8 py-4 flex items-center justify-between">
-            <div 
+            <div
               className="flex items-center gap-3 cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary rounded-lg px-2 py-1"
               onClick={() => router.push('/')}
               role="button"
@@ -70,7 +70,7 @@ export default function Home() {
         <section className="relative pt-20 pb-32 px-6 lg:px-8 overflow-hidden">
           {/* Subtle gradient background accent */}
           <div className="absolute inset-0 bg-gradient-brand-subtle opacity-50 pointer-events-none" />
-          
+
           <div className="max-w-6xl mx-auto space-y-8 relative z-10">
             {/* Animated badge */}
             <div className="flex justify-center">
@@ -91,7 +91,11 @@ export default function Home() {
                 <span className="block">for Solana</span>
               </h1>
               <p className="text-lg lg:text-xl text-text-secondary leading-relaxed">
-                Deploy AI agents that execute transactions, manage portfolios, and build wealth—<span className="text-secondary font-semibold">24/7 with institutional security</span>. No human oversight required.
+                Deploy AI agents that execute transactions, manage portfolios, and build wealth—
+                <span className="text-secondary font-semibold">
+                  24/7 with institutional security
+                </span>
+                . No human oversight required.
               </p>
             </div>
 
@@ -147,7 +151,8 @@ export default function Home() {
                 </span>
               </h2>
               <p className="text-lg text-text-secondary max-w-2xl mx-auto">
-                Everything you need to run autonomous agents at scale with institutional-level security.
+                Everything you need to run autonomous agents at scale with institutional-level
+                security.
               </p>
             </div>
 
@@ -161,7 +166,10 @@ export default function Home() {
                   </div>
                   <div className="space-y-2">
                     <h3 className="font-bold text-lg">High-Speed Execution</h3>
-                    <p className="text-text-tertiary">Execute transactions instantly with sub-second confirmation across Solana network.</p>
+                    <p className="text-text-tertiary">
+                      Execute transactions instantly with sub-second confirmation across Solana
+                      network.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -174,7 +182,9 @@ export default function Home() {
                   </div>
                   <div className="space-y-2">
                     <h3 className="font-bold text-lg">Military-Grade Security</h3>
-                    <p className="text-text-tertiary">Encrypted keys, policy enforcement, and audit trails for complete control.</p>
+                    <p className="text-text-tertiary">
+                      Encrypted keys, policy enforcement, and audit trails for complete control.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -187,7 +197,10 @@ export default function Home() {
                   </div>
                   <div className="space-y-2">
                     <h3 className="font-bold text-lg">Portfolio Management</h3>
-                    <p className="text-text-tertiary">Automated distribution, balance guards, and intelligent strategy orchestration.</p>
+                    <p className="text-text-tertiary">
+                      Automated distribution, balance guards, and intelligent strategy
+                      orchestration.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -200,7 +213,9 @@ export default function Home() {
                   </div>
                   <div className="space-y-2">
                     <h3 className="font-bold text-lg">Deploy in Minutes</h3>
-                    <p className="text-text-tertiary">Pre-built agent templates and one-click deployment for rapid scaling.</p>
+                    <p className="text-text-tertiary">
+                      Pre-built agent templates and one-click deployment for rapid scaling.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -213,7 +228,9 @@ export default function Home() {
                   </div>
                   <div className="space-y-2">
                     <h3 className="font-bold text-lg">Developer API</h3>
-                    <p className="text-text-tertiary">Powerful REST & WebSocket APIs for custom integrations and workflows.</p>
+                    <p className="text-text-tertiary">
+                      Powerful REST & WebSocket APIs for custom integrations and workflows.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -226,7 +243,9 @@ export default function Home() {
                   </div>
                   <div className="space-y-2">
                     <h3 className="font-bold text-lg">Real-Time Monitoring</h3>
-                    <p className="text-text-tertiary">Live dashboard with transaction history, alerts, and detailed analytics.</p>
+                    <p className="text-text-tertiary">
+                      Live dashboard with transaction history, alerts, and detailed analytics.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -237,11 +256,10 @@ export default function Home() {
         {/* CTA Footer */}
         <section className="py-24 px-6 lg:px-8 bg-gradient-brand-accent-dark border-t border-surface-muted">
           <div className="max-w-4xl mx-auto text-center space-y-6">
-            <h2 className="text-3xl sm:text-4xl font-bold">
-              Ready to deploy intelligent agents?
-            </h2>
+            <h2 className="text-3xl sm:text-4xl font-bold">Ready to deploy intelligent agents?</h2>
             <p className="text-lg text-text-secondary">
-              Build autonomous wealth management systems on Solana. Start for free, scale to billions.
+              Build autonomous wealth management systems on Solana. Start for free, scale to
+              billions.
             </p>
             <button
               onClick={() => router.push('/dashboard')}
@@ -256,4 +274,3 @@ export default function Home() {
     </>
   );
 }
-

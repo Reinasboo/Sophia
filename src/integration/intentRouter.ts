@@ -26,9 +26,9 @@ import { v4 as uuidv4 } from 'uuid';
 import { PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
 import { createLogger } from '../utils/logger.js';
 import { getRateLimiter } from '../utils/rate-limiter.js';
-import { 
-  Result, 
-  success, 
+import {
+  Result,
+  success,
   failure,
   IntentHistoryRecord as SharedIntentHistoryRecord,
   SupportedIntentType,
@@ -45,11 +45,7 @@ import {
   SolanaClient,
 } from '../rpc/index.js';
 import type { InstructionDescriptor } from '../types/internal.js';
-import {
-  getAgentRegistry,
-  AgentRegistry,
-  ExternalAgentRecord,
-} from './agentRegistry.js';
+import { getAgentRegistry, AgentRegistry, ExternalAgentRecord } from './agentRegistry.js';
 import { eventBus } from '../orchestrator/event-emitter.js';
 
 const logger = createLogger('BYOA_INTENT');
@@ -65,9 +61,9 @@ const logger = createLogger('BYOA_INTENT');
 
 /**
  * External intent with strongly-documented parameter requirements.
- * 
+ *
  * Supported intent types and their params:
- * 
+ *
  * - REQUEST_AIRDROP: { amount: number } - Request devnet SOL
  * - TRANSFER_SOL: { recipient: string, amount: number, memo?: string } - Transfer SOL
  * - TRANSFER_TOKEN: { mint: string, recipient: string, amount: number, decimals?: number, memo?: string } - Transfer SPL tokens
@@ -168,14 +164,18 @@ function sanitizeIntentParams(
       break;
 
     case 'TRANSFER_SOL':
-      sanitized['recipient'] = params['recipient'] ? truncateAddress(params['recipient'] as string) : undefined;
+      sanitized['recipient'] = params['recipient']
+        ? truncateAddress(params['recipient'] as string)
+        : undefined;
       sanitized['amount'] = params['amount'] ? '***' : undefined;
       sanitized['memo'] = params['memo'] ? '[REDACTED]' : undefined;
       break;
 
     case 'TRANSFER_TOKEN':
       sanitized['mint'] = params['mint'] ? truncateAddress(params['mint'] as string) : undefined;
-      sanitized['recipient'] = params['recipient'] ? truncateAddress(params['recipient'] as string) : undefined;
+      sanitized['recipient'] = params['recipient']
+        ? truncateAddress(params['recipient'] as string)
+        : undefined;
       sanitized['amount'] = params['amount'] ? '***' : undefined;
       sanitized['decimals'] = params['decimals'];
       sanitized['memo'] = params['memo'] ? '[REDACTED]' : undefined;
@@ -192,7 +192,9 @@ function sanitizeIntentParams(
 
     case 'SERVICE_PAYMENT':
       sanitized['serviceId'] = params['serviceId'] ? '[REDACTED]' : undefined;
-      sanitized['recipient'] = params['recipient'] ? truncateAddress(params['recipient'] as string) : undefined;
+      sanitized['recipient'] = params['recipient']
+        ? truncateAddress(params['recipient'] as string)
+        : undefined;
       sanitized['amount'] = params['amount'] ? '***' : undefined;
       sanitized['description'] = params['description'] ? '[REDACTED]' : undefined;
       break;

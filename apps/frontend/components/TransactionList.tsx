@@ -164,9 +164,7 @@ export function TransactionList({ transactions, loading, compact = false }: Tran
               {!compact && (
                 <>
                   <span className="text-slate-500">·</span>
-                  <span className="text-xs text-slate-400">
-                    {formatRelativeTime(tx.createdAt)}
-                  </span>
+                  <span className="text-xs text-slate-400">{formatRelativeTime(tx.createdAt)}</span>
                 </>
               )}
             </div>

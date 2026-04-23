@@ -34,7 +34,12 @@ interface FormData {
   verificationMethods: VerificationMethod[];
 }
 
-type SupportedIntentType = 'REQUEST_AIRDROP' | 'TRANSFER_SOL' | 'TRANSFER_TOKEN' | 'QUERY_BALANCE' | 'AUTONOMOUS';
+type SupportedIntentType =
+  | 'REQUEST_AIRDROP'
+  | 'TRANSFER_SOL'
+  | 'TRANSFER_TOKEN'
+  | 'QUERY_BALANCE'
+  | 'AUTONOMOUS';
 
 const AVAILABLE_INTENTS: { value: SupportedIntentType; label: string; description: string }[] = [
   {
@@ -119,7 +124,8 @@ export default function ByoaRegisterPage() {
         agentType: formData.agentType,
         agentEndpoint: formData.agentType === 'remote' ? formData.webhookUrl : undefined,
         supportedIntents: formData.supportedIntents,
-        verificationMethods: formData.verificationMethods.length > 0 ? formData.verificationMethods : ['none'],
+        verificationMethods:
+          formData.verificationMethods.length > 0 ? formData.verificationMethods : ['none'],
         metadata: {
           agentId: formData.agentId,
           agentSecret: formData.agentSecret,
@@ -162,7 +168,7 @@ export default function ByoaRegisterPage() {
     formData.signingKey &&
     formData.supportedIntents.length > 0 &&
     (formData.agentType === 'remote' ? !!formData.webhookUrl : true);
-  
+
   const isTypeSelected = formData.agentType !== null;
 
   return (
@@ -198,10 +204,7 @@ export default function ByoaRegisterPage() {
                     const StepIcon = step.icon;
 
                     return (
-                      <motion.div
-                        key={step.id}
-                        className="flex flex-col items-center flex-1"
-                      >
+                      <motion.div key={step.id} className="flex flex-col items-center flex-1">
                         <motion.div
                           className={cn(
                             'w-12 h-12 rounded-full border-2 flex items-center justify-center font-semibold transition-all mb-2',
@@ -217,9 +220,7 @@ export default function ByoaRegisterPage() {
                         <span
                           className={cn(
                             'text-xs font-medium text-center whitespace-nowrap',
-                            isActive || isCompleted
-                              ? 'text-slate-50'
-                              : 'text-slate-400'
+                            isActive || isCompleted ? 'text-slate-50' : 'text-slate-400'
                           )}
                         >
                           {step.label}
@@ -241,9 +242,7 @@ export default function ByoaRegisterPage() {
                 >
                   {currentStep === 'type' && (
                     <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-slate-50">
-                        Select Agent Type
-                      </h3>
+                      <h3 className="text-lg font-semibold text-slate-50">Select Agent Type</h3>
                       <p className="text-sm text-slate-400 mb-6">
                         Choose how your agent will communicate with Sophia.
                       </p>
@@ -291,7 +290,9 @@ export default function ByoaRegisterPage() {
                       {formData.agentType && (
                         <div className="mt-6 p-4 bg-cyan-500/10 border border-cyan-500/30 rounded-lg">
                           <p className="text-sm text-cyan-300">
-                            ✓ Selected: <span className="font-semibold capitalize">{formData.agentType}</span> Agent
+                            ✓ Selected:{' '}
+                            <span className="font-semibold capitalize">{formData.agentType}</span>{' '}
+                            Agent
                           </p>
                         </div>
                       )}
@@ -300,9 +301,7 @@ export default function ByoaRegisterPage() {
 
                   {currentStep === 'info' && (
                     <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-slate-50">
-                        Agent Information
-                      </h3>
+                      <h3 className="text-lg font-semibold text-slate-50">Agent Information</h3>
                       <p className="text-sm text-slate-400 mb-4">
                         Enter the basic information about your agent.
                       </p>
@@ -315,9 +314,7 @@ export default function ByoaRegisterPage() {
                           type="text"
                           placeholder="My Trading Agent"
                           value={formData.agentName}
-                          onChange={(e) =>
-                            updateFormData('agentName', e.target.value)
-                          }
+                          onChange={(e) => updateFormData('agentName', e.target.value)}
                           className="w-full bg-slate-800/50 border border-slate-700/50 hover:border-cyan-500/30 focus:border-cyan-500 text-slate-50 placeholder:text-slate-500 rounded-lg px-4 py-3 text-sm transition-all"
                         />
                       </div>
@@ -330,9 +327,7 @@ export default function ByoaRegisterPage() {
                           type="text"
                           placeholder="agent_abc123def456"
                           value={formData.agentId}
-                          onChange={(e) =>
-                            updateFormData('agentId', e.target.value)
-                          }
+                          onChange={(e) => updateFormData('agentId', e.target.value)}
                           className="w-full bg-slate-800/50 border border-slate-700/50 hover:border-cyan-500/30 focus:border-cyan-500 text-slate-50 placeholder:text-slate-500 rounded-lg px-4 py-3 text-sm transition-all"
                         />
                         <p className="text-xs text-slate-500 mt-1">
@@ -344,9 +339,7 @@ export default function ByoaRegisterPage() {
 
                   {currentStep === 'intents' && (
                     <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-slate-50">
-                        Supported Intents
-                      </h3>
+                      <h3 className="text-lg font-semibold text-slate-50">Supported Intents</h3>
                       <p className="text-sm text-slate-400 mb-6">
                         Select which operations your agent will support.
                       </p>
@@ -359,37 +352,27 @@ export default function ByoaRegisterPage() {
                           >
                             <input
                               type="checkbox"
-                              checked={formData.supportedIntents.includes(
-                                intent.value
-                              )}
+                              checked={formData.supportedIntents.includes(intent.value)}
                               onChange={(e) => {
                                 if (e.target.checked) {
                                   setFormData((prev) => ({
                                     ...prev,
-                                    supportedIntents: [
-                                      ...prev.supportedIntents,
-                                      intent.value,
-                                    ],
+                                    supportedIntents: [...prev.supportedIntents, intent.value],
                                   }));
                                 } else {
                                   setFormData((prev) => ({
                                     ...prev,
-                                    supportedIntents:
-                                      prev.supportedIntents.filter(
-                                        (i) => i !== intent.value
-                                      ),
+                                    supportedIntents: prev.supportedIntents.filter(
+                                      (i) => i !== intent.value
+                                    ),
                                   }));
                                 }
                               }}
                               className="w-4 h-4 rounded border border-slate-600 text-cyan-500 focus:ring-cyan-500 accent-cyan-500 mt-1 flex-shrink-0"
                             />
                             <div>
-                              <div className="font-medium text-slate-50">
-                                {intent.label}
-                              </div>
-                              <div className="text-xs text-slate-400">
-                                {intent.description}
-                              </div>
+                              <div className="font-medium text-slate-50">{intent.label}</div>
+                              <div className="text-xs text-slate-400">{intent.description}</div>
                             </div>
                           </label>
                         ))}
@@ -405,9 +388,7 @@ export default function ByoaRegisterPage() {
 
                   {currentStep === 'verification' && (
                     <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-slate-50">
-                        Verification Methods
-                      </h3>
+                      <h3 className="text-lg font-semibold text-slate-50">Verification Methods</h3>
                       <p className="text-sm text-slate-400 mb-6">
                         Select optional security verification methods for your agent.
                       </p>
@@ -421,12 +402,17 @@ export default function ByoaRegisterPage() {
                               if (e.target.checked) {
                                 setFormData((prev) => ({
                                   ...prev,
-                                  verificationMethods: [...prev.verificationMethods, 'challenge-response'],
+                                  verificationMethods: [
+                                    ...prev.verificationMethods,
+                                    'challenge-response',
+                                  ],
                                 }));
                               } else {
                                 setFormData((prev) => ({
                                   ...prev,
-                                  verificationMethods: prev.verificationMethods.filter(m => m !== 'challenge-response'),
+                                  verificationMethods: prev.verificationMethods.filter(
+                                    (m) => m !== 'challenge-response'
+                                  ),
                                 }));
                               }
                             }}
@@ -437,7 +423,8 @@ export default function ByoaRegisterPage() {
                               Challenge-Response Handshake
                             </div>
                             <div className="text-xs text-slate-400">
-                              Verify endpoint ownership with a cryptographic challenge during registration
+                              Verify endpoint ownership with a cryptographic challenge during
+                              registration
                             </div>
                           </div>
                         </label>
@@ -450,23 +437,27 @@ export default function ByoaRegisterPage() {
                               if (e.target.checked) {
                                 setFormData((prev) => ({
                                   ...prev,
-                                  verificationMethods: [...prev.verificationMethods, 'hmac-signature'],
+                                  verificationMethods: [
+                                    ...prev.verificationMethods,
+                                    'hmac-signature',
+                                  ],
                                 }));
                               } else {
                                 setFormData((prev) => ({
                                   ...prev,
-                                  verificationMethods: prev.verificationMethods.filter(m => m !== 'hmac-signature'),
+                                  verificationMethods: prev.verificationMethods.filter(
+                                    (m) => m !== 'hmac-signature'
+                                  ),
                                 }));
                               }
                             }}
                             className="w-4 h-4 rounded border border-slate-600 text-cyan-500 focus:ring-cyan-500 accent-cyan-500 mt-1 flex-shrink-0"
                           />
                           <div>
-                            <div className="font-medium text-slate-50">
-                              HMAC Webhook Signatures
-                            </div>
+                            <div className="font-medium text-slate-50">HMAC Webhook Signatures</div>
                             <div className="text-xs text-slate-400">
-                              Sign all webhook notifications with HMAC-SHA256 for integrity verification
+                              Sign all webhook notifications with HMAC-SHA256 for integrity
+                              verification
                             </div>
                           </div>
                         </label>
@@ -474,7 +465,9 @@ export default function ByoaRegisterPage() {
 
                       <div className="text-xs text-slate-400 bg-slate-800/50 border border-slate-700/50 rounded p-3">
                         <p className="font-medium text-slate-300 mb-1">Note:</p>
-                        <p>You can skip verification (no checkboxes selected) for basic integrations.</p>
+                        <p>
+                          You can skip verification (no checkboxes selected) for basic integrations.
+                        </p>
                       </div>
                     </div>
                   )}
@@ -484,19 +477,15 @@ export default function ByoaRegisterPage() {
                       <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 flex items-start gap-3 mb-6">
                         <AlertCircle className="w-5 h-5 text-red-300 flex-shrink-0 mt-0.5" />
                         <div>
-                          <p className="text-sm font-medium text-red-300 mb-1">
-                            Security Warning
-                          </p>
+                          <p className="text-sm font-medium text-red-300 mb-1">Security Warning</p>
                           <p className="text-xs text-red-200">
-                            Keep your agent secret and signing key safe. Never
-                            share them publicly or commit them to version control.
+                            Keep your agent secret and signing key safe. Never share them publicly
+                            or commit them to version control.
                           </p>
                         </div>
                       </div>
 
-                      <h3 className="text-lg font-semibold text-slate-50">
-                        Security Credentials
-                      </h3>
+                      <h3 className="text-lg font-semibold text-slate-50">Security Credentials</h3>
                       <p className="text-sm text-slate-400 mb-4">
                         Don't share these credentials with anyone.
                       </p>
@@ -510,9 +499,7 @@ export default function ByoaRegisterPage() {
                             type={showSecret ? 'text' : 'password'}
                             placeholder="sk_live_xxxxxxxxxxxxxxxxxx"
                             value={formData.agentSecret}
-                            onChange={(e) =>
-                              updateFormData('agentSecret', e.target.value)
-                            }
+                            onChange={(e) => updateFormData('agentSecret', e.target.value)}
                             className="w-full bg-slate-800/50 border border-slate-700/50 hover:border-cyan-500/30 focus:border-cyan-500 text-slate-50 placeholder:text-slate-500 rounded-lg px-4 py-3 pr-12 text-sm transition-all"
                           />
                           <button
@@ -538,9 +525,7 @@ export default function ByoaRegisterPage() {
                             type={showKey ? 'text' : 'password'}
                             placeholder="0x1234567890abcdef..."
                             value={formData.signingKey}
-                            onChange={(e) =>
-                              updateFormData('signingKey', e.target.value)
-                            }
+                            onChange={(e) => updateFormData('signingKey', e.target.value)}
                             className="w-full bg-slate-800/50 border border-slate-700/50 hover:border-cyan-500/30 focus:border-cyan-500 text-slate-50 placeholder:text-slate-500 rounded-lg px-4 py-3 pr-12 text-sm transition-all"
                           />
                           <button
@@ -548,11 +533,7 @@ export default function ByoaRegisterPage() {
                             onClick={() => setShowKey(!showKey)}
                             className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-300 transition-colors"
                           >
-                            {showKey ? (
-                              <EyeOff className="w-4 h-4" />
-                            ) : (
-                              <Eye className="w-4 h-4" />
-                            )}
+                            {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                           </button>
                         </div>
                       </div>
@@ -561,9 +542,7 @@ export default function ByoaRegisterPage() {
 
                   {currentStep === 'verify' && (
                     <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-slate-50">
-                        Verification
-                      </h3>
+                      <h3 className="text-lg font-semibold text-slate-50">Verification</h3>
                       <p className="text-sm text-slate-400 mb-4">
                         {formData.agentType === 'remote'
                           ? 'Configure webhook for agent communication.'
@@ -579,9 +558,7 @@ export default function ByoaRegisterPage() {
                             type="url"
                             placeholder="https://api.example.com/webhook"
                             value={formData.webhookUrl}
-                            onChange={(e) =>
-                              updateFormData('webhookUrl', e.target.value)
-                            }
+                            onChange={(e) => updateFormData('webhookUrl', e.target.value)}
                             className="w-full bg-slate-800/50 border border-slate-700/50 hover:border-cyan-500/30 focus:border-cyan-500 text-slate-50 placeholder:text-slate-500 rounded-lg px-4 py-3 text-sm transition-all"
                           />
                           <p className="text-xs text-slate-500 mt-1">
@@ -592,7 +569,9 @@ export default function ByoaRegisterPage() {
 
                       <div className="mt-6 p-4 bg-slate-800/50 rounded-lg border border-slate-700/50">
                         <p className="text-xs text-slate-400 font-medium mb-2 uppercase tracking-wider">
-                          {formData.agentType === 'remote' ? 'Verification Details' : 'Configuration Status'}
+                          {formData.agentType === 'remote'
+                            ? 'Verification Details'
+                            : 'Configuration Status'}
                         </p>
                         <div className="space-y-2 text-xs text-slate-300">
                           {formData.agentType === 'remote' ? (
@@ -646,7 +625,7 @@ export default function ByoaRegisterPage() {
                               <code className="text-sm text-slate-300 font-mono flex-1 break-all">
                                 {registrationResult.agentId}
                               </code>
-                              <button 
+                              <button
                                 aria-label="Copy agent ID"
                                 className="text-slate-400 hover:text-cyan-300 transition-colors"
                               >
@@ -661,9 +640,7 @@ export default function ByoaRegisterPage() {
                           <h3 className="text-lg font-semibold text-red-300 mb-2">
                             Registration Failed
                           </h3>
-                          <p className="text-sm text-red-200">
-                            {registrationResult.message}
-                          </p>
+                          <p className="text-sm text-red-200">{registrationResult.message}</p>
                         </div>
                       ) : (
                         <div className="space-y-4">
@@ -676,17 +653,11 @@ export default function ByoaRegisterPage() {
 
                           <div className="bg-slate-800/50 rounded-lg p-4 space-y-3">
                             <div className="flex justify-between items-start">
-                              <span className="text-xs text-slate-400 font-medium">
-                                Agent Name
-                              </span>
-                              <span className="text-sm text-slate-300">
-                                {formData.agentName}
-                              </span>
+                              <span className="text-xs text-slate-400 font-medium">Agent Name</span>
+                              <span className="text-sm text-slate-300">{formData.agentName}</span>
                             </div>
                             <div className="flex justify-between items-start">
-                              <span className="text-xs text-slate-400 font-medium">
-                                Agent ID
-                              </span>
+                              <span className="text-xs text-slate-400 font-medium">Agent ID</span>
                               <span className="text-sm text-slate-300 font-mono">
                                 {formData.agentId}
                               </span>
@@ -734,9 +705,7 @@ export default function ByoaRegisterPage() {
                         : 'bg-slate-800/50 border border-slate-700/50 text-slate-400'
                     )}
                   >
-                    {isRegistering && (
-                      <RefreshCw className="w-4 h-4 animate-spin" />
-                    )}
+                    {isRegistering && <RefreshCw className="w-4 h-4 animate-spin" />}
                     {isRegistering ? 'Registering...' : 'Register Agent'}
                   </button>
                 ) : isLastStep ? (

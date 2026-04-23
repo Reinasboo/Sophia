@@ -72,7 +72,9 @@ export function Sidebar() {
             <span className="text-black font-bold text-lg">Ⓢ</span>
           </div>
           <div>
-            <span className="font-bold text-sm text-white group-hover:text-primary transition-colors">Sophia</span>
+            <span className="font-bold text-sm text-white group-hover:text-primary transition-colors">
+              Sophia
+            </span>
             <span className="block text-xs text-text-secondary">Agentic Wallet</span>
           </div>
         </Link>

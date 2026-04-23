@@ -15,11 +15,7 @@ import { randomBytes, createHash } from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 import { createLogger } from '../utils/logger.js';
 import { Result, success, failure } from '../types/index.js';
-import { 
-  ExternalAgentType, 
-  ExternalAgentStatus, 
-  SupportedIntentType,
-} from '../types/shared.js';
+import { ExternalAgentType, ExternalAgentStatus, SupportedIntentType } from '../types/shared.js';
 import { saveState, loadState } from '../utils/store.js';
 
 const logger = createLogger('BYOA_REGISTRY');

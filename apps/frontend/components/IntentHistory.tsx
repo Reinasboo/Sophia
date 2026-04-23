@@ -64,7 +64,8 @@ interface IntentRowProps {
 }
 
 function IntentRow({ record }: IntentRowProps) {
-  const config = intentTypeConfig[record.type as SupportedIntentType] ?? intentTypeConfig.AUTONOMOUS;
+  const config =
+    intentTypeConfig[record.type as SupportedIntentType] ?? intentTypeConfig.AUTONOMOUS;
   const Icon = config.icon;
   const isExecuted = record.status === 'executed';
 

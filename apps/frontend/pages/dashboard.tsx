@@ -11,7 +11,17 @@ import { useState } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { useAuthProtected } from '@/lib/useAuthProtected';
-import { Plus, LogOut, Home, TrendingUp, ArrowRightLeft, Layers, Plug, UserPlus, ScrollText } from 'lucide-react';
+import {
+  Plus,
+  LogOut,
+  Home,
+  TrendingUp,
+  ArrowRightLeft,
+  Layers,
+  Plug,
+  UserPlus,
+  ScrollText,
+} from 'lucide-react';
 import {
   Sidebar,
   Header,
@@ -56,7 +66,10 @@ export default function Dashboard() {
         <div className="fixed left-0 top-0 h-full w-60 bg-surface-elevated border-r border-surface-muted flex flex-col z-40">
           {/* Logo */}
           <div className="p-6 border-b border-surface-muted">
-            <div className="flex items-center gap-3 group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary rounded-lg px-2 py-1" onClick={() => router.push('/')}>
+            <div
+              className="flex items-center gap-3 group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary rounded-lg px-2 py-1"
+              onClick={() => router.push('/')}
+            >
               <div className="w-10 h-10 rounded-lg bg-gradient-brand-accent flex items-center justify-center font-bold text-base text-black group-hover:shadow-lg group-hover:shadow-primary/50 transition-shadow duration-200">
                 Ⓢ
               </div>
@@ -68,50 +81,50 @@ export default function Dashboard() {
 
           {/* Navigation */}
           <nav className="flex-1 p-6 space-y-3 overflow-y-auto">
-            <NavItem 
-              icon={<Home className="w-5 h-5" />} 
-              label="Overview" 
+            <NavItem
+              icon={<Home className="w-5 h-5" />}
+              label="Overview"
               href="/dashboard"
               router={router}
               active={router.pathname === '/dashboard'}
             />
-            <NavItem 
-              icon={<TrendingUp className="w-5 h-5" />} 
+            <NavItem
+              icon={<TrendingUp className="w-5 h-5" />}
               label="Agents"
               href="/agents"
               router={router}
               active={router.pathname === '/agents'}
             />
-            <NavItem 
-              icon={<Plug className="w-5 h-5" />} 
+            <NavItem
+              icon={<Plug className="w-5 h-5" />}
               label="Connected Agents"
               href="/connected-agents"
               router={router}
               active={router.pathname === '/connected-agents'}
             />
-            <NavItem 
-              icon={<UserPlus className="w-5 h-5" />} 
+            <NavItem
+              icon={<UserPlus className="w-5 h-5" />}
               label="Register BYOA"
               href="/byoa-register"
               router={router}
               active={router.pathname === '/byoa-register'}
             />
-            <NavItem 
-              icon={<Layers className="w-5 h-5" />} 
+            <NavItem
+              icon={<Layers className="w-5 h-5" />}
               label="Strategies"
               href="/strategies"
               router={router}
               active={router.pathname === '/strategies'}
             />
-            <NavItem 
-              icon={<ScrollText className="w-5 h-5" />} 
+            <NavItem
+              icon={<ScrollText className="w-5 h-5" />}
               label="Intent History"
               href="/intent-history"
               router={router}
               active={router.pathname === '/intent-history'}
             />
-            <NavItem 
-              icon={<ArrowRightLeft className="w-5 h-5" />} 
+            <NavItem
+              icon={<ArrowRightLeft className="w-5 h-5" />}
               label="Transactions"
               href="/transactions"
               router={router}
@@ -138,7 +151,9 @@ export default function Dashboard() {
             <div className="px-8 lg:px-12 py-6 flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold text-white">Overview</h1>
-                <p className="text-sm text-text-secondary mt-1">Monitor your autonomous agents in real-time</p>
+                <p className="text-sm text-text-secondary mt-1">
+                  Monitor your autonomous agents in real-time
+                </p>
               </div>
               <button
                 onClick={() => setShowCreateModal(true)}
@@ -161,8 +176,13 @@ export default function Dashboard() {
                   { label: 'Policies Enforced', value: '156', change: 'All compliant' },
                   { label: 'Avg Gas Saved', value: '34%', change: 'vs manual ops' },
                 ].map((stat, i) => (
-                  <div key={i} className="bg-gradient-brand-subtle rounded-lg border border-surface-muted hover:border-secondary/50 p-6 transition-colors duration-200">
-                    <p className="text-sm text-text-tertiary font-mono uppercase tracking-wider">{stat.label}</p>
+                  <div
+                    key={i}
+                    className="bg-gradient-brand-subtle rounded-lg border border-surface-muted hover:border-secondary/50 p-6 transition-colors duration-200"
+                  >
+                    <p className="text-sm text-text-tertiary font-mono uppercase tracking-wider">
+                      {stat.label}
+                    </p>
                     <p className="text-4xl font-bold text-white mt-3">{stat.value}</p>
                     <p className="text-xs text-secondary mt-3 font-mono">{stat.change}</p>
                   </div>
@@ -194,12 +214,16 @@ export default function Dashboard() {
                           <p className="font-bold text-white group-hover:text-primary transition-colors duration-150">
                             {agent.name}
                           </p>
-                          <p className="text-sm text-text-tertiary mt-2 font-mono">TVL: {agent.tvl} • APR: {agent.apr}</p>
+                          <p className="text-sm text-text-tertiary mt-2 font-mono">
+                            TVL: {agent.tvl} • APR: {agent.apr}
+                          </p>
                         </div>
                         <div className="flex items-center gap-3 flex-shrink-0">
                           <div className="flex items-center gap-2">
                             <div className="w-2 h-2 rounded-full bg-status-success" />
-                            <span className="text-sm text-text-tertiary font-mono">{agent.status}</span>
+                            <span className="text-sm text-text-tertiary font-mono">
+                              {agent.status}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -222,7 +246,10 @@ export default function Dashboard() {
                     { type: 'alert', msg: 'Daily cap near limit', time: '5 hours ago' },
                     { type: 'txn', msg: 'Compound yield farming', time: '8 hours ago' },
                   ].map((item, i) => (
-                    <div key={i} className="bg-surface-elevated border border-surface-muted rounded-lg p-3 text-sm hover:border-secondary/30 transition-colors duration-200">
+                    <div
+                      key={i}
+                      className="bg-surface-elevated border border-surface-muted rounded-lg p-3 text-sm hover:border-secondary/30 transition-colors duration-200"
+                    >
                       <p className="text-text-secondary">{item.msg}</p>
                       <p className="text-xs text-text-muted mt-2 font-mono">{item.time}</p>
                     </div>
@@ -243,7 +270,19 @@ export default function Dashboard() {
   );
 }
 
-function NavItem({ icon, label, active, href, router }: { icon: React.ReactNode; label: string; active?: boolean; href?: string; router?: any }) {
+function NavItem({
+  icon,
+  label,
+  active,
+  href,
+  router,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  active?: boolean;
+  href?: string;
+  router?: any;
+}) {
   return (
     <button
       onClick={() => href && router?.push(href)}

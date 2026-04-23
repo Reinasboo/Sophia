@@ -84,7 +84,9 @@ export class X402Handler {
   static parseX402Header(headerValue: string): Result<X402PaymentDescriptor, Error> {
     try {
       const json = Buffer.from(headerValue, 'base64').toString('utf-8');
-      const parsed = JSON.parse(json) as Omit<X402PaymentDescriptor, 'expiresAt'> & { expiresAt: string };
+      const parsed = JSON.parse(json) as Omit<X402PaymentDescriptor, 'expiresAt'> & {
+        expiresAt: string;
+      };
 
       // Validate required fields
       if (!parsed.paymentAddress || !parsed.requestId || !parsed.amount) {
@@ -98,7 +100,9 @@ export class X402Handler {
       return success(descriptor);
     } catch (err) {
       return failure(
-        new Error(`Failed to parse x402 header: ${err instanceof Error ? err.message : String(err)}`)
+        new Error(
+          `Failed to parse x402 header: ${err instanceof Error ? err.message : String(err)}`
+        )
       );
     }
   }

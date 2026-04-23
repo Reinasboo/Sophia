@@ -106,10 +106,7 @@ export function ActivityFeed({
         <h3 className="text-sm font-semibold text-slate-50">{title}</h3>
         <div className="flex items-center gap-2">
           <span
-            className={cn(
-              'w-1.5 h-1.5 rounded-full',
-              connected ? 'bg-cyan-500' : 'bg-red-500'
-            )}
+            className={cn('w-1.5 h-1.5 rounded-full', connected ? 'bg-cyan-500' : 'bg-red-500')}
           />
           <span className="text-xs text-slate-400">{connected ? 'Live' : 'Offline'}</span>
         </div>
@@ -151,9 +148,7 @@ export function ActivityFeed({
                       <span className="text-sm text-slate-50">{getEventTitle(event)}</span>
                       {statusIcon}
                     </div>
-                    {detail && (
-                      <p className="text-xs text-slate-400 truncate mt-0.5">{detail}</p>
-                    )}
+                    {detail && <p className="text-xs text-slate-400 truncate mt-0.5">{detail}</p>}
                   </div>
 
                   {/* Time */}

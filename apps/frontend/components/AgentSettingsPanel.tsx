@@ -71,9 +71,7 @@ function ParamInput({
       return (
         <div>
           <label className="block text-sm font-medium text-slate-50 mb-2">{field.label}</label>
-          {field.description && (
-            <p className="text-xs text-slate-400 mb-1">{field.description}</p>
-          )}
+          {field.description && <p className="text-xs text-slate-400 mb-1">{field.description}</p>}
           <input
             type="text"
             value={String(value ?? '')}
@@ -86,9 +84,7 @@ function ParamInput({
       return (
         <div>
           <label className="block text-sm font-medium text-slate-50 mb-2">{field.label}</label>
-          {field.description && (
-            <p className="text-xs text-slate-400 mb-1">{field.description}</p>
-          )}
+          {field.description && <p className="text-xs text-slate-400 mb-1">{field.description}</p>}
           <input
             type="text"
             value={Array.isArray(value) ? (value as string[]).join(', ') : String(value ?? '')}
@@ -109,9 +105,7 @@ function ParamInput({
       return (
         <div>
           <label className="block text-sm font-medium text-slate-50 mb-2">{field.label}</label>
-          {field.description && (
-            <p className="text-xs text-slate-400 mb-1">{field.description}</p>
-          )}
+          {field.description && <p className="text-xs text-slate-400 mb-1">{field.description}</p>}
           <input
             type="number"
             value={value !== undefined && value !== '' ? Number(value) : ''}
@@ -201,9 +195,7 @@ export function AgentSettingsPanel({ agent, onUpdated }: AgentSettingsPanelProps
           </div>
           <div>
             <h3 className="text-base font-medium text-slate-50">Agent Configuration</h3>
-            {strategyDef && (
-              <p className="text-xs text-slate-400">{strategyDef.label} strategy</p>
-            )}
+            {strategyDef && <p className="text-xs text-slate-400">{strategyDef.label} strategy</p>}
           </div>
         </div>
 
@@ -292,7 +284,9 @@ export function AgentSettingsPanel({ agent, onUpdated }: AgentSettingsPanelProps
             </label>
 
             <div>
-              <label className="block text-sm font-medium text-slate-50 mb-2">Cycle Interval (ms)</label>
+              <label className="block text-sm font-medium text-slate-50 mb-2">
+                Cycle Interval (ms)
+              </label>
               <input
                 type="number"
                 value={cycleInterval}
@@ -304,7 +298,9 @@ export function AgentSettingsPanel({ agent, onUpdated }: AgentSettingsPanelProps
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-50 mb-2">Max Actions Per Day</label>
+              <label className="block text-sm font-medium text-slate-50 mb-2">
+                Max Actions Per Day
+              </label>
               <input
                 type="number"
                 value={maxActions}

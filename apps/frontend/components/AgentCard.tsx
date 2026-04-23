@@ -76,7 +76,9 @@ export function AgentCard({ agent, onUpdate }: AgentCardProps) {
             <div
               className={cn(
                 'w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0',
-                agent.strategy === 'accumulator' ? 'bg-cyan-500/10 border border-cyan-500/30' : 'bg-blue-500/10 border border-blue-500/30'
+                agent.strategy === 'accumulator'
+                  ? 'bg-cyan-500/10 border border-cyan-500/30'
+                  : 'bg-blue-500/10 border border-blue-500/30'
               )}
             >
               <Bot
@@ -95,20 +97,28 @@ export function AgentCard({ agent, onUpdate }: AgentCardProps) {
           </div>
 
           {/* Status badge */}
-          <span className={cn(
-            'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border',
-            (agent.status === 'executing' || agent.status === 'thinking') ? 'bg-cyan-500/10 text-cyan-300 border-cyan-500/30' :
-            agent.status === 'error' ? 'bg-red-500/10 text-red-300 border-red-500/30' :
-            agent.status === 'stopped' ? 'bg-slate-600/10 text-slate-400 border-slate-600/30' :
-            'bg-blue-500/10 text-blue-300 border-blue-500/30'
-          )}>
+          <span
+            className={cn(
+              'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border',
+              agent.status === 'executing' || agent.status === 'thinking'
+                ? 'bg-cyan-500/10 text-cyan-300 border-cyan-500/30'
+                : agent.status === 'error'
+                  ? 'bg-red-500/10 text-red-300 border-red-500/30'
+                  : agent.status === 'stopped'
+                    ? 'bg-slate-600/10 text-slate-400 border-slate-600/30'
+                    : 'bg-blue-500/10 text-blue-300 border-blue-500/30'
+            )}
+          >
             <span
               className={cn(
                 'w-1.5 h-1.5 rounded-full',
-                (agent.status === 'executing' || agent.status === 'thinking') ? 'animate-pulse bg-cyan-500' :
-                agent.status === 'stopped' ? 'bg-slate-500' :
-                agent.status === 'error' ? 'bg-red-500' :
-                'bg-blue-500'
+                agent.status === 'executing' || agent.status === 'thinking'
+                  ? 'animate-pulse bg-cyan-500'
+                  : agent.status === 'stopped'
+                    ? 'bg-slate-500'
+                    : agent.status === 'error'
+                      ? 'bg-red-500'
+                      : 'bg-blue-500'
               )}
             />
             <span className="capitalize">{agent.status}</span>

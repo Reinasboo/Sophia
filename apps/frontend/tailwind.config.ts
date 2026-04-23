@@ -97,9 +97,11 @@ const config: Config = {
       // GRADIENTS - Brand spectrum (magenta → cyan)
       // ============================================
       backgroundImage: {
-        'gradient-brand-subtle': 'linear-gradient(135deg, rgba(255, 0, 128, 0.1) 0%, rgba(0, 217, 255, 0.1) 100%)',
+        'gradient-brand-subtle':
+          'linear-gradient(135deg, rgba(255, 0, 128, 0.1) 0%, rgba(0, 217, 255, 0.1) 100%)',
         'gradient-brand-accent': 'linear-gradient(135deg, #ff0080 0%, #00d9ff 100%)',
-        'gradient-brand-accent-dark': 'linear-gradient(135deg, rgba(255, 0, 128, 0.2) 0%, rgba(0, 217, 255, 0.2) 100%)',
+        'gradient-brand-accent-dark':
+          'linear-gradient(135deg, rgba(255, 0, 128, 0.2) 0%, rgba(0, 217, 255, 0.2) 100%)',
       },
       // ============================================
       // TYPOGRAPHY - Bold Modern: Syne + Space Mono

@@ -6,7 +6,7 @@
 graph TD
     INDEX[index.ts]
     SERVER[server.ts]
-    
+
     ORCH[orchestrator/]
     AGENT[agent/]
     INTEGRATION[integration/]
@@ -14,31 +14,31 @@ graph TD
     RPC[rpc/]
     TYPES[types/]
     UTILS[utils/]
-    
+
     INDEX -->|getOrchestrator| ORCH
     SERVER -->|getOrchestrator| ORCH
     SERVER -->|integration| INTEGRATION
-    
+
     ORCH -->|agents| AGENT
     ORCH -->|wallet mgr| WALLET
     ORCH -->|intent router| INTEGRATION
     ORCH -->|event bus| ORCH
-    
+
     INTEGRATION -->|wallet| WALLET
     INTEGRATION -->|agent registry| INTEGRATION
-    
+
     AGENT -->|utils| UTILS
     AGENT -->|types| TYPES
-    
+
     WALLET -->|utils| UTILS
     WALLET -->|types| TYPES
     WALLET -->|rpc| RPC
-    
+
     RPC -->|utils| UTILS
     RPC -->|types| TYPES
-    
+
     UTILS -->|types| TYPES
-    
+
     style INDEX fill:#fff
     style SERVER fill:#fff
     style ORCH fill:#e1f5ff
@@ -53,6 +53,7 @@ graph TD
 ## Layer-by-Layer Breakdown
 
 ### Layer 1: Entry Points
+
 ```
 index.ts ─────┐
               ├──> getOrchestrator()
@@ -60,6 +61,7 @@ server.ts ────┘
 ```
 
 ### Layer 2: Orchestration
+
 ```
 orchestrator/
 ├── orchestrator.ts (singleton: getOrchestrator)
@@ -71,6 +73,7 @@ orchestrator/
 ```
 
 ### Layer 3: Business Logic
+
 ```
 agent/ (no upward deps)
 ├── base-agent.ts
@@ -94,6 +97,7 @@ integration/ (BYOA layer - unidirectional within)
 ```
 
 ### Layer 4: Core Services
+
 ```
 wallet/
 ├── wallet-manager.ts (singleton: getWalletManager)
@@ -113,6 +117,7 @@ rpc/
 ```
 
 ### Layer 5: Leaf Nodes
+
 ```
 types/
 ├── shared.ts (frontend + backend types)
@@ -151,15 +156,19 @@ Legend:
 ## Key Invariants (Maintained)
 
 ### Uni-Directionality ✅
+
 Every non-diagonal edge in the matrix points downward or horizontally (never upward).
 
 ### No Back-References ✅
+
 - Agent ┤ ←> Integration: only Integration uses Agent & Wallet
 - Wallet ┤ ←> RPC: only RPC uses Wallet types
 - Orchestrator ┤ ←> Integration: only Orchestrator calls getIntentRouter()
 
 ### Lazy Singletons ✅
+
 All stateful services use the pattern:
+
 ```
 let instance = null;
 export function get*() {
@@ -169,6 +178,7 @@ export function get*() {
 ```
 
 ### Type Safety ✅
+
 - Cross-layer type imports use `import type { ... }` when possible
 - Types are centralized in `src/types/`
 - No type cycles detected
@@ -189,11 +199,12 @@ export function get*() {
 ## Safe Dependency Patterns Demonstrated
 
 ### ✅ Dependency Injection
+
 ```typescript
 // walletBinder.ts
 export class WalletBinder {
   private registry: AgentRegistry;
-  
+
   constructor() {
     this.registry = getAgentRegistry(); // ← Lazy, inside constructor
   }
@@ -201,6 +212,7 @@ export class WalletBinder {
 ```
 
 ### ✅ Event-Driven Communication
+
 ```typescript
 // intentRouter.ts
 import { eventBus } from '../orchestrator/event-emitter.js';
@@ -209,6 +221,7 @@ eventBus.emit({...}); // ← No back-reference to emitter's logic
 ```
 
 ### ✅ Type-Only Imports
+
 ```typescript
 // orchestrator.ts
 import type { SupportedIntentType } from '../integration/agentRegistry.js';
@@ -218,6 +231,7 @@ export function recordIntent(type: SupportedIntentType) { ... }
 ```
 
 ### ✅ Layered Architecture
+
 ```
 Data Flow:    orchestrator → integration → wallet → rpc
 Type Flow:    orchestrator ← integration ← wallet ← rpc

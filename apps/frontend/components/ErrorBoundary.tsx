@@ -58,7 +58,8 @@ export class ErrorBoundary extends React.Component<Props, State> {
                 </div>
 
                 <p className="text-sm text-red-200 mb-4">
-                  An unexpected error occurred. Please try again or contact support if the problem persists.
+                  An unexpected error occurred. Please try again or contact support if the problem
+                  persists.
                 </p>
 
                 {process.env.NODE_ENV === 'development' && this.state.error && (

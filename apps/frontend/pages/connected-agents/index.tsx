@@ -62,9 +62,7 @@ interface AgentRowProps {
 
 function AgentRow({ agent, onSelect, onRevoke }: AgentRowProps) {
   const status = statusConfig[agent.status] || statusConfig.inactive;
-  const lastSeen = agent.lastSeen
-    ? new Date(agent.lastSeen).toLocaleString()
-    : 'Never';
+  const lastSeen = agent.lastSeen ? new Date(agent.lastSeen).toLocaleString() : 'Never';
 
   return (
     <motion.tr
@@ -78,20 +76,16 @@ function AgentRow({ agent, onSelect, onRevoke }: AgentRowProps) {
           <div
             className={cn(
               'w-3 h-3 rounded-full flex-shrink-0',
-              (agent.status === 'active')
+              agent.status === 'active'
                 ? 'bg-cyan-500'
-                : (agent.status === 'inactive')
+                : agent.status === 'inactive'
                   ? 'bg-red-500'
                   : 'bg-blue-500'
             )}
           />
           <div className="min-w-0">
-            <p className="font-medium text-slate-50 truncate">
-              {agent.name}
-            </p>
-            <p className="text-xs text-slate-500 font-mono truncate">
-              {agent.id}
-            </p>
+            <p className="font-medium text-slate-50 truncate">{agent.name}</p>
+            <p className="text-xs text-slate-500 font-mono truncate">{agent.id}</p>
           </div>
         </div>
       </td>
@@ -210,10 +204,7 @@ export default function ConnectedAgentsPage() {
         <Sidebar />
 
         <div className="flex-1 ml-60">
-          <Header
-            title="Connected Agents"
-            subtitle="Manage external agents and integrations"
-          />
+          <Header title="Connected Agents" subtitle="Manage external agents and integrations" />
 
           <main className="px-8 lg:px-12 pb-12 space-y-6">
             <motion.div
@@ -396,9 +387,7 @@ export default function ConnectedAgentsPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-bold text-slate-50">
-                {selectedAgent.name}
-              </h3>
+              <h3 className="text-lg font-bold text-slate-50">{selectedAgent.name}</h3>
               <button
                 onClick={() => setSelectedAgent(null)}
                 className="p-1 hover:bg-slate-700 rounded-lg transition-colors text-slate-400"
@@ -409,9 +398,7 @@ export default function ConnectedAgentsPage() {
 
             <div className="space-y-4 mb-6">
               <div>
-                <p className="text-xs text-slate-400 mb-1 uppercase tracking-wider">
-                  Agent ID
-                </p>
+                <p className="text-xs text-slate-400 mb-1 uppercase tracking-wider">Agent ID</p>
                 <div className="flex items-center gap-2">
                   <code className="text-sm text-slate-300 font-mono flex-1 break-all">
                     {selectedAgent.id}
@@ -423,16 +410,12 @@ export default function ConnectedAgentsPage() {
               </div>
 
               <div>
-                <p className="text-xs text-slate-400 mb-1 uppercase tracking-wider">
-                  Type
-                </p>
+                <p className="text-xs text-slate-400 mb-1 uppercase tracking-wider">Type</p>
                 <p className="text-sm text-slate-300">{selectedAgent.type}</p>
               </div>
 
               <div>
-                <p className="text-xs text-slate-400 mb-1 uppercase tracking-wider">
-                  Status
-                </p>
+                <p className="text-xs text-slate-400 mb-1 uppercase tracking-wider">Status</p>
                 <span
                   className={cn(
                     'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border',
@@ -504,10 +487,8 @@ export default function ConnectedAgentsPage() {
 
             <p className="text-sm text-slate-400 text-center mb-6">
               Are you sure you want to revoke access for{' '}
-              <span className="font-medium text-slate-50">
-                {showRevokeModal.name}
-              </span>
-              ? This action cannot be undone.
+              <span className="font-medium text-slate-50">{showRevokeModal.name}</span>? This action
+              cannot be undone.
             </p>
 
             <div className="flex items-center gap-3">

@@ -267,11 +267,13 @@ export async function activateExternalAgent(id: string): Promise<ApiResponse<voi
   return fetchApi(`/api/byoa/agents/${id}/activate`, { method: 'POST', headers: adminHeaders() });
 }
 
-export async function generateAgentChallenge(agentId: string): Promise<ApiResponse<{
-  challenge: string;
-  expiresIn: number;
-  instruction: string;
-}>> {
+export async function generateAgentChallenge(agentId: string): Promise<
+  ApiResponse<{
+    challenge: string;
+    expiresIn: number;
+    instruction: string;
+  }>
+> {
   return fetchApi('/api/byoa/verify/challenge-generate', {
     method: 'POST',
     headers: adminHeaders(),
@@ -279,10 +281,15 @@ export async function generateAgentChallenge(agentId: string): Promise<ApiRespon
   });
 }
 
-export async function verifyChallengeResponse(agentId: string, challengeResponse: string): Promise<ApiResponse<{
-  verified: boolean;
-  message: string;
-}>> {
+export async function verifyChallengeResponse(
+  agentId: string,
+  challengeResponse: string
+): Promise<
+  ApiResponse<{
+    verified: boolean;
+    message: string;
+  }>
+> {
   return fetchApi('/api/byoa/verify/challenge-submit', {
     method: 'POST',
     body: JSON.stringify({ agentId, challengeResponse }),

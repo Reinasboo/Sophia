@@ -76,9 +76,7 @@ export const PrivySignin: React.FC<PrivySigninProps> = ({ onSuccess }) => {
           {/* Email Input */}
           <form onSubmit={handleEmailSignup} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Email Address
-              </label>
+              <label className="block text-sm font-medium text-slate-300 mb-2">Email Address</label>
               <input
                 type="email"
                 value={email}

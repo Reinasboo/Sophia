@@ -17,6 +17,7 @@ curl -X POST http://localhost:3001/api/byoa/register \
 ```
 
 **Response:**
+
 ```json
 {
   "agentId": "agent-abc123",
@@ -43,6 +44,7 @@ curl -X POST http://localhost:3001/api/byoa/intents \
 ```
 
 **Response:**
+
 ```json
 {
   "intentId": "intent-123",
@@ -89,6 +91,7 @@ Transfer SOL to a recipient address.
 ```
 
 **Response:**
+
 ```json
 {
   "intentId": "intent-456",
@@ -130,6 +133,7 @@ Query wallet balances (no transaction).
 ```
 
 **Response:**
+
 ```json
 {
   "intentId": "intent-789",
@@ -173,22 +177,22 @@ Define custom autonomous behavior.
 
 ### Success Responses
 
-| Status | Meaning |
-|--------|---------|
-| 200 | Intent accepted and processed |
-| 202 | Intent queued (will process asynchronously) |
+| Status | Meaning                                     |
+| ------ | ------------------------------------------- |
+| 200    | Intent accepted and processed               |
+| 202    | Intent queued (will process asynchronously) |
 
 ### Error Responses
 
-| Status | Error Code | Meaning |
-|--------|-----------|---------|
-| 400 | VALIDATION_FAILED | Invalid payload or missing required fields |
-| 401 | UNAUTHORIZED | Invalid or missing authentication token |
-| 402 | INSUFFICIENT_BALANCE | Wallet doesn't have enough SOL/tokens |
-| 403 | POLICY_VIOLATION | Intent violates safety policies (budget, allowlist, etc.) |
-| 404 | AGENT_NOT_FOUND | Agent ID not registered |
-| 429 | RATE_LIMITED | Too many requests, try again later |
-| 500 | INTERNAL_ERROR | Server error (transient, safe to retry) |
+| Status | Error Code           | Meaning                                                   |
+| ------ | -------------------- | --------------------------------------------------------- |
+| 400    | VALIDATION_FAILED    | Invalid payload or missing required fields                |
+| 401    | UNAUTHORIZED         | Invalid or missing authentication token                   |
+| 402    | INSUFFICIENT_BALANCE | Wallet doesn't have enough SOL/tokens                     |
+| 403    | POLICY_VIOLATION     | Intent violates safety policies (budget, allowlist, etc.) |
+| 404    | AGENT_NOT_FOUND      | Agent ID not registered                                   |
+| 429    | RATE_LIMITED         | Too many requests, try again later                        |
+| 500    | INTERNAL_ERROR       | Server error (transient, safe to retry)                   |
 
 ### Example Error Response
 
@@ -223,10 +227,10 @@ class SophiaAgent:
             "Authorization": f"Bearer {control_token}",
             "Content-Type": "application/json"
         }
-    
+
     def submit_intent(self, intent_type: str, payload: dict, timeout_sec: int = 30):
         """Submit an intent and wait for confirmation (polling)"""
-        
+
         # Submit intent
         response = requests.post(
             f"{self.endpoint}/api/byoa/intents",
@@ -237,14 +241,14 @@ class SophiaAgent:
             },
             timeout=10
         )
-        
+
         if response.status_code not in [200, 202]:
             error = response.json()
             raise Exception(f"Intent submission failed: {error['error']['message']}")
-        
+
         intent_data = response.json()
         intent_id = intent_data.get("intentId")
-        
+
         # Poll for confirmation (optional)
         start_time = time.time()
         while time.time() - start_time < timeout_sec:
@@ -253,20 +257,20 @@ class SophiaAgent:
                 headers=self.headers,
                 timeout=5
             )
-            
+
             if status_response.status_code == 200:
                 intent = status_response.json()
                 if intent["status"] in ["confirmed", "failed"]:
                     return intent
-            
+
             time.sleep(2)  # Poll every 2 seconds
-        
+
         return {"intentId": intent_id, "status": "pending"}
-    
+
     def check_balance(self):
         """Check wallet balance"""
         return self.submit_intent("CHECK_BALANCE", {})
-    
+
     def transfer_sol(self, recipient: str, amount: float):
         """Transfer SOL to recipient"""
         return self.submit_intent("TRANSFER_SOL", {
@@ -277,11 +281,11 @@ class SophiaAgent:
 # Usage
 if __name__ == "__main__":
     agent = SophiaAgent("token_xyz789")
-    
+
     # Check balance
     balance = agent.check_balance()
     print(f"Current balance: {balance['result']['balance']['sol']} SOL")
-    
+
     # Transfer SOL
     result = agent.transfer_sol("8WxCw9ULRkr4QHLtvyeHR7Q6yDwEF8qM8S5JpHJX7xRs", 0.1)
     print(f"Transfer signature: {result['result']['signature']}")
@@ -390,17 +394,17 @@ from requests.packages.urllib3.util.retry import Retry
 
 def create_session():
     session = requests.Session()
-    
+
     retries = Retry(
         total=3,
         backoff_factor=1,  # 1s, 2s, 4s
         status_forcelist=[429, 500, 502, 503, 504]
     )
-    
+
     adapter = HTTPAdapter(max_retries=retries)
     session.mount('http://', adapter)
     session.mount('https://', adapter)
-    
+
     return session
 ```
 
@@ -409,15 +413,15 @@ def create_session():
 ```python
 def validate_intent_response(response):
     """Ensure response is valid before acting on it"""
-    
+
     required_fields = ['intentId', 'agentId', 'type', 'status']
     for field in required_fields:
         if field not in response:
             raise ValueError(f"Missing required field: {field}")
-    
+
     if response['status'] not in ['pending', 'confirmed', 'failed']:
         raise ValueError(f"Invalid status: {response['status']}")
-    
+
     return response
 ```
 
@@ -437,6 +441,7 @@ curl http://localhost:3001/api/byoa/agents/agent-abc123 \
 ```
 
 Response:
+
 ```json
 {
   "agentId": "agent-abc123",

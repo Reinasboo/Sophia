@@ -29,11 +29,7 @@ export class MPPHandler {
   private nonces: Set<string> = new Set();
   private maxNonces: number = 5000;
 
-  constructor(
-    serviceId: string,
-    walletPublicKeyOrAddress: string,
-    keypair?: Keypair
-  ) {
+  constructor(serviceId: string, walletPublicKeyOrAddress: string, keypair?: Keypair) {
     this.serviceId = serviceId;
     try {
       this.walletPublicKey = new PublicKey(walletPublicKeyOrAddress);
@@ -116,11 +112,7 @@ export class MPPHandler {
       const signatureBytes = Buffer.from(message.signature, 'hex');
 
       // Verify Ed25519 signature
-      const isValid = nacl.sign.detached.verify(
-        messageBytes,
-        signatureBytes,
-        publicKey.toBytes()
-      );
+      const isValid = nacl.sign.detached.verify(messageBytes, signatureBytes, publicKey.toBytes());
 
       if (!isValid) {
         return failure(new Error('Invalid signature'));
@@ -130,9 +122,7 @@ export class MPPHandler {
       return success(true);
     } catch (err) {
       return failure(
-        new Error(
-          `Failed to verify signature: ${err instanceof Error ? err.message : String(err)}`
-        )
+        new Error(`Failed to verify signature: ${err instanceof Error ? err.message : String(err)}`)
       );
     }
   }
@@ -193,11 +183,7 @@ export class MPPHandler {
   /**
    * Create a payment proof message (proof of payment over Solana)
    */
-  createPaymentProof(
-    txSignature: string,
-    amount: number,
-    requestNonce: string
-  ): MPPMessage {
+  createPaymentProof(txSignature: string, amount: number, requestNonce: string): MPPMessage {
     const nonce = randomBytes(32).toString('hex');
 
     return {
@@ -260,7 +246,9 @@ export class MPPHandler {
       return success(message);
     } catch (err) {
       return failure(
-        new Error(`Failed to parse MPP message: ${err instanceof Error ? err.message : String(err)}`)
+        new Error(
+          `Failed to parse MPP message: ${err instanceof Error ? err.message : String(err)}`
+        )
       );
     }
   }

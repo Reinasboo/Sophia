@@ -199,12 +199,12 @@ export function SyncIndicator() {
 
 ```typescript
 interface DraftAgentConfig {
-  id: string;                    // Agent ID
-  name: string;                  // Agent name
-  strategy: string;              // Strategy type
+  id: string; // Agent ID
+  name: string; // Agent name
+  strategy: string; // Strategy type
   config: Record<string, unknown>; // Strategy parameters
-  lastModified: number;          // Timestamp in ms
-  synced: boolean;               // Whether successfully synced
+  lastModified: number; // Timestamp in ms
+  synced: boolean; // Whether successfully synced
 }
 ```
 
@@ -212,15 +212,15 @@ interface DraftAgentConfig {
 
 ```typescript
 interface PendingIntent {
-  id: string;                    // Unique intent ID
-  agentId: string;               // Source agent
-  intentType: string;            // transfer_sol, transfer_token, etc.
-  amount: number;                // Amount
-  recipient?: string;            // Optional recipient address
-  mint?: string;                 // Optional mint address
+  id: string; // Unique intent ID
+  agentId: string; // Source agent
+  intentType: string; // transfer_sol, transfer_token, etc.
+  amount: number; // Amount
+  recipient?: string; // Optional recipient address
+  mint?: string; // Optional mint address
   data?: Record<string, unknown>; // Optional custom data
-  createdAt: number;             // Timestamp in ms
-  retries: number;               // Number of sync attempts
+  createdAt: number; // Timestamp in ms
+  retries: number; // Number of sync attempts
 }
 ```
 
@@ -228,7 +228,7 @@ interface PendingIntent {
 
 - **localStorage capacity**: ~5MB per domain (browser-dependent)
 - **Typical usage**: ~1KB per agent draft, ~2KB per pending intent
-- **Practical limits**: 
+- **Practical limits**:
   - ~500 unsaved agent drafts
   - ~1000 pending intents
 

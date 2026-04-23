@@ -134,24 +134,16 @@ describe('SERVICE_PAYMENT Intent Execution', () => {
       const policyResult = policyManager.getServicePolicy(serviceId);
       expect(policyResult.ok).toBe(true);
       const policy = policyResult.value!;
-      
+
       expect(intent.amount).toBeGreaterThan(policy.capPerTransaction);
     });
 
     it('should reject payment exceeding daily budget', () => {
       // Record a payment close to budget limit
-      policyManager.recordServicePayment(
-        walletPublicKey,
-        serviceId,
-        400_000,
-        'nonce-1'
-      );
+      policyManager.recordServicePayment(walletPublicKey, serviceId, 400_000, 'nonce-1');
 
       // Attempt another large payment
-      const usageResult = policyManager.getUsageRecord(
-        walletPublicKey,
-        serviceId
-      );
+      const usageResult = policyManager.getUsageRecord(walletPublicKey, serviceId);
 
       expect(usageResult.ok).toBe(true);
       const usageRecord = usageResult.value!;
@@ -166,17 +158,9 @@ describe('SERVICE_PAYMENT Intent Execution', () => {
       const now = Date.now();
 
       // First payment
-      policyManager.recordServicePayment(
-        walletPublicKey,
-        serviceId,
-        50_000,
-        'nonce-2'
-      );
+      policyManager.recordServicePayment(walletPublicKey, serviceId, 50_000, 'nonce-2');
 
-      const usageResult = policyManager.getUsageRecord(
-        walletPublicKey,
-        serviceId
-      );
+      const usageResult = policyManager.getUsageRecord(walletPublicKey, serviceId);
 
       expect(usageResult.ok).toBe(true);
       const usageRecord = usageResult.value!;
@@ -194,17 +178,9 @@ describe('SERVICE_PAYMENT Intent Execution', () => {
       const cooldownSeconds = 30;
 
       // Record initial payment
-      policyManager.recordServicePayment(
-        walletPublicKey,
-        serviceId,
-        50_000,
-        'nonce-3'
-      );
+      policyManager.recordServicePayment(walletPublicKey, serviceId, 50_000, 'nonce-3');
 
-      const usageResult = policyManager.getUsageRecord(
-        walletPublicKey,
-        serviceId
-      );
+      const usageResult = policyManager.getUsageRecord(walletPublicKey, serviceId);
 
       expect(usageResult.ok).toBe(true);
       const usageRecord = usageResult.value!;
@@ -214,30 +190,18 @@ describe('SERVICE_PAYMENT Intent Execution', () => {
       const futureTime = new Date(firstCallTime + (cooldownSeconds + 1) * 1000);
 
       // At this point, another payment should be allowed
-      expect(futureTime.getTime()).toBeGreaterThan(
-        firstCallTime + cooldownSeconds * 1000
-      );
+      expect(futureTime.getTime()).toBeGreaterThan(firstCallTime + cooldownSeconds * 1000);
     });
 
     it('should reject replay attack: same nonce twice', () => {
       const nonce = 'test-nonce-replay';
 
       // First recording succeeds
-      const result1 = policyManager.recordServicePayment(
-        walletPublicKey,
-        serviceId,
-        50_000,
-        nonce
-      );
+      const result1 = policyManager.recordServicePayment(walletPublicKey, serviceId, 50_000, nonce);
       expect(result1.ok).toBe(true);
 
       // Second attempt with same nonce should fail
-      const result2 = policyManager.recordServicePayment(
-        walletPublicKey,
-        serviceId,
-        50_000,
-        nonce
-      );
+      const result2 = policyManager.recordServicePayment(walletPublicKey, serviceId, 50_000, nonce);
       expect(result2.ok).toBe(false);
       expect(result2.error?.message).toMatch(/replay/i);
     });
@@ -410,7 +374,9 @@ describe('SERVICE_PAYMENT Intent Execution', () => {
   describe('Daily Reset Behavior', () => {
     it('should reset usage at midnight UTC', () => {
       const now = new Date();
-      const midnightUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0));
+      const midnightUTC = new Date(
+        Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0)
+      );
 
       // Verify midnight calculation
       expect(midnightUTC.getUTCHours()).toBe(0);

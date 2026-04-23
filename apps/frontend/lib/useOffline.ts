@@ -63,9 +63,7 @@ export interface UseOfflineReturn {
 }
 
 export function useOffline(): UseOfflineReturn {
-  const [offlineState, setOfflineState] = useState<OfflineState>(
-    offlineManager.getState()
-  );
+  const [offlineState, setOfflineState] = useState<OfflineState>(offlineManager.getState());
 
   useEffect(() => {
     // Subscribe to offline state changes

@@ -15,57 +15,59 @@ Selected April 20, 2026. A high-impact, modern palette optimized for precision, 
 
 ### Primary Colors
 
-| Role | Color | Hex | Usage |
-|------|-------|-----|-------|
-| **Background** | Pure Black | `#000000` | Main page backgrounds, cards at depth 0 |
-| **Surface** | Deep Black | `#0a0a0a` | Elevated cards, panels |
-| **Text Primary** | Pure White | `#ffffff` | Body copy, headings, high contrast |
-| **Text Secondary** | Light Gray | `#e0e0e0` | Secondary labels, hints |
+| Role               | Color      | Hex       | Usage                                   |
+| ------------------ | ---------- | --------- | --------------------------------------- |
+| **Background**     | Pure Black | `#000000` | Main page backgrounds, cards at depth 0 |
+| **Surface**        | Deep Black | `#0a0a0a` | Elevated cards, panels                  |
+| **Text Primary**   | Pure White | `#ffffff` | Body copy, headings, high contrast      |
+| **Text Secondary** | Light Gray | `#e0e0e0` | Secondary labels, hints                 |
 
 ### Accent Colors
 
-| Role | Color | Hex | WCAG AA | Usage |
-|------|-------|-----|---------|-------|
+| Role                  | Color            | Hex       | WCAG AA | Usage                                                  |
+| --------------------- | ---------------- | --------- | ------- | ------------------------------------------------------ |
 | **Primary (Magenta)** | Electric Magenta | `#ff0080` | 5.8:1 ✓ | Call-to-action buttons, active states, primary accents |
-| **Secondary (Cyan)** | Neon Cyan | `#00d9ff` | 6.2:1 ✓ | Secondary actions, focus rings, information |
+| **Secondary (Cyan)**  | Neon Cyan        | `#00d9ff` | 6.2:1 ✓ | Secondary actions, focus rings, information            |
 
 ### Supporting Colors
 
-| State | Color | Hex | Usage |
-|-------|-------|-----|-------|
-| **Success** | Bright Green | `#00d964` | Status indicators, positive states |
-| **Warning** | Bright Orange | `#ffa500` | Caution, pending states |
-| **Error** | Bright Red | `#ff3b3b` | Error states, destructive actions |
-| **Info** | Cyan (Secondary) | `#00d9ff` | Information, agents active |
+| State       | Color            | Hex       | Usage                              |
+| ----------- | ---------------- | --------- | ---------------------------------- |
+| **Success** | Bright Green     | `#00d964` | Status indicators, positive states |
+| **Warning** | Bright Orange    | `#ffa500` | Caution, pending states            |
+| **Error**   | Bright Red       | `#ff3b3b` | Error states, destructive actions  |
+| **Info**    | Cyan (Secondary) | `#00d9ff` | Information, agents active         |
 
 ### Grayscale (for borders, dividers, subtlety)
 
-| Level | Color | Hex | Opacity | Usage |
-|-------|-------|-----|---------|-------|
-| **L0** | Black | `#000000` | — | Base |
-| **L1** | Dark Gray | `#1a1a1a` | — | Subtle borders |
-| **L2** | Gray | `#2d2d2d` | — | Visible borders |
-| **L3** | Medium Gray | `#4d4d4d` | — | Focused borders |
-| **L4** | Light Gray | `#606060` | — | Muted text |
-| **L5** | Lighter Gray | `#a0a0a0` | — | Tertiary text |
-| **L6** | White | `#ffffff` | — | Primary text |
+| Level  | Color        | Hex       | Opacity | Usage           |
+| ------ | ------------ | --------- | ------- | --------------- |
+| **L0** | Black        | `#000000` | —       | Base            |
+| **L1** | Dark Gray    | `#1a1a1a` | —       | Subtle borders  |
+| **L2** | Gray         | `#2d2d2d` | —       | Visible borders |
+| **L3** | Medium Gray  | `#4d4d4d` | —       | Focused borders |
+| **L4** | Light Gray   | `#606060` | —       | Muted text      |
+| **L5** | Lighter Gray | `#a0a0a0` | —       | Tertiary text   |
+| **L6** | White        | `#ffffff` | —       | Primary text    |
 
 ### Brand Gradients
 
 Two gradient accents derived from magenta → cyan spectrum. Applied to backgrounds, CTAs, and hero sections.
 
-| Gradient | Direction | Colors | Opacity | Usage |
-|----------|-----------|--------|---------|-------|
-| **Subtle BG** | 135° (↘) | Magenta → Cyan | 10% | Background layers, card accents, gentle depth |
-| **Accent** | 135° (↘) | Magenta → Cyan | 100% | Primary CTA buttons, hero sections, emphasis |
-| **Accent Dark** | 135° (↘) | Magenta → Cyan | 20% | Hover states, focus rings, secondary emphasis |
+| Gradient        | Direction | Colors         | Opacity | Usage                                         |
+| --------------- | --------- | -------------- | ------- | --------------------------------------------- |
+| **Subtle BG**   | 135° (↘)  | Magenta → Cyan | 10%     | Background layers, card accents, gentle depth |
+| **Accent**      | 135° (↘)  | Magenta → Cyan | 100%    | Primary CTA buttons, hero sections, emphasis  |
+| **Accent Dark** | 135° (↘)  | Magenta → Cyan | 20%     | Hover states, focus rings, secondary emphasis |
 
 **Tailwind Classes:**
+
 - `bg-gradient-brand-subtle` — Subtle background gradient
 - `bg-gradient-brand-accent` — Full-strength accent gradient
 - `bg-gradient-brand-accent-dark` — Semi-transparent accent
 
 **Example Usage:**
+
 ```jsx
 // Hero section with accent gradient
 <div className="bg-gradient-brand-accent text-white">
@@ -241,6 +243,7 @@ const spaceMono = Space_Mono({
 ```
 
 These are injected into the main app wrapper using CSS variables:
+
 - `--font-sans` → Syne (via `syne.variable`)
 - `--font-mono` → Space Mono (via `spaceMono.variable`)
 
@@ -260,11 +263,13 @@ fontFamily: {
 All colors are defined in `apps/frontend/tailwind.config.ts` under the theme.extend.colors section.
 
 **Primary color tokens:**
+
 - `bg-black`, `bg-surface`, `bg-background`
 - `text-white`, `text-secondary`
 - `bg-primary-*`, `bg-secondary-*` (Tailwind scales 50-900)
 
 **Usage:**
+
 ```tsx
 <button className="bg-primary-500 text-white hover:bg-primary-600">
   Send SOL
@@ -283,12 +288,12 @@ All tokens are optimized for dark theme. The palette was selected **for maximum 
 
 ### Contrast Matrix
 
-| Element | BG Color | FG Color | Ratio | Pass |
-|---------|----------|----------|-------|------|
-| Body Text | `#000000` | `#ffffff` | 21.0:1 | ✓ AA + AAA |
-| Primary CTA | `#ff0080` | `#ffffff` | 5.8:1 | ✓ AA |
-| Secondary CTA | `#000000` | `#00d9ff` | 6.2:1 | ✓ AA |
-| Labels | `#000000` | `#e0e0e0` | 11.8:1 | ✓ AA + AAA |
+| Element       | BG Color  | FG Color  | Ratio  | Pass       |
+| ------------- | --------- | --------- | ------ | ---------- |
+| Body Text     | `#000000` | `#ffffff` | 21.0:1 | ✓ AA + AAA |
+| Primary CTA   | `#ff0080` | `#ffffff` | 5.8:1  | ✓ AA       |
+| Secondary CTA | `#000000` | `#00d9ff` | 6.2:1  | ✓ AA       |
+| Labels        | `#000000` | `#e0e0e0` | 11.8:1 | ✓ AA + AAA |
 
 ---
 

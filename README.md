@@ -15,7 +15,7 @@
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Solana](https://img.shields.io/badge/Solana-Devnet-blueviolet?logo=solana&logoColor=white)](https://solana.com)
-[![Status](https://img.shields.io/badge/Status-Production%20Ready%20(P1)-brightgreen)](PRODUCTION_ROADMAP.md)
+[![Status](<https://img.shields.io/badge/Status-Production%20Ready%20(P1)-brightgreen>)](PRODUCTION_ROADMAP.md)
 
 </div>
 
@@ -26,6 +26,7 @@
 **P0 Complete** — All production-blocking items delivered (pre-flight simulation, rate limiting, E2E tests, runbook)
 
 **P1 Complete** — First-month production features deployed:
+
 - ✅ **WebSocket Heartbeat** — 30-second bidirectional ping/pong with auto-reconnection
 - ✅ **Agent Context Caching** — 30-50% RPC reduction via intelligent TTL-based caching
 - ✅ **Performance Dashboard** — Real-time metrics visualization and per-agent analytics
@@ -167,7 +168,7 @@ Whether you're building autonomous treasury bots, fleet-scale DeFi operators, or
 | **Wallet Layer**  | AES-256-GCM encryption, scrypt KDF, policy engine                         |
 | **Blockchain**    | Solana Devnet via `@solana/web3.js` 1.91, `@solana/spl-token`, preflight  |
 | **Caching**       | **Agent Context Cache** (balance, token, transaction TTLs)                |
-| **Monitoring**    | Rate limiter with per-wallet quotas, cache performance metrics             |
+| **Monitoring**    | Rate limiter with per-wallet quotas, cache performance metrics            |
 | **Testing**       | Vitest (50+ tests: agent logic, wallet ops, E2E critical path, policies)  |
 | **Linting**       | ESLint v9 (flat config), Prettier 3.x                                     |
 | **CI/CD**         | GitHub Actions (lint, format, test, build, audit, security, auto-release) |
@@ -244,11 +245,11 @@ npm run dev:backend
 npm run dev:frontend
 ```
 
-| Service         | URL                      | Purpose                                 |
-| --------------- | ------------------------ | --------------------------------------- |
-| Dashboard       | `http://localhost:3000`  | Web UI with agent wizard and monitoring |
-| API Server      | `http://localhost:3001`  | REST + WebSocket endpoints              |
-| WebSocket       | `ws://localhost:3002`    | Real-time agent updates (heartbeat)     |
+| Service    | URL                     | Purpose                                 |
+| ---------- | ----------------------- | --------------------------------------- |
+| Dashboard  | `http://localhost:3000` | Web UI with agent wizard and monitoring |
+| API Server | `http://localhost:3001` | REST + WebSocket endpoints              |
+| WebSocket  | `ws://localhost:3002`   | Real-time agent updates (heartbeat)     |
 
 ### Monitor System Health
 
@@ -305,25 +306,32 @@ curl -X POST http://localhost:3001/api/byoa/intent \
 ## Monitoring & Operations
 
 ### Performance Dashboard
+
 Access at `http://localhost:3000/monitoring` for real-time insights:
+
 - **Total transactions, success rate, active agents**
 - **Cache hit rate** — visible RPC savings from caching layer
 - **Per-agent metrics** — success %, gas spent, cycle time
 - **RPC utilization** — global budget status and per-wallet quotas
 
 ### Transaction Explorer
+
 Access at `http://localhost:3000/explorer/transactions` to debug:
+
 - **Browse and filter** transactions by status (confirmed/failed/pending)
 - **Drill into details** — full instruction logs, simulation results, gas breakdown
 - **Link to Solana Explorer** for devnet transaction verification
 
 ### API Documentation
+
 - **Interactive** at `http://localhost:3001/api/openapi.json`
 - **Full reference** with cURL examples in [BYOA Integration Guide](docs/BYOA_INTEGRATION_GUIDE.md)
 - **Endpoints** support OpenAPI/Swagger consumers and IDE integrations
 
 ### Operational Runbook
+
 **[OPERATOR_RUNBOOK.md](OPERATOR_RUNBOOK.md)** covers:
+
 - Pre-deployment checklist
 - Environment setup and configuration
 - Monitoring key metrics (CPU, memory, RPC budget, transaction success rate)
@@ -415,6 +423,7 @@ Tests cover agent decision logic, wallet management, encryption, data store oper
 ```
 
 **Key P1 Production-Ready Additions:**
+
 - `apps/frontend/pages/monitoring/index.tsx` — Performance dashboard with real-time metrics
 - `apps/frontend/pages/explorer/transactions.tsx` — Transaction drill-down and debugging
 - `src/utils/agent-context-cache.ts` — Intelligent balance/token/transaction caching (30-50% RPC savings)

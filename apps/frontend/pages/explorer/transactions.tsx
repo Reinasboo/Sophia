@@ -109,7 +109,9 @@ export default function TransactionExplorer() {
               {/* Page Title */}
               <div>
                 <h1 className="text-3xl font-bold text-white">Transaction Explorer</h1>
-                <p className="text-gray-400 mt-2">Drill down into transaction details and debugging information</p>
+                <p className="text-gray-400 mt-2">
+                  Drill down into transaction details and debugging information
+                </p>
               </div>
 
               {/* Filter Controls */}
@@ -135,7 +137,9 @@ export default function TransactionExplorer() {
                 <div className="lg:col-span-1 bg-gradient-to-br from-gray-900 to-black border border-gray-700 rounded-lg overflow-hidden flex flex-col">
                   <div className="p-4 border-b border-gray-700">
                     <h2 className="text-lg font-bold text-cyan-400">Transactions</h2>
-                    <p className="text-xs text-gray-500 mt-1">{filteredTransactions.length} total</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {filteredTransactions.length} total
+                    </p>
                   </div>
 
                   <div className="flex-1 overflow-y-auto">
@@ -193,7 +197,9 @@ export default function TransactionExplorer() {
                         <div className="flex items-center justify-between mb-4">
                           <div>
                             <p className="text-sm text-gray-400">Signature</p>
-                            <p className="text-lg font-mono text-cyan-400 break-all">{selected.signature}</p>
+                            <p className="text-lg font-mono text-cyan-400 break-all">
+                              {selected.signature}
+                            </p>
                           </div>
                           <a
                             href={`https://explorer.solana.com/tx/${selected.signature}?cluster=devnet`}
@@ -226,11 +232,15 @@ export default function TransactionExplorer() {
                           </div>
                           <div>
                             <p className="text-xs text-gray-500 mb-1">Gas Spent</p>
-                            <p className="text-sm text-magenta-500 font-semibold">{selected.gasSpent?.toFixed(6) || 'N/A'} SOL</p>
+                            <p className="text-sm text-magenta-500 font-semibold">
+                              {selected.gasSpent?.toFixed(6) || 'N/A'} SOL
+                            </p>
                           </div>
                           <div>
                             <p className="text-xs text-gray-500 mb-1">Timestamp</p>
-                            <p className="text-sm text-gray-300">{new Date(selected.timestamp).toLocaleString()}</p>
+                            <p className="text-sm text-gray-300">
+                              {new Date(selected.timestamp).toLocaleString()}
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -253,7 +263,9 @@ export default function TransactionExplorer() {
                         {selected.error && (
                           <div className="bg-red-900/20 border border-red-500 rounded p-3">
                             <p className="text-sm text-red-400 font-semibold">Error</p>
-                            <p className="text-sm text-red-300 mt-1 font-mono break-all">{selected.error}</p>
+                            <p className="text-sm text-red-300 mt-1 font-mono break-all">
+                              {selected.error}
+                            </p>
                           </div>
                         )}
 
@@ -262,14 +274,23 @@ export default function TransactionExplorer() {
                             <p className="text-sm text-blue-400 font-semibold">Simulation Result</p>
                             <div className="text-sm text-blue-300 mt-2 space-y-1">
                               <p>
-                                Success: <span className="font-mono">{selected.simulationResult.success ? 'true' : 'false'}</span>
+                                Success:{' '}
+                                <span className="font-mono">
+                                  {selected.simulationResult.success ? 'true' : 'false'}
+                                </span>
                               </p>
                               <p>
-                                Gas Estimate: <span className="font-mono">{selected.simulationResult.gasEstimate} lamports</span>
+                                Gas Estimate:{' '}
+                                <span className="font-mono">
+                                  {selected.simulationResult.gasEstimate} lamports
+                                </span>
                               </p>
                               {selected.simulationResult.error && (
                                 <p>
-                                  Error: <span className="font-mono break-all">{selected.simulationResult.error}</span>
+                                  Error:{' '}
+                                  <span className="font-mono break-all">
+                                    {selected.simulationResult.error}
+                                  </span>
                                 </p>
                               )}
                             </div>
@@ -278,20 +299,26 @@ export default function TransactionExplorer() {
 
                         <div className="bg-gray-800/30 border border-gray-700 rounded p-3">
                           <p className="text-sm text-gray-400 font-semibold mb-2">From</p>
-                          <p className="text-sm font-mono text-cyan-400 break-all">{selected.from}</p>
+                          <p className="text-sm font-mono text-cyan-400 break-all">
+                            {selected.from}
+                          </p>
                         </div>
 
                         {selected.to && (
                           <div className="bg-gray-800/30 border border-gray-700 rounded p-3">
                             <p className="text-sm text-gray-400 font-semibold mb-2">To</p>
-                            <p className="text-sm font-mono text-cyan-400 break-all">{selected.to}</p>
+                            <p className="text-sm font-mono text-cyan-400 break-all">
+                              {selected.to}
+                            </p>
                           </div>
                         )}
 
                         {selected.amount && (
                           <div className="bg-gray-800/30 border border-gray-700 rounded p-3">
                             <p className="text-sm text-gray-400 font-semibold mb-2">Amount</p>
-                            <p className="text-sm font-mono text-magenta-500">{selected.amount} SOL</p>
+                            <p className="text-sm font-mono text-magenta-500">
+                              {selected.amount} SOL
+                            </p>
                           </div>
                         )}
                       </div>

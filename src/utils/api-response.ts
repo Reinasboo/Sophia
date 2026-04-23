@@ -29,7 +29,10 @@ export interface ApiMessageResponse {
   timestamp: Date;
 }
 
-export type ApiResponse<T = unknown> = ApiSuccessResponse<T> | ApiErrorResponse | ApiMessageResponse;
+export type ApiResponse<T = unknown> =
+  | ApiSuccessResponse<T>
+  | ApiErrorResponse
+  | ApiMessageResponse;
 
 /**
  * Standard HTTP status codes for common API errors
@@ -76,11 +79,7 @@ export const ERROR_CODE = {
 /**
  * Send a success response with data
  */
-export function sendSuccess<T>(
-  res: Response,
-  data: T,
-  statusCode: number = 200
-): void {
+export function sendSuccess<T>(res: Response, data: T, statusCode: number = 200): void {
   res.status(statusCode).json({
     success: true,
     data,
@@ -91,11 +90,7 @@ export function sendSuccess<T>(
 /**
  * Send a success response with a message
  */
-export function sendMessage(
-  res: Response,
-  message: string,
-  statusCode: number = 200
-): void {
+export function sendMessage(res: Response, message: string, statusCode: number = 200): void {
   res.status(statusCode).json({
     success: true,
     message,
@@ -114,7 +109,7 @@ export function sendError(
   context?: Record<string, unknown>
 ): void {
   const errorMessage = error instanceof Error ? error.message : String(error);
-  
+
   // Log error with context
   logger.error('API Error', {
     statusCode,
@@ -169,9 +164,11 @@ export function validateString(
 /**
  * Validate bearer token format from Authorization header
  */
-export function validateBearerToken(
-  authHeader: string | undefined
-): { valid: boolean; token?: string; error?: string } {
+export function validateBearerToken(authHeader: string | undefined): {
+  valid: boolean;
+  token?: string;
+  error?: string;
+} {
   if (!authHeader) {
     return {
       valid: false,
@@ -213,13 +210,8 @@ export function asyncHandler(
         method: req.method,
         error: errorMsg,
       });
-      
-      sendError(
-        res,
-        errorMsg,
-        HTTP_STATUS.INTERNAL_SERVER_ERROR,
-        ERROR_CODE.INTERNAL_ERROR
-      );
+
+      sendError(res, errorMsg, HTTP_STATUS.INTERNAL_SERVER_ERROR, ERROR_CODE.INTERNAL_ERROR);
     }
   };
 }

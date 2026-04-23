@@ -239,8 +239,7 @@ export class AgentContextCache {
       balances: this.balanceCache.size,
       transactions: this.transactionCache.size,
       metadata: this.tokenMetadataCache.size,
-      total:
-        this.balanceCache.size + this.transactionCache.size + this.tokenMetadataCache.size,
+      total: this.balanceCache.size + this.transactionCache.size + this.tokenMetadataCache.size,
     };
 
     return sizes;

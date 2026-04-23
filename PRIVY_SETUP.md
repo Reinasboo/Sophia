@@ -18,12 +18,14 @@ Privy provides enterprise-grade wallet infrastructure with hardware-isolated key
 ## Step 2: Install Dependencies
 
 ### Frontend (React SDK)
+
 ```bash
 cd apps/frontend
 npm install @privy-io/react-auth
 ```
 
 ### Backend (Server SDK)
+
 ```bash
 npm install @privy-io/server-auth
 ```
@@ -42,6 +44,7 @@ NEXT_PUBLIC_PRIVY_APP_ID=your_app_id_here
 ```
 
 Also add to `.env` for backend:
+
 ```bash
 PRIVY_APP_ID=your_app_id_here
 PRIVY_SECRET_KEY=your_secret_key_here
@@ -118,12 +121,14 @@ async function createAgent() {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${tenantSession.apiKey}`,
+      Authorization: `Bearer ${tenantSession.apiKey}`,
     },
     body: JSON.stringify({
       name: 'My Agent',
       strategy: 'accumulator',
-      strategyParams: { /* ... */ },
+      strategyParams: {
+        /* ... */
+      },
     }),
   });
   return response.json();
