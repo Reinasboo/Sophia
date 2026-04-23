@@ -143,7 +143,7 @@ export default function TransactionsPage() {
         <title>Transactions | Sophia Agentic Wallet</title>
       </Head>
 
-      <div className="flex min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+      <div className="flex min-h-screen bg-black">
         <Sidebar />
 
         <div className="flex-1 ml-60">
@@ -161,11 +161,11 @@ export default function TransactionsPage() {
                 className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3"
               >
                 {[
-                  { label: 'Total', value: stats.total, icon: TrendingUp, color: 'text-cyan-300', bgColor: 'from-cyan-500/10 to-transparent' },
-                  { label: 'Finalized', value: stats.finalized, icon: CheckCircle2, color: 'text-cyan-400', bgColor: 'from-cyan-500/10 to-transparent' },
-                  { label: 'Pending', value: stats.pending, icon: Clock, color: 'text-yellow-400', bgColor: 'from-yellow-500/10 to-transparent' },
-                  { label: 'Failed', value: stats.failed, icon: AlertCircle, color: 'text-red-400', bgColor: 'from-red-500/10 to-transparent' },
-                  { label: 'Volume', value: `${stats.volume.toFixed(2)}`, icon: TrendingUp, color: 'text-blue-400', unit: 'SOL', bgColor: 'from-blue-500/10 to-transparent' },
+                  { label: 'Total', value: stats.total, icon: TrendingUp, color: 'text-secondary', bgColor: 'from-secondary/10 to-transparent' },
+                  { label: 'Finalized', value: stats.finalized, icon: CheckCircle2, color: 'text-status-success', bgColor: 'from-status-success/10 to-transparent' },
+                  { label: 'Pending', value: stats.pending, icon: Clock, color: 'text-status-warning', bgColor: 'from-status-warning/10 to-transparent' },
+                  { label: 'Failed', value: stats.failed, icon: AlertCircle, color: 'text-status-error', bgColor: 'from-status-error/10 to-transparent' },
+                  { label: 'Volume', value: `${stats.volume.toFixed(2)}`, icon: TrendingUp, color: 'text-primary', unit: 'SOL', bgColor: 'from-primary/10 to-transparent' },
                 ].map((stat, idx) => {
                   const Icon = stat.icon;
                   return (
@@ -177,7 +177,7 @@ export default function TransactionsPage() {
                       className={cn(
                         'bg-gradient-to-br',
                         stat.bgColor,
-                        'border border-slate-700/50 hover:border-cyan-500/40 rounded-lg p-4 backdrop-blur-sm transition-all hover:bg-slate-800/50'
+                        'border border-primary/20 hover:border-secondary/50 rounded-lg p-4 backdrop-blur-sm transition-all hover:bg-surface-elevated/50'
                       )}
                     >
                       <div className="flex items-center gap-3">
@@ -204,13 +204,13 @@ export default function TransactionsPage() {
               <div className="flex items-center gap-3 flex-wrap">
                 {/* Search */}
                 <div className="relative flex-1 min-w-[240px]">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" />
                   <input
                     type="text"
                     placeholder="Search by signature, recipient, agent…"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="w-full bg-slate-800/50 border border-slate-700/50 hover:border-cyan-500/30 focus:border-cyan-500 text-slate-50 placeholder:text-slate-500 rounded-lg px-4 py-2.5 text-sm transition-all backdrop-blur-sm"
+                    className="w-full bg-surface-elevated/50 border border-primary/20 hover:border-secondary/30 focus:border-secondary text-white placeholder:text-text-secondary rounded-lg px-4 py-2.5 text-sm transition-all backdrop-blur-sm"
                   />
                 </div>
 
@@ -218,7 +218,7 @@ export default function TransactionsPage() {
                 <select
                   value={typeFilter}
                   onChange={(e) => setTypeFilter(e.target.value)}
-                  className="bg-slate-800/50 border border-slate-700/50 hover:border-cyan-500/30 text-slate-50 rounded-lg px-3 py-2.5 text-sm transition-all backdrop-blur-sm cursor-pointer"
+                  className="bg-surface-elevated/50 border border-primary/20 hover:border-secondary/30 text-white rounded-lg px-3 py-2.5 text-sm transition-all backdrop-blur-sm cursor-pointer"
                 >
                   <option value="all">All Types</option>
                   <option value="transfer">Transfers</option>
@@ -229,7 +229,7 @@ export default function TransactionsPage() {
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="bg-slate-800/50 border border-slate-700/50 hover:border-cyan-500/30 text-slate-50 rounded-lg px-3 py-2.5 text-sm transition-all backdrop-blur-sm cursor-pointer"
+                  className="bg-surface-elevated/50 border border-primary/20 hover:border-secondary/30 text-white rounded-lg px-3 py-2.5 text-sm transition-all backdrop-blur-sm cursor-pointer"
                 >
                   <option value="all">All Statuses</option>
                   <option value="finalized">Finalized</option>
@@ -242,12 +242,12 @@ export default function TransactionsPage() {
                 <button
                   onClick={refetch}
                   disabled={loading}
-                  className="bg-slate-800/50 border border-slate-700/50 hover:border-cyan-500/30 text-slate-300 hover:text-cyan-300 rounded-lg px-3 py-2.5 transition-all backdrop-blur-sm inline-flex items-center gap-2"
+                  className="bg-surface-elevated/50 border border-primary/20 hover:border-secondary/30 text-text-secondary hover:text-secondary rounded-lg px-3 py-2.5 transition-all backdrop-blur-sm inline-flex items-center gap-2"
                 >
                   <RefreshCw className={cn('w-4 h-4', loading && 'animate-spin')} />
                 </button>
 
-                <button className="bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 hover:border-cyan-500/50 text-cyan-300 rounded-lg px-4 py-2.5 transition-all backdrop-blur-sm inline-flex items-center gap-2 hover:bg-cyan-500/30">
+                <button className="bg-gradient-to-r from-primary/20 to-secondary/20 border border-primary/30 hover:border-primary/50 text-primary rounded-lg px-4 py-2.5 transition-all backdrop-blur-sm inline-flex items-center gap-2 hover:bg-primary/30">
                   <FileDown className="w-4 h-4" />
                   Export CSV
                 </button>
