@@ -64,16 +64,16 @@ export function Sidebar() {
   const pathname = router.pathname;
 
   return (
-    <aside className="fixed left-0 top-0 bottom-0 w-60 bg-gradient-to-b from-slate-900 via-slate-900/80 to-slate-950 border-r border-slate-700/50 flex flex-col backdrop-blur-xl">
+    <aside className="fixed left-0 top-0 bottom-0 w-60 bg-black border-r border-primary/20 flex flex-col backdrop-blur-xl">
       {/* Logo */}
       <div className="h-18 flex items-center px-6 pt-6">
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center transition-all group-hover:shadow-lg group-hover:shadow-cyan-500/50">
-            <span className="text-slate-950 font-bold text-lg">Ⓢ</span>
+          <div className="w-9 h-9 rounded-xl bg-gradient-brand-accent flex items-center justify-center transition-all group-hover:shadow-lg group-hover:shadow-primary/50">
+            <span className="text-black font-bold text-lg">Ⓢ</span>
           </div>
           <div>
-            <span className="font-bold text-sm bg-gradient-to-r from-cyan-300 to-blue-400 bg-clip-text text-transparent">Sophia</span>
-            <span className="block text-xs text-slate-400">Agentic Wallet</span>
+            <span className="font-bold text-sm text-white group-hover:text-primary transition-colors">Sophia</span>
+            <span className="block text-xs text-text-secondary">Agentic Wallet</span>
           </div>
         </Link>
       </div>
@@ -95,7 +95,7 @@ export function Sidebar() {
                   {isActive && (
                     <motion.div
                       layoutId="nav-indicator"
-                      className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-cyan-500 rounded-full"
+                      className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-primary rounded-full"
                       initial={false}
                       transition={{
                         type: 'spring',
@@ -107,7 +107,7 @@ export function Sidebar() {
                   <Icon
                     className={cn(
                       'w-[18px] h-[18px]',
-                      isActive ? 'text-cyan-400' : 'text-slate-500'
+                      isActive ? 'text-primary' : 'text-text-secondary'
                     )}
                   />
                   <span>{item.name}</span>

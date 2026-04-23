@@ -347,7 +347,7 @@ export function useIntentHistory(pollInterval: number = 5000) {
   return useAllIntentHistory(pollInterval);
 }
 
-// Mock hook for connected agents
+// Fetch connected BYOA agents from real backend
 export function useConnectedAgents(pollInterval: number = 5000) {
   const [agents, setAgents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -356,27 +356,26 @@ export function useConnectedAgents(pollInterval: number = 5000) {
   const fetchAgents = useCallback(async () => {
     try {
       setError(null);
-      // Mock data - replace with real API call when available
-      setAgents([
-        {
-          id: 'agent_123',
-          name: 'Test Agent',
-          type: 'BYOA',
-          status: 'active',
-          lastSeen: new Date().toISOString(),
-        },
-      ]);
+      const response = await api.getExternalAgents();
+      if (response.success && response.data) {
+        setAgents(response.data);
+      } else {
+        setAgents([]);
+      }
       setLoading(false);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch agents';
       setError(errorMessage);
+      setAgents([]);
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
     fetchAgents();
-  }, [fetchAgents]);
+    const interval = setInterval(fetchAgents, pollInterval);
+    return () => clearInterval(interval);
+  }, [fetchAgents, pollInterval]);
 
   const revoke = useCallback(async (id: string) => {
     try {

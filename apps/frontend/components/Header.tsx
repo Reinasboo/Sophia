@@ -32,12 +32,12 @@ export function Header({ title, subtitle }: HeaderProps) {
               initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              className="text-4xl font-black text-slate-50"
+              className="text-4xl font-black text-white"
             >
               {title}
             </motion.h1>
           )}
-          {subtitle && <p className="text-body text-slate-400">{subtitle}</p>}
+          {subtitle && <p className="text-body text-text-secondary">{subtitle}</p>}
         </div>
 
         {/* Status indicators - subtle, right-aligned */}
