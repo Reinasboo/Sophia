@@ -608,7 +608,6 @@ app.patch(
 
 app.get(
   '/api/strategies',
-  requireAdminAuth,
   asyncHandler(async (_req: Request, res: Response) => {
     const registry = getStrategyRegistry();
     const strategies = registry.getAllDTOs();
@@ -619,7 +618,6 @@ app.get(
 
 app.get(
   '/api/strategies/:name',
-  requireAdminAuth,
   asyncHandler(async (req: Request, res: Response) => {
     const registry = getStrategyRegistry();
     const strategy = registry.getDTO(req.params['name'] ?? '');
