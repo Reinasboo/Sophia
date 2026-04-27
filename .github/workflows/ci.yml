@@ -43,13 +43,19 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
-      - run: npm ci
-      - run: npm test -- --run
+      - name: Display Node version
+        run: node --version && npm --version
+      - name: Install dependencies
+        run: npm ci
+      - name: Run tests
+        run: npm test -- --run
         env:
           SOLANA_RPC_URL: https://api.devnet.solana.com
           SOLANA_NETWORK: devnet
           KEY_ENCRYPTION_SECRET: ci-test-secret-not-for-production
           ADMIN_API_KEY: ci-test-admin-key-not-for-production
+          CI: 'true'
+        timeout-minutes: 15
 
   build:
     name: Build Verification
