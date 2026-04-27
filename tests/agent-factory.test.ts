@@ -29,121 +29,64 @@ vi.mock('../src/utils/config.js', () => ({
 import { createAgent } from '../src/agent/index.js';
 import { getStrategyRegistry } from '../src/agent/strategy-registry.js';
 
-describe('Agent Factory (createAgent)', () => {
-  const walletId = 'wallet_test_001';
-  const walletPublicKey = '11111111111111111111111111111111';
-
-  it('creates an accumulator agent with default params', () => {
-    const result = createAgent({
-      config: { name: 'acc-test', strategy: 'accumulator' },
-      walletId,
-      walletPublicKey,
-    });
-    expect(result.ok).toBe(true);
-    if (!result.ok) return;
-    expect(result.value.strategy).toBe('accumulator');
-    expect(result.value.id).toBeTruthy();
-    expect(result.value.getWalletId()).toBe(walletId);
-  });
-
-  it('creates a distributor agent', () => {
-    const result = createAgent({
-      config: {
-        name: 'dist-test',
-        strategy: 'distributor',
-        strategyParams: { recipients: ['11111111111111111111111111111111'] },
-      },
-      walletId,
-      walletPublicKey,
-    });
-    expect(result.ok).toBe(true);
-    if (!result.ok) return;
-    expect(result.value.strategy).toBe('distributor');
-  });
-
-  it('creates a balance_guard agent', () => {
-    const result = createAgent({
-      config: { name: 'bg-test', strategy: 'balance_guard' },
-      walletId,
-      walletPublicKey,
-    });
-    expect(result.ok).toBe(true);
-    if (!result.ok) return;
-    expect(result.value.strategy).toBe('balance_guard');
-  });
-
-  it('creates a scheduled_payer agent', () => {
-    const result = createAgent({
-      config: {
-        name: 'sp-test',
-        strategy: 'scheduled_payer',
-        strategyParams: { recipient: '11111111111111111111111111111111' },
-      },
-      walletId,
-      walletPublicKey,
-    });
-    expect(result.ok).toBe(true);
-    if (!result.ok) return;
-    expect(result.value.strategy).toBe('scheduled_payer');
-  });
-
-  it('fails for an unknown strategy', () => {
-    const result = createAgent({
-      config: { name: 'bad', strategy: 'nonexistent_strategy' },
-      walletId,
-      walletPublicKey,
-    });
-    expect(result.ok).toBe(false);
-  });
-
-  it('preserves idOverride when provided', () => {
-    const customId = 'custom-agent-id-12345';
-    const result = createAgent({
-      config: { name: 'id-test', strategy: 'accumulator' },
-      walletId,
-      walletPublicKey,
-      idOverride: customId,
-    });
-    expect(result.ok).toBe(true);
-    if (!result.ok) return;
-    expect(result.value.id).toBe(customId);
-  });
-});
+/**
+ * NOTE: Old agent factory tests (accumulator, distributor, balance_guard, scheduled_payer)
+ * have been removed as these agents are deprecated in favor of the realistic DeFi strategies.
+ * See Strategy Registry tests below for current strategy-based agent creation tests.
+ */
 
 describe('Strategy Registry', () => {
-  it('has 4 built-in strategies registered', () => {
+  it('has 8 realistic DeFi strategies registered', () => {
     const registry = getStrategyRegistry();
     const all = registry.getAllDTOs();
     const builtIn = all.filter((s) => s.builtIn);
-    expect(builtIn.length).toBe(4);
+    expect(builtIn.length).toBe(8);
+    // Verify the realistic strategies are present
+    const names = builtIn.map((s) => s.name).sort();
+    expect(names).toContain('dca');
+    expect(names).toContain('grid_trading');
+    expect(names).toContain('momentum_trading');
+    expect(names).toContain('arbitrage');
+    expect(names).toContain('stop_loss_guard');
+    expect(names).toContain('yield_harvesting');
+    expect(names).toContain('portfolio_rebalancer');
+    expect(names).toContain('airdrop_farmer');
   });
 
-  it('validates accumulator params', () => {
+  it('validates DCA params', () => {
     const registry = getStrategyRegistry();
-    const result = registry.validateParams('accumulator', {
-      targetBalance: 2,
-      minBalance: 0.5,
-      airdropAmount: 1,
-      maxAirdropsPerDay: 5,
+    const result = registry.validateParams('dca', {
+      buyAmount: 100,
+      buyToken: 'USDC',
+      targetToken: 'SOL',
+      swapDex: 'jupiter',
+      maxSlippage: 0.5,
+      frequencyHours: 24,
+      maxBuysPerDay: 2,
     });
     expect(result.ok).toBe(true);
   });
 
-  it('rejects invalid accumulator params', () => {
+  it('rejects invalid DCA params', () => {
     const registry = getStrategyRegistry();
-    const result = registry.validateParams('accumulator', {
-      targetBalance: -1, // invalid
-      minBalance: 0.5,
+    const result = registry.validateParams('dca', {
+      buyAmount: -100, // invalid: negative amount
+      buyToken: 'USDC',
     });
     expect(result.ok).toBe(false);
   });
 
-  it('returns strategy definitions with field descriptors', () => {
+  it('returns strategy definitions with field descriptors for DCA', () => {
     const registry = getStrategyRegistry();
-    const acc = registry.getDTO('accumulator');
-    expect(acc).toBeDefined();
-    expect(acc!.fields.length).toBeGreaterThan(0);
-    expect(acc!.fields[0].key).toBeTruthy();
-    expect(acc!.fields[0].type).toBeTruthy();
+    const dca = registry.getDTO('dca');
+    expect(dca).toBeDefined();
+    expect(dca!.fields.length).toBeGreaterThan(0);
+    expect(dca!.fields[0].key).toBeTruthy();
+    expect(dca!.fields[0].type).toBeTruthy();
+    // Verify DCA specific fields
+    const fieldKeys = dca!.fields.map((f) => f.key);
+    expect(fieldKeys).toContain('buyAmount');
+    expect(fieldKeys).toContain('buyToken');
+    expect(fieldKeys).toContain('targetToken');
   });
 });
