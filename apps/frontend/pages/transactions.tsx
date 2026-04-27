@@ -71,9 +71,7 @@ function TransactionRow({ transaction, isExpanded, onToggle }: TransactionRowPro
                 {transaction.status}
               </span>
             </div>
-            <p className="text-xs text-slate-500 truncate">
-              {transaction.signature || 'Pending'}
-            </p>
+            <p className="text-xs text-slate-500 truncate">{transaction.signature || 'Pending'}</p>
           </div>
 
           <div className="text-right">
@@ -194,7 +192,10 @@ export default function TransactionsPage() {
       ['pending', 'submitted', 'confirmed'].includes(tx.status)
     ).length;
     const failed = (transactions || []).filter((tx) => tx.status === 'failed').length;
-    const volume = (transactions || []).reduce((sum, tx) => sum + parseFloat((tx.amount as any) || '0'), 0);
+    const volume = (transactions || []).reduce(
+      (sum, tx) => sum + parseFloat((tx.amount as any) || '0'),
+      0
+    );
 
     return { total, finalized, pending, failed, volume };
   }, [transactions]);
@@ -220,10 +221,25 @@ export default function TransactionsPage() {
               >
                 {[
                   { label: 'Total', value: stats.total, icon: TrendingUp, color: 'text-cyan-400' },
-                  { label: 'Finalized', value: stats.finalized, icon: CheckCircle2, color: 'text-emerald-400' },
+                  {
+                    label: 'Finalized',
+                    value: stats.finalized,
+                    icon: CheckCircle2,
+                    color: 'text-emerald-400',
+                  },
                   { label: 'Pending', value: stats.pending, icon: Clock, color: 'text-amber-400' },
-                  { label: 'Failed', value: stats.failed, icon: AlertCircle, color: 'text-red-400' },
-                  { label: 'Volume (SOL)', value: stats.volume.toFixed(2), icon: TrendingUp, color: 'text-blue-400' },
+                  {
+                    label: 'Failed',
+                    value: stats.failed,
+                    icon: AlertCircle,
+                    color: 'text-red-400',
+                  },
+                  {
+                    label: 'Volume (SOL)',
+                    value: stats.volume.toFixed(2),
+                    icon: TrendingUp,
+                    color: 'text-blue-400',
+                  },
                 ].map((stat, idx) => {
                   const Icon = stat.icon;
                   return (
@@ -236,7 +252,9 @@ export default function TransactionsPage() {
                     >
                       <div className="flex items-start justify-between">
                         <div>
-                          <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">{stat.label}</p>
+                          <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">
+                            {stat.label}
+                          </p>
                           <p className={cn('text-xl font-bold', stat.color)}>{stat.value}</p>
                         </div>
                         <Icon className={cn('w-5 h-5', stat.color, 'opacity-50')} />
@@ -306,11 +324,7 @@ export default function TransactionsPage() {
                 <p className="text-sm text-slate-500">Try adjusting your search or filters</p>
               </div>
             ) : (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="space-y-3"
-              >
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3">
                 <p className="text-xs text-slate-500 uppercase tracking-wider mb-4">
                   Showing {filteredTxs.length} of {transactions?.length || 0} transactions
                 </p>

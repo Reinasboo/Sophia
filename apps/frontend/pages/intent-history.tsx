@@ -51,7 +51,9 @@ function IntentRow({ intent, isExpanded, onToggle }: IntentRowProps) {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <span className="text-sm font-medium text-slate-50">Intent</span>
-              <span className={cn('text-xs px-2 py-0.5 rounded font-medium capitalize', statusColors)}>
+              <span
+                className={cn('text-xs px-2 py-0.5 rounded font-medium capitalize', statusColors)}
+              >
                 {intent.status}
               </span>
             </div>
@@ -166,9 +168,7 @@ export default function IntentHistoryPage() {
       result = result.filter((intent) => intent.status === statusFilter);
     }
 
-    result.sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     return result;
   }, [intents, search, statusFilter]);
@@ -202,8 +202,18 @@ export default function IntentHistoryPage() {
               >
                 {[
                   { label: 'Total', value: stats.total, icon: TrendingUp, color: 'text-cyan-400' },
-                  { label: 'Executed', value: stats.executed, icon: CheckCircle2, color: 'text-emerald-400' },
-                  { label: 'Rejected', value: stats.rejected, icon: XCircle, color: 'text-red-400' },
+                  {
+                    label: 'Executed',
+                    value: stats.executed,
+                    icon: CheckCircle2,
+                    color: 'text-emerald-400',
+                  },
+                  {
+                    label: 'Rejected',
+                    value: stats.rejected,
+                    icon: XCircle,
+                    color: 'text-red-400',
+                  },
                 ].map((stat, idx) => {
                   const Icon = stat.icon;
                   return (
@@ -216,7 +226,9 @@ export default function IntentHistoryPage() {
                     >
                       <div className="flex items-start justify-between">
                         <div>
-                          <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">{stat.label}</p>
+                          <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">
+                            {stat.label}
+                          </p>
                           <p className={cn('text-2xl font-bold', stat.color)}>{stat.value}</p>
                         </div>
                         <Icon className={cn('w-5 h-5', stat.color, 'opacity-50')} />
@@ -273,11 +285,7 @@ export default function IntentHistoryPage() {
                 <p className="text-sm text-slate-500">Try adjusting your search or filters</p>
               </div>
             ) : (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="space-y-3"
-              >
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3">
                 <p className="text-xs text-slate-500 uppercase tracking-wider mb-4">
                   Showing {filteredIntents.length} of {intents?.length || 0} intents
                 </p>
@@ -289,7 +297,9 @@ export default function IntentHistoryPage() {
                       intent={intent}
                       isExpanded={expandedIntent === intent.intentId}
                       onToggle={() =>
-                        setExpandedIntent(expandedIntent === intent.intentId ? null : intent.intentId)
+                        setExpandedIntent(
+                          expandedIntent === intent.intentId ? null : intent.intentId
+                        )
                       }
                     />
                   ))}

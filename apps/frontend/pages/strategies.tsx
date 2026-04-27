@@ -91,9 +91,13 @@ function StrategyCard({ strategy, isExpanded, onToggleExpand, onConfigure }: Str
                       <p className="text-xs text-slate-400 font-medium mb-1 uppercase tracking-wider">
                         {field.label}
                       </p>
-                      <p className="text-xs text-slate-500">{field.description || `Type: ${field.type}`}</p>
+                      <p className="text-xs text-slate-500">
+                        {field.description || `Type: ${field.type}`}
+                      </p>
                       {field.default !== undefined && (
-                        <p className="text-xs text-slate-600 mt-1">Default: {JSON.stringify(field.default)}</p>
+                        <p className="text-xs text-slate-600 mt-1">
+                          Default: {JSON.stringify(field.default)}
+                        </p>
                       )}
                     </div>
                   ))}
@@ -122,8 +126,7 @@ export default function StrategiesPage() {
     if (search) {
       const q = search.toLowerCase();
       result = result.filter(
-        (s) =>
-          s.label.toLowerCase().includes(q) || s.description.toLowerCase().includes(q)
+        (s) => s.label.toLowerCase().includes(q) || s.description.toLowerCase().includes(q)
       );
     }
 
