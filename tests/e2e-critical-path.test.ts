@@ -77,7 +77,8 @@ describe('E2E Critical Path: Agent → Sign → Submit', () => {
     expect(createResult.ok).toBe(true);
     if (!createResult.ok) return;
 
-    const pubkey = createResult.value;
+    const walletInfo = createResult.value;
+    const pubkey = new PublicKey(walletInfo.publicKey);
 
     // Step 2: Rate limit check (should pass for first transaction)
     const rateLimitCheck = rateLimiter.canSubmitTransaction(pubkey.toBase58());
@@ -103,7 +104,7 @@ describe('E2E Critical Path: Agent → Sign → Submit', () => {
 
     // Step 5: Sign transaction (wallet manager responsibility)
     expect(() => {
-      walletManager.getPublicKey('test-wallet');
+      walletManager.getPublicKey(walletInfo.id);
     }).not.toThrow();
 
     // Step 6: Record rate limit (simulating successful submission)
@@ -129,7 +130,8 @@ describe('E2E Critical Path: Agent → Sign → Submit', () => {
     expect(createResult.ok).toBe(true);
     if (!createResult.ok) return;
 
-    const pubkey = createResult.value;
+    const walletInfo = createResult.value;
+    const pubkey = new PublicKey(walletInfo.publicKey);
     const recipient = new PublicKey('11111111111111111111111111111112');
 
     // Try to send more SOL than is available (this is on devnet, so preflight will simulate)
@@ -214,8 +216,9 @@ describe('E2E Critical Path: Agent → Sign → Submit', () => {
     expect(createResult.ok).toBe(true);
     if (!createResult.ok) return;
 
+    const walletInfo = createResult.value;
     // Verify that the wallet manager never returns private keys
-    const pubkeyResult = walletManager.getPublicKey(createResult.value.id);
+    const pubkeyResult = walletManager.getPublicKey(walletInfo.id);
     expect(pubkeyResult.ok).toBe(true);
     if (pubkeyResult.ok) {
       expect(pubkeyResult.value).toBeInstanceOf(PublicKey);

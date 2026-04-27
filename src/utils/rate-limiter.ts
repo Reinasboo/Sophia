@@ -82,6 +82,15 @@ export class RateLimiter {
       this.rpcBudget.currentCount = 0;
       this.rpcBudget.windowStartMs = now;
       this.rpcBudget.blockedUntilMs = 0;
+      return false;
+    }
+
+    // Check if budget exhausted
+    if (this.rpcBudget.currentCount >= this.rpcBudget.callsPerMinute) {
+      // Block until next window
+      const msUntilReset = 60_000 - (now - this.rpcBudget.windowStartMs);
+      this.rpcBudget.blockedUntilMs = now + msUntilReset;
+      return true;
     }
 
     return false;
