@@ -1,75 +1,22 @@
 'use client';
 
+import React, { useState, useMemo } from 'react';
 import Head from 'next/head';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useMemo } from 'react';
 import {
-  TrendingUp,
-  Send,
-  Shield,
-  CalendarClock,
-  Zap,
-  Layers,
-  ChevronDown,
-  Search,
   Plus,
-  Copy,
+  Search,
   Settings,
+  Copy,
   Download,
+  ChevronDown,
   HelpCircle,
+  Loader2,
 } from 'lucide-react';
 import { Sidebar, Header } from '@/components';
 import { useStrategies } from '@/lib/hooks';
 import { cn } from '@/lib/utils';
 import type { StrategyDefinition, StrategyFieldDescriptor } from '@/lib/types';
-
-const iconMap: Record<string, React.ElementType> = {
-  TrendingUp,
-  Send,
-  Shield,
-  CalendarClock,
-  Zap,
-  Layers,
-};
-
-const categoryLabels: Record<string, string> = {
-  income: 'Income',
-  distribution: 'Distribution',
-  trading: 'Trading',
-  utility: 'Utility',
-  custom: 'Custom',
-};
-
-const categoryColors: Record<string, string> = {
-  income: 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/30',
-  distribution: 'bg-yellow-500/10 text-yellow-300 border border-yellow-500/30',
-  trading: 'bg-blue-500/10 text-blue-300 border border-blue-500/30',
-  utility: 'bg-slate-500/10 text-slate-300 border border-slate-500/30',
-  custom: 'bg-slate-600/10 text-slate-300 border border-slate-600/30',
-};
-
-interface FieldRowProps {
-  field: StrategyFieldDescriptor;
-}
-
-function FieldRow({ field }: FieldRowProps) {
-  return (
-    <div className="flex items-start justify-between py-3 border-b border-slate-700/50 last:border-b-0 hover:bg-slate-700/20 px-4 -mx-4 transition-colors">
-      <div className="flex-1 min-w-0">
-        <span className="text-sm font-medium text-slate-50">{field.label}</span>
-        {field.description && <p className="text-xs text-slate-400 mt-1">{field.description}</p>}
-      </div>
-      <div className="flex items-center gap-3 ml-4 flex-shrink-0">
-        <code className="text-xs text-slate-400 font-mono bg-slate-900/50 rounded px-2 py-1">
-          {field.type}
-        </code>
-        {field.default !== undefined && field.default !== '' && (
-          <span className="text-xs text-slate-500 font-mono">{JSON.stringify(field.default)}</span>
-        )}
-      </div>
-    </div>
-  );
-}
 
 interface StrategyCardProps {
   strategy: StrategyDefinition;
@@ -79,44 +26,26 @@ interface StrategyCardProps {
 }
 
 function StrategyCard({ strategy, isExpanded, onToggleExpand, onConfigure }: StrategyCardProps) {
-  const Icon = strategy.icon ? (iconMap[strategy.icon] ?? Zap) : Zap;
-  const catColor = categoryColors.custom;
-
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -8 }}
-      className="bg-gradient-brand-subtle border border-surface-muted hover:border-secondary/50 rounded-lg overflow-hidden transition-colors duration-200"
+      className="border border-slate-700/30 rounded-lg overflow-hidden bg-slate-900/20 backdrop-blur-sm hover:border-cyan-500/30 transition-colors"
     >
-      <div className="px-6 py-5">
-        <div className="flex items-start gap-4 mb-3">
-          <div className="w-12 h-12 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center flex-shrink-0">
-            <Icon className="w-6 h-6 text-cyan-400" />
+      <div className="p-4">
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex-1">
+            <h3 className="text-base font-semibold text-slate-50">{strategy.label}</h3>
+            <p className="text-sm text-slate-400 mt-1">{strategy.description}</p>
           </div>
-
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <h3 className="text-base font-semibold text-slate-50">{strategy.label}</h3>
-              <span className="text-xs px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 font-medium border border-cyan-500/30">
-                Built-in
-              </span>
-            </div>
-            <p className="text-sm text-slate-400">{strategy.description}</p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 flex-wrap mb-4">
-          <span className={cn('text-xs px-2.5 py-1 rounded-full font-medium', catColor)}>
-            Custom
+          <span className="text-xs px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 font-medium border border-cyan-500/30 whitespace-nowrap ml-2">
+            {strategy.category || 'Custom'}
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={() => onConfigure(strategy)}
-            className="flex-1 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 hover:border-cyan-500/50 text-cyan-300 rounded-lg px-3 py-2 text-sm font-medium transition-all inline-flex items-center justify-center gap-2 hover:bg-cyan-500/30"
+            className="flex-1 min-w-max bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 hover:border-cyan-500/50 text-cyan-300 rounded-lg px-3 py-2 text-sm font-medium transition-all inline-flex items-center justify-center gap-2 hover:bg-cyan-500/30"
           >
             <Settings className="w-4 h-4" />
             Configure
@@ -134,7 +63,7 @@ function StrategyCard({ strategy, isExpanded, onToggleExpand, onConfigure }: Str
         <>
           <button
             onClick={onToggleExpand}
-            className="w-full flex items-center justify-between px-6 py-3 border-t border-slate-700/50 bg-slate-800/20 hover:bg-slate-800/40 transition-colors"
+            className="w-full flex items-center justify-between px-4 py-3 border-t border-slate-700/30 bg-slate-800/20 hover:bg-slate-800/40 transition-colors"
           >
             <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">
               {strategy.fields.length} parameter{strategy.fields.length === 1 ? '' : 's'}
@@ -151,11 +80,22 @@ function StrategyCard({ strategy, isExpanded, onToggleExpand, onConfigure }: Str
                 animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
                 transition={{ duration: 0.2 }}
-                className="border-t border-slate-700/50 bg-slate-900/20 px-6 py-4"
+                className="border-t border-slate-700/30 bg-slate-900/20 px-4 py-3"
               >
-                <div className="space-y-0">
-                  {strategy.fields.map((field) => (
-                    <FieldRow key={field.key} field={field} />
+                <div className="space-y-2">
+                  {Array.from(strategy.fields).map((field) => (
+                    <div
+                      key={field.key}
+                      className="border-b border-slate-700/20 pb-2 last:border-0 last:pb-0"
+                    >
+                      <p className="text-xs text-slate-400 font-medium mb-1 uppercase tracking-wider">
+                        {field.label}
+                      </p>
+                      <p className="text-xs text-slate-500">{field.description || `Type: ${field.type}`}</p>
+                      {field.default !== undefined && (
+                        <p className="text-xs text-slate-600 mt-1">Default: {JSON.stringify(field.default)}</p>
+                      )}
+                    </div>
                   ))}
                 </div>
               </motion.div>
@@ -182,38 +122,38 @@ export default function StrategiesPage() {
     if (search) {
       const q = search.toLowerCase();
       result = result.filter(
-        (s: StrategyDefinition) =>
+        (s) =>
           s.label.toLowerCase().includes(q) || s.description.toLowerCase().includes(q)
       );
     }
 
     if (categoryFilter !== 'all') {
-      // Category filter not applicable - all strategies shown
+      result = result.filter((s) => s.category === categoryFilter);
     }
 
     return result;
-  }, [strategies, search]);
+  }, [strategies, search, categoryFilter]);
 
   const grouped = useMemo(() => {
     return filteredStrategies.reduce<Record<string, StrategyDefinition[]>>((acc, s) => {
-      const cat = 'custom';
+      const cat = s.category || 'custom';
       if (!acc[cat]) acc[cat] = [];
-      acc[cat]!.push(s);
+      acc[cat].push(s);
       return acc;
     }, {});
   }, [filteredStrategies]);
 
   const categories = useMemo(() => {
-    return ['custom'];
-  }, []);
+    return [...new Set(strategies?.map((s) => s.category || 'custom') || [])];
+  }, [strategies]);
 
   return (
     <>
       <Head>
-        <title>Strategies | Sophia</title>
+        <title>Strategies | Sophia Agentic Wallet</title>
       </Head>
 
-      <div className="flex min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+      <div className="flex min-h-screen bg-black">
         <Sidebar />
 
         <div className="flex-1 ml-60">
@@ -245,7 +185,7 @@ export default function StrategiesPage() {
                   <option value="all">All Categories</option>
                   {categories.map((cat) => (
                     <option key={cat} value={cat}>
-                      {categoryLabels[cat as keyof typeof categoryLabels] ?? cat}
+                      {cat.charAt(0).toUpperCase() + cat.slice(1)}
                     </option>
                   ))}
                 </select>
@@ -266,7 +206,7 @@ export default function StrategiesPage() {
             {loading ? (
               <div className="flex items-center justify-center py-16">
                 <div className="text-center">
-                  <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-700 border-t-cyan-500 mx-auto mb-4" />
+                  <Loader2 className="w-12 h-12 mx-auto text-cyan-400 animate-spin mb-4" />
                   <p className="text-slate-400">Loading strategies…</p>
                 </div>
               </div>
@@ -286,7 +226,7 @@ export default function StrategiesPage() {
                   <section key={category}>
                     <div className="flex items-center gap-2 mb-4">
                       <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                        {categoryLabels[category as keyof typeof categoryLabels] ?? category}
+                        {category.charAt(0).toUpperCase() + category.slice(1)}
                       </h2>
                       <span className="text-xs text-slate-500 bg-slate-800/50 rounded-full px-2 py-1">
                         {items.length}
@@ -295,17 +235,17 @@ export default function StrategiesPage() {
 
                     <AnimatePresence mode="popLayout">
                       <motion.div layout className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        {items.map((strategy: StrategyDefinition) => (
+                        {items.map((strategy) => (
                           <StrategyCard
                             key={strategy.name}
-                            strategy={strategy}
+                            strategy={strategy as any}
                             isExpanded={expandedStrategy === strategy.name}
                             onToggleExpand={() =>
                               setExpandedStrategy(
                                 expandedStrategy === strategy.name ? null : strategy.name
                               )
                             }
-                            onConfigure={(s) => setSelectedConfig(s)}
+                            onConfigure={(s) => setSelectedConfig(s as any)}
                           />
                         ))}
                       </motion.div>
@@ -353,7 +293,7 @@ export default function StrategiesPage() {
                 <div>
                   <p className="text-xs text-slate-400 mb-3 uppercase tracking-wider">Parameters</p>
                   <div className="space-y-3 bg-slate-900/50 rounded-lg p-4">
-                    {selectedConfig.fields.map((field) => (
+                    {Array.from(selectedConfig.fields).map((field) => (
                       <div key={field.key}>
                         <label className="text-xs text-slate-400 font-medium mb-1 block uppercase tracking-wider">
                           {field.label}

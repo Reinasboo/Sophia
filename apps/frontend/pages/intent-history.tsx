@@ -1,104 +1,74 @@
 ﻿'use client';
 
+import React, { useState, useMemo } from 'react';
 import Head from 'next/head';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useMemo } from 'react';
 import {
-  Search,
-  Filter,
-  RefreshCw,
-  Download,
-  ChevronDown,
-  Clock,
+  TrendingUp,
   CheckCircle2,
-  AlertCircle,
+  XCircle,
+  Clock,
+  HelpCircle,
   Copy,
   ExternalLink,
-  ChevronRight,
-  Zap,
+  ChevronDown,
+  Search,
+  Loader2,
 } from 'lucide-react';
 import { Sidebar, Header } from '@/components';
 import { useIntentHistory } from '@/lib/hooks';
 import { cn } from '@/lib/utils';
 import type { IntentHistoryRecord } from '@/lib/types';
 
-const statusColors: Record<
-  string,
-  { bg: string; text: string; border: string; icon: React.ElementType }
-> = {
-  executed: {
-    bg: 'bg-cyan-500/10',
-    text: 'text-cyan-300',
-    border: 'border-cyan-500/30',
-    icon: CheckCircle2,
-  },
-  rejected: {
-    bg: 'bg-red-500/10',
-    text: 'text-red-300',
-    border: 'border-red-500/30',
-    icon: AlertCircle,
-  },
-};
-
-function StatusBadge({ status }: { status: string }) {
-  const config = statusColors[status] || statusColors.rejected;
-  const Icon = config.icon;
-  return (
-    <span
-      className={cn(
-        'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border',
-        config.bg,
-        config.text,
-        config.border
-      )}
-    >
-      <Icon className="w-3 h-3" />
-      {status.charAt(0).toUpperCase() + status.slice(1)}
-    </span>
-  );
-}
-
 interface IntentRowProps {
-  IntentHistoryRecord: IntentHistoryRecord;
+  intent: IntentHistoryRecord;
   isExpanded: boolean;
   onToggle: () => void;
 }
 
-function IntentRow({ IntentHistoryRecord, isExpanded, onToggle }: IntentRowProps) {
-  const statusConfig = statusColors[IntentHistoryRecord.status] || statusColors.rejected;
-  const params = IntentHistoryRecord.params as Record<string, any>;
+function IntentRow({ intent, isExpanded, onToggle }: IntentRowProps) {
+  const statusColors =
+    intent.status === 'executed'
+      ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/30'
+      : 'bg-red-500/10 text-red-300 border border-red-500/30';
+
+  const Icon = intent.status === 'executed' ? CheckCircle2 : XCircle;
 
   return (
     <motion.div
       layout
-      className="border border-slate-700/50 rounded-lg overflow-hidden hover:border-cyan-500/40 transition-all bg-slate-800/20"
+      className="border border-slate-700/30 rounded-lg overflow-hidden bg-slate-900/20 backdrop-blur-sm hover:border-cyan-500/30 transition-colors"
     >
       <button
         onClick={onToggle}
-        className="w-full px-6 py-4 flex items-center justify-between hover:bg-slate-800/40 transition-colors"
+        className="w-full flex items-center justify-between p-4 hover:bg-slate-800/50 transition-colors text-left"
       >
-        <div className="flex items-start gap-4 min-w-0 flex-1 text-left">
-          <Zap className="w-5 h-5 text-slate-500 flex-shrink-0 mt-1" />
+        <div className="flex items-center gap-4 flex-1 min-w-0">
+          <div className="p-2 rounded-lg bg-slate-800/50">
+            <Icon className="w-5 h-5 text-cyan-400" />
+          </div>
+
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-2 flex-wrap">
-              <span className="font-medium text-slate-50 truncate">{IntentHistoryRecord.type}</span>
-              <StatusBadge status={IntentHistoryRecord.status} />
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-sm font-medium text-slate-50">Intent</span>
+              <span className={cn('text-xs px-2 py-0.5 rounded font-medium capitalize', statusColors)}>
+                {intent.status}
+              </span>
             </div>
-            <div className="text-xs text-slate-400 space-y-1">
-              <div>Agent: {IntentHistoryRecord.agentId.slice(0, 8)}</div>
-              <div className="text-slate-500">
-                {new Date(IntentHistoryRecord.createdAt).toLocaleString()}
-              </div>
-            </div>
+            <p className="text-xs text-slate-500 truncate font-mono">{intent.intentId}</p>
+          </div>
+
+          <div className="text-right">
+            <p className="text-sm text-slate-400">{new Date(intent.createdAt).toLocaleString()}</p>
           </div>
         </div>
 
         <motion.div
           animate={{ rotate: isExpanded ? 180 : 0 }}
           transition={{ duration: 0.2 }}
-          className="flex-shrink-0 ml-4"
+          className="ml-2 text-slate-400"
         >
-          <ChevronDown className="w-5 h-5 text-slate-500" />
+          <ChevronDown className="w-4 h-4" />
         </motion.div>
       </button>
 
@@ -109,71 +79,61 @@ function IntentRow({ IntentHistoryRecord, isExpanded, onToggle }: IntentRowProps
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="border-t border-slate-700/50 bg-slate-900/30 px-6 py-4"
+            className="border-t border-slate-700/30 bg-slate-800/30 px-4 py-4"
           >
             <div className="space-y-4">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div>
-                  <p className="text-xs text-slate-400 font-medium uppercase tracking-wider mb-2">
-                    Intent ID
-                  </p>
-                  <code className="text-xs text-slate-300 bg-slate-800/50 rounded px-3 py-1.5 block font-mono break-all">
-                    {IntentHistoryRecord.intentId}
+                  <p className="text-xs text-slate-400 mb-1 uppercase tracking-wider">Intent ID</p>
+                  <code className="text-xs text-slate-300 bg-slate-700/50 rounded px-2 py-1 block font-mono break-all">
+                    {intent.intentId}
                   </code>
                 </div>
                 <div>
-                  <p className="text-xs text-slate-400 font-medium uppercase tracking-wider mb-2">
-                    Created
-                  </p>
+                  <p className="text-xs text-slate-400 mb-1 uppercase tracking-wider">Created</p>
                   <p className="text-sm text-slate-300">
-                    {new Date(IntentHistoryRecord.createdAt).toLocaleString()}
+                    {new Date(intent.createdAt).toLocaleString()}
                   </p>
                 </div>
               </div>
 
-              {params && Object.keys(params).length > 0 && (
+              {intent.params && Object.keys(intent.params).length > 0 && (
                 <div>
-                  <p className="text-xs text-slate-400 font-medium uppercase tracking-wider mb-3">
-                    Parameters
-                  </p>
-                  <div className="bg-slate-800/50 rounded-lg p-4 text-xs">
+                  <p className="text-xs text-slate-400 mb-2 uppercase tracking-wider">Parameters</p>
+                  <div className="bg-slate-700/50 rounded-lg p-3 text-xs">
                     <pre className="text-slate-300 font-mono overflow-x-auto whitespace-pre-wrap break-words">
-                      {JSON.stringify(params, null, 2)}
+                      {JSON.stringify(intent.params, null, 2)}
                     </pre>
                   </div>
                 </div>
               )}
 
-              {IntentHistoryRecord.result && Object.keys(IntentHistoryRecord.result).length > 0 && (
+              {intent.result && Object.keys(intent.result).length > 0 && (
                 <div>
-                  <p className="text-xs text-slate-400 font-medium uppercase tracking-wider mb-3">
-                    Result
-                  </p>
-                  <div className="bg-slate-800/50 rounded-lg p-4 text-xs">
+                  <p className="text-xs text-slate-400 mb-2 uppercase tracking-wider">Result</p>
+                  <div className="bg-slate-700/50 rounded-lg p-3 text-xs">
                     <pre className="text-slate-300 font-mono overflow-x-auto whitespace-pre-wrap break-words">
-                      {JSON.stringify(IntentHistoryRecord.result, null, 2)}
+                      {JSON.stringify(intent.result, null, 2)}
                     </pre>
                   </div>
                 </div>
               )}
 
-              {IntentHistoryRecord.error && (
+              {intent.error && (
                 <div>
-                  <p className="text-xs text-slate-400 font-medium uppercase tracking-wider mb-3">
-                    Error
-                  </p>
-                  <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 text-xs">
-                    <p className="text-red-300">{IntentHistoryRecord.error}</p>
+                  <p className="text-xs text-slate-400 mb-2 uppercase tracking-wider">Error</p>
+                  <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-xs">
+                    <p className="text-red-300">{intent.error}</p>
                   </div>
                 </div>
               )}
 
-              <div className="pt-4 border-t border-slate-700/50 flex items-center gap-2 flex-wrap">
+              <div className="pt-3 border-t border-slate-700/30 flex items-center gap-2 flex-wrap">
                 <button className="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-300 hover:text-cyan-300 bg-slate-800/50 hover:bg-slate-700 rounded transition-colors">
                   <Copy className="w-3.5 h-3.5" />
                   Copy ID
                 </button>
-                {IntentHistoryRecord.status === 'executed' && (
+                {intent.status === 'executed' && (
                   <button className="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-300 hover:text-cyan-300 bg-slate-800/50 hover:bg-slate-700 rounded transition-colors">
                     <ExternalLink className="w-3.5 h-3.5" />
                     View Details
@@ -195,92 +155,77 @@ export default function IntentHistoryPage() {
   const [expandedIntent, setExpandedIntent] = useState<string | null>(null);
 
   const filteredIntents = useMemo(() => {
-    if (!intents) return [];
-
-    let result = [...intents];
+    let result = [...(intents || [])];
 
     if (search) {
       const q = search.toLowerCase();
-      result = result.filter(
-        (IntentHistoryRecord: IntentHistoryRecord) =>
-          IntentHistoryRecord.intentId.toLowerCase().includes(q) ||
-          IntentHistoryRecord.type.toLowerCase().includes(q) ||
-          IntentHistoryRecord.agentId.toLowerCase().includes(q)
-      );
+      result = result.filter((intent) => intent.intentId.toLowerCase().includes(q));
     }
 
     if (statusFilter !== 'all') {
-      result = result.filter(
-        (IntentHistoryRecord: IntentHistoryRecord) => IntentHistoryRecord.status === statusFilter
-      );
+      result = result.filter((intent) => intent.status === statusFilter);
     }
+
+    result.sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
 
     return result;
   }, [intents, search, statusFilter]);
 
   const stats = useMemo(() => {
-    if (!intents) return { total: 0, executed: 0, rejected: 0 };
+    const total = intents?.length || 0;
+    const executed = (intents || []).filter((i) => i.status === 'executed').length;
+    const rejected = (intents || []).filter((i) => i.status === 'rejected').length;
 
-    return {
-      total: intents.length,
-      executed: intents.filter((i: IntentHistoryRecord) => i.status === 'executed').length,
-      rejected: intents.filter((i: IntentHistoryRecord) => i.status === 'rejected').length,
-    };
+    return { total, executed, rejected };
   }, [intents]);
 
   return (
     <>
       <Head>
-        <title>Intent History | Sophia</title>
+        <title>Intent History | Sophia Agentic Wallet</title>
       </Head>
 
-      <div className="flex min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+      <div className="flex min-h-screen bg-black">
         <Sidebar />
 
         <div className="flex-1 ml-60">
-          <Header
-            title="Intent History"
-            subtitle="Track execution of all intents and transactions"
-          />
+          <Header title="Intent History" subtitle="Track all agent intent executions" />
 
           <main className="px-8 lg:px-12 pb-12 space-y-6">
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ staggerChildren: 0.1 }}
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
-            >
+            {!loading && !error && (
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-gradient-to-br from-cyan-500/10 to-transparent border border-slate-700/50 hover:border-cyan-500/40 rounded-lg px-6 py-5 backdrop-blur-sm hover:bg-slate-800/40 transition-all"
+                className="grid grid-cols-1 md:grid-cols-3 gap-3"
               >
-                <p className="text-xs text-slate-400 uppercase tracking-wider mb-2">
-                  Total Intents
-                </p>
-                <p className="text-2xl font-bold text-cyan-300">{stats.total}</p>
+                {[
+                  { label: 'Total', value: stats.total, icon: TrendingUp, color: 'text-cyan-400' },
+                  { label: 'Executed', value: stats.executed, icon: CheckCircle2, color: 'text-emerald-400' },
+                  { label: 'Rejected', value: stats.rejected, icon: XCircle, color: 'text-red-400' },
+                ].map((stat, idx) => {
+                  const Icon = stat.icon;
+                  return (
+                    <motion.div
+                      key={stat.label}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.05 }}
+                      className="bg-gradient-to-br from-slate-800/50 to-transparent border border-slate-700/50 rounded-lg p-4 backdrop-blur-sm"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">{stat.label}</p>
+                          <p className={cn('text-2xl font-bold', stat.color)}>{stat.value}</p>
+                        </div>
+                        <Icon className={cn('w-5 h-5', stat.color, 'opacity-50')} />
+                      </div>
+                    </motion.div>
+                  );
+                })}
               </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="bg-gradient-to-br from-blue-500/10 to-transparent border border-slate-700/50 hover:border-blue-500/40 rounded-lg px-6 py-5 backdrop-blur-sm hover:bg-slate-800/40 transition-all"
-              >
-                <p className="text-xs text-slate-400 uppercase tracking-wider mb-2">Executed</p>
-                <p className="text-2xl font-bold text-blue-300">{stats.executed}</p>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="bg-gradient-to-br from-red-500/10 to-transparent border border-slate-700/50 hover:border-red-500/40 rounded-lg px-6 py-5 backdrop-blur-sm hover:bg-slate-800/40 transition-all"
-              >
-                <p className="text-xs text-slate-400 uppercase tracking-wider mb-2">Rejected</p>
-                <p className="text-2xl font-bold text-red-300">{stats.rejected}</p>
-              </motion.div>
-            </motion.div>
+            )}
 
             <motion.div
               initial={{ opacity: 0, y: 8 }}
@@ -291,7 +236,7 @@ export default function IntentHistoryPage() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                 <input
                   type="text"
-                  placeholder="Search intents..."
+                  placeholder="Search intents…"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="w-full bg-slate-800/50 border border-slate-700/50 hover:border-cyan-500/30 focus:border-cyan-500 text-slate-50 placeholder:text-slate-500 rounded-lg px-4 py-2.5 text-sm transition-all backdrop-blur-sm"
@@ -307,71 +252,47 @@ export default function IntentHistoryPage() {
                 <option value="executed">Executed</option>
                 <option value="rejected">Rejected</option>
               </select>
-
-              <button
-                onClick={() => refetch()}
-                disabled={loading}
-                className="bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 hover:border-cyan-500/50 text-cyan-300 rounded-lg px-4 py-2.5 text-sm font-medium transition-all inline-flex items-center gap-2 hover:bg-cyan-500/30 disabled:opacity-50"
-              >
-                <RefreshCw className={cn('w-4 h-4', loading && 'animate-spin')} />
-                Refresh
-              </button>
-
-              <button className="bg-slate-800/50 border border-slate-700/50 hover:border-cyan-500/30 text-slate-300 hover:text-cyan-300 rounded-lg px-4 py-2.5 text-sm transition-all inline-flex items-center gap-2">
-                <Download className="w-4 h-4" />
-              </button>
             </motion.div>
 
             {loading ? (
               <div className="flex items-center justify-center py-16">
                 <div className="text-center">
-                  <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-700 border-t-cyan-500 mx-auto mb-4" />
-                  <p className="text-slate-400">Loading intents...</p>
+                  <Loader2 className="w-12 h-12 mx-auto text-cyan-400 animate-spin mb-4" />
+                  <p className="text-slate-400">Loading intent history…</p>
                 </div>
               </div>
             ) : error ? (
               <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 text-red-300 backdrop-blur-sm">
-                {error}
+                <p className="font-medium">Error loading intent history</p>
+                <p className="text-sm mt-1">{error}</p>
               </div>
             ) : filteredIntents.length === 0 ? (
               <div className="text-center py-16">
-                <AlertCircle className="w-12 h-12 mx-auto text-slate-500 mb-4 opacity-50" />
+                <HelpCircle className="w-12 h-12 mx-auto text-slate-500 mb-4 opacity-50" />
                 <p className="text-slate-400 mb-2">No intents found</p>
                 <p className="text-sm text-slate-500">Try adjusting your search or filters</p>
               </div>
             ) : (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3">
-                <p className="text-xs text-slate-500 uppercase tracking-wider">
-                  Showing {filteredIntents.length} IntentHistoryRecord
-                  {filteredIntents.length !== 1 ? 's' : ''}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="space-y-3"
+              >
+                <p className="text-xs text-slate-500 uppercase tracking-wider mb-4">
+                  Showing {filteredIntents.length} of {intents?.length || 0} intents
                 </p>
 
                 <AnimatePresence mode="popLayout">
-                  <motion.div layout className="space-y-3">
-                    {filteredIntents.map(
-                      (IntentHistoryRecord: IntentHistoryRecord, index: number) => (
-                        <motion.div
-                          key={IntentHistoryRecord.intentId}
-                          initial={{ opacity: 0, y: -8 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: 8 }}
-                          transition={{ delay: index * 0.03 }}
-                        >
-                          <IntentRow
-                            IntentHistoryRecord={IntentHistoryRecord}
-                            isExpanded={expandedIntent === IntentHistoryRecord.intentId}
-                            onToggle={() =>
-                              setExpandedIntent(
-                                expandedIntent === IntentHistoryRecord.intentId
-                                  ? null
-                                  : IntentHistoryRecord.intentId
-                              )
-                            }
-                          />
-                        </motion.div>
-                      )
-                    )}
-                  </motion.div>
+                  {filteredIntents.map((intent) => (
+                    <IntentRow
+                      key={intent.intentId}
+                      intent={intent}
+                      isExpanded={expandedIntent === intent.intentId}
+                      onToggle={() =>
+                        setExpandedIntent(expandedIntent === intent.intentId ? null : intent.intentId)
+                      }
+                    />
+                  ))}
                 </AnimatePresence>
               </motion.div>
             )}

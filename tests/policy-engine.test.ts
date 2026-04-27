@@ -10,7 +10,6 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { PublicKey } from '@solana/web3.js';
 
 // ───────────────────────────────────────────
 // Mocks
@@ -69,8 +68,8 @@ describe('Policy Engine - Wallet Transfer Limits', () => {
     expect(result.ok).toBe(true);
 
     if (result.ok) {
-      const pubkey = result.value;
-      expect(pubkey).toBeInstanceOf(PublicKey);
+      expect(result.value).toHaveProperty('publicKey');
+      expect(result.value).toHaveProperty('id');
 
       // Policy enforcement is verified through integration tests
       // Unit test verifies wallet creation succeeded
@@ -89,8 +88,8 @@ describe('Policy Engine - Wallet Transfer Limits', () => {
     expect(result.ok).toBe(true);
 
     if (result.ok) {
-      const pubkey = result.value;
-      expect(pubkey).toBeInstanceOf(PublicKey);
+      expect(result.value).toHaveProperty('publicKey');
+      expect(result.value).toHaveProperty('id');
     }
   });
 
@@ -107,8 +106,8 @@ describe('Policy Engine - Wallet Transfer Limits', () => {
     expect(result.ok).toBe(true);
 
     if (result.ok) {
-      const pubkey = result.value;
-      expect(pubkey).toBeInstanceOf(PublicKey);
+      expect(result.value).toHaveProperty('publicKey');
+      expect(result.value).toHaveProperty('id');
     }
   });
 
@@ -124,8 +123,8 @@ describe('Policy Engine - Wallet Transfer Limits', () => {
     expect(result.ok).toBe(true);
 
     if (result.ok) {
-      const pubkey = result.value;
-      expect(pubkey).toBeInstanceOf(PublicKey);
+      expect(result.value).toHaveProperty('publicKey');
+      expect(result.value).toHaveProperty('id');
     }
   });
 
@@ -166,9 +165,9 @@ describe('Policy Engine - Wallet Transfer Limits', () => {
     expect(walletC.ok).toBe(true);
 
     if (walletA.ok && walletB.ok && walletC.ok) {
-      expect(walletA.value).toBeInstanceOf(PublicKey);
-      expect(walletB.value).toBeInstanceOf(PublicKey);
-      expect(walletC.value).toBeInstanceOf(PublicKey);
+      expect(walletA.value).toHaveProperty('publicKey');
+      expect(walletB.value).toHaveProperty('publicKey');
+      expect(walletC.value).toHaveProperty('publicKey');
     }
   });
 });
@@ -196,8 +195,8 @@ describe('Policy Engine - Recipient Allowlist', () => {
     expect(result.ok).toBe(true);
 
     if (result.ok) {
-      const pubkey = result.value;
-      expect(pubkey).toBeInstanceOf(PublicKey);
+      expect(result.value).toHaveProperty('publicKey');
+      expect(result.value).toHaveProperty('id');
     }
   });
 
@@ -214,8 +213,8 @@ describe('Policy Engine - Recipient Allowlist', () => {
     expect(result.ok).toBe(true);
 
     if (result.ok) {
-      const pubkey = result.value;
-      expect(pubkey).toBeInstanceOf(PublicKey);
+      expect(result.value).toHaveProperty('publicKey');
+      expect(result.value).toHaveProperty('id');
     }
   });
 
@@ -231,8 +230,8 @@ describe('Policy Engine - Recipient Allowlist', () => {
     expect(result.ok).toBe(true);
 
     if (result.ok) {
-      const pubkey = result.value;
-      expect(pubkey).toBeInstanceOf(PublicKey);
+      expect(result.value).toHaveProperty('publicKey');
+      expect(result.value).toHaveProperty('id');
     }
   });
 
@@ -248,8 +247,8 @@ describe('Policy Engine - Recipient Allowlist', () => {
     expect(result.ok).toBe(true);
 
     if (result.ok) {
-      const pubkey = result.value;
-      expect(pubkey).toBeInstanceOf(PublicKey);
+      expect(result.value).toHaveProperty('publicKey');
+      expect(result.value).toHaveProperty('id');
     }
   });
 });
@@ -277,8 +276,8 @@ describe('Policy Engine - Cooldown Period', () => {
     expect(result.ok).toBe(true);
 
     if (result.ok) {
-      const pubkey = result.value;
-      expect(pubkey).toBeInstanceOf(PublicKey);
+      expect(result.value).toHaveProperty('publicKey');
+      expect(result.value).toHaveProperty('id');
     }
   });
 
@@ -295,8 +294,8 @@ describe('Policy Engine - Cooldown Period', () => {
     expect(result.ok).toBe(true);
 
     if (result.ok) {
-      const pubkey = result.value;
-      expect(pubkey).toBeInstanceOf(PublicKey);
+      expect(result.value).toHaveProperty('publicKey');
+      expect(result.value).toHaveProperty('id');
     }
   });
 
@@ -312,8 +311,8 @@ describe('Policy Engine - Cooldown Period', () => {
     expect(result.ok).toBe(true);
 
     if (result.ok) {
-      const pubkey = result.value;
-      expect(pubkey).toBeInstanceOf(PublicKey);
+      expect(result.value).toHaveProperty('publicKey');
+      expect(result.value).toHaveProperty('id');
     }
   });
 
@@ -329,8 +328,8 @@ describe('Policy Engine - Cooldown Period', () => {
     expect(result.ok).toBe(true);
 
     if (result.ok) {
-      const pubkey = result.value;
-      expect(pubkey).toBeInstanceOf(PublicKey);
+      expect(result.value).toHaveProperty('publicKey');
+      expect(result.value).toHaveProperty('id');
     }
   });
 });
@@ -362,8 +361,8 @@ describe('Policy Engine - Combined Policies', () => {
     expect(result.ok).toBe(true);
 
     if (result.ok) {
-      const pubkey = result.value;
-      expect(pubkey).toBeInstanceOf(PublicKey);
+      expect(result.value).toHaveProperty('publicKey');
+      expect(result.value).toHaveProperty('id');
     }
   });
 
@@ -379,8 +378,8 @@ describe('Policy Engine - Combined Policies', () => {
     expect(result.ok).toBe(true);
 
     if (result.ok) {
-      const pubkey = result.value;
-      expect(pubkey).toBeInstanceOf(PublicKey);
+      expect(result.value).toHaveProperty('publicKey');
+      expect(result.value).toHaveProperty('id');
     }
   });
 
@@ -397,8 +396,8 @@ describe('Policy Engine - Combined Policies', () => {
     expect(result.ok).toBe(true);
 
     if (result.ok) {
-      const pubkey = result.value;
-      expect(pubkey).toBeInstanceOf(PublicKey);
+      expect(result.value).toHaveProperty('publicKey');
+      expect(result.value).toHaveProperty('id');
     }
   });
 });
@@ -427,8 +426,8 @@ describe('Policy Engine - Edge Cases', () => {
     expect(result.ok).toBe(true);
 
     if (result.ok) {
-      const pubkey = result.value;
-      expect(pubkey).toBeInstanceOf(PublicKey);
+      expect(result.value).toHaveProperty('publicKey');
+      expect(result.value).toHaveProperty('id');
     }
   });
 
@@ -444,8 +443,8 @@ describe('Policy Engine - Edge Cases', () => {
     expect(result.ok).toBe(true);
 
     if (result.ok) {
-      const pubkey = result.value;
-      expect(pubkey).toBeInstanceOf(PublicKey);
+      expect(result.value).toHaveProperty('publicKey');
+      expect(result.value).toHaveProperty('id');
     }
   });
 
@@ -461,8 +460,8 @@ describe('Policy Engine - Edge Cases', () => {
     expect(result.ok).toBe(true);
 
     if (result.ok) {
-      const pubkey = result.value;
-      expect(pubkey).toBeInstanceOf(PublicKey);
+      expect(result.value).toHaveProperty('publicKey');
+      expect(result.value).toHaveProperty('id');
     }
   });
 
@@ -478,8 +477,8 @@ describe('Policy Engine - Edge Cases', () => {
     expect(result.ok).toBe(true);
 
     if (result.ok) {
-      const pubkey = result.value;
-      expect(pubkey).toBeInstanceOf(PublicKey);
+      expect(result.value).toHaveProperty('publicKey');
+      expect(result.value).toHaveProperty('id');
     }
   });
 });
@@ -529,8 +528,8 @@ describe('Policy Engine - Performance', () => {
     expect(result.ok).toBe(true);
 
     if (result.ok) {
-      const pubkey = result.value;
-      expect(pubkey).toBeInstanceOf(PublicKey);
+      expect(result.value).toHaveProperty('publicKey');
+      expect(result.value).toHaveProperty('id');
     }
   });
 });

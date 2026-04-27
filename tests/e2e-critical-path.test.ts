@@ -212,11 +212,14 @@ describe('E2E Critical Path: Agent → Sign → Submit', () => {
   it('should sign transactions without exposing private keys', async () => {
     const createResult = walletManager.createWallet('secure-wallet');
     expect(createResult.ok).toBe(true);
+    if (!createResult.ok) return;
 
     // Verify that the wallet manager never returns private keys
-    const pubkeyResult = walletManager.getPublicKey('secure-wallet');
+    const pubkeyResult = walletManager.getPublicKey(createResult.value.id);
     expect(pubkeyResult.ok).toBe(true);
-    expect(pubkeyResult.value).toBeInstanceOf(PublicKey);
+    if (pubkeyResult.ok) {
+      expect(pubkeyResult.value).toBeInstanceOf(PublicKey);
+    }
 
     // Verify that attempting to get private key info fails or returns empty
     // (This depends on the WalletManager implementation)
@@ -237,8 +240,11 @@ describe('E2E Critical Path: Agent → Sign → Submit', () => {
     if (!createResult.ok) return;
 
     // Create a new wallet and check that default policies exist
-    const pubkey = createResult.value;
-    expect(pubkey).toBeInstanceOf(PublicKey);
+    const pubkeyResult = walletManager.getPublicKey(createResult.value.id);
+    expect(pubkeyResult.ok).toBe(true);
+    if (pubkeyResult.ok) {
+      expect(pubkeyResult.value).toBeInstanceOf(PublicKey);
+    }
 
     // The actual policy enforcement happens at the agent/intent level,
     // not at transaction building level
@@ -365,10 +371,14 @@ describe('Policy Engine', () => {
   it('should enforce daily budget cap', async () => {
     const createResult = walletManager.createWallet('budget-wallet');
     expect(createResult.ok).toBe(true);
+    if (!createResult.ok) return;
 
     // Get the wallet and check for policy field
-    const pubkey = createResult.value;
-    expect(pubkey).toBeInstanceOf(PublicKey);
+    const pubkeyResult = walletManager.getPublicKey(createResult.value.id);
+    expect(pubkeyResult.ok).toBe(true);
+    if (pubkeyResult.ok) {
+      expect(pubkeyResult.value).toBeInstanceOf(PublicKey);
+    }
 
     // The policy enforcement happens in the agent/intent router layer
     // This test just verifies the wallet was created successfully
@@ -380,7 +390,12 @@ describe('Policy Engine', () => {
   it('should block transfers to non-allowlisted recipients', async () => {
     const createResult = walletManager.createWallet('restricted-wallet');
     expect(createResult.ok).toBe(true);
-    expect(createResult.value).toBeInstanceOf(PublicKey);
+    if (!createResult.ok) return;
+    const pubkeyResult = walletManager.getPublicKey(createResult.value.id);
+    expect(pubkeyResult.ok).toBe(true);
+    if (pubkeyResult.ok) {
+      expect(pubkeyResult.value).toBeInstanceOf(PublicKey);
+    }
 
     // Policy enforcement happens at intent level
   });
@@ -391,7 +406,12 @@ describe('Policy Engine', () => {
   it('should enforce cooldown between transactions', async () => {
     const createResult = walletManager.createWallet('cooldown-wallet');
     expect(createResult.ok).toBe(true);
-    expect(createResult.value).toBeInstanceOf(PublicKey);
+    if (!createResult.ok) return;
+    const pubkeyResult = walletManager.getPublicKey(createResult.value.id);
+    expect(pubkeyResult.ok).toBe(true);
+    if (pubkeyResult.ok) {
+      expect(pubkeyResult.value).toBeInstanceOf(PublicKey);
+    }
 
     // Cooldown enforced at orchestrator/agent level
   });
@@ -402,10 +422,14 @@ describe('Policy Engine', () => {
   it('should reset daily policy counters at midnight UTC', async () => {
     const createResult = walletManager.createWallet('daily-reset-wallet');
     expect(createResult.ok).toBe(true);
+    if (!createResult.ok) return;
 
     // Verify wallet state persists across sessions
-    const pubkey = createResult.value;
-    expect(pubkey).toBeInstanceOf(PublicKey);
+    const pubkeyResult = walletManager.getPublicKey(createResult.value.id);
+    expect(pubkeyResult.ok).toBe(true);
+    if (pubkeyResult.ok) {
+      expect(pubkeyResult.value).toBeInstanceOf(PublicKey);
+    }
   });
 });
 
@@ -423,8 +447,9 @@ describe('Transaction Builder with Preflight', () => {
    * Transaction structure validation
    */
   it('should create valid transaction structure', async () => {
-    const from = new PublicKey('11111111111111111111111111111119');
-    const to = new PublicKey('11111111111111111111111111111120');
+    // Using valid base58-encoded Solana addresses (32-byte account addresses)
+    const from = new PublicKey('11111111111111111111111111111114');
+    const to = new PublicKey('11111111111111111111111111111115');
 
     const result = await buildSolTransfer(from, to, 0.5, 'test');
     expect(result.ok).toBe(true);
@@ -440,8 +465,8 @@ describe('Transaction Builder with Preflight', () => {
    * Memo instruction inclusion
    */
   it('should include memo instruction when provided', async () => {
-    const from = new PublicKey('11111111111111111111111111111121');
-    const to = new PublicKey('11111111111111111111111111111122');
+    const from = new PublicKey('11111111111111111111111111111114');
+    const to = new PublicKey('11111111111111111111111111111115');
 
     const result = await buildSolTransfer(from, to, 0.25, 'memo-test');
     expect(result.ok).toBe(true);
@@ -457,8 +482,8 @@ describe('Transaction Builder with Preflight', () => {
    * Missing memo handling
    */
   it('should create transaction without memo if not provided', async () => {
-    const from = new PublicKey('11111111111111111111111111111123');
-    const to = new PublicKey('11111111111111111111111111111124');
+    const from = new PublicKey('11111111111111111111111111111114');
+    const to = new PublicKey('11111111111111111111111111111115');
 
     const result = await buildSolTransfer(from, to, 0.1);
     expect(result.ok).toBe(true);
