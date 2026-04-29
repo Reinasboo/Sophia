@@ -164,7 +164,7 @@ export default async function handler(
   const rateLimitCheck = checkAuthRateLimit(clientIp);
 
   if (!rateLimitCheck.allowed) {
-    res.setHeader('Retry-After', rateLimitCheck.retryAfter);
+    res.setHeader('Retry-After', rateLimitCheck.retryAfter ?? 60);
     return res.status(429).json({
       success: false,
       error: 'Too many authentication attempts. Please try again later.',
