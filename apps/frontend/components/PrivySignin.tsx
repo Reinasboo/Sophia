@@ -63,16 +63,15 @@ export const PrivySignin: React.FC<PrivySigninProps> = ({ onSuccess }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-900/20 to-slate-950 flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-8">
-        {/* Header */}
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-white mb-2">Agentic Wallet</h1>
-          <p className="text-slate-400">Autonomous DeFi Agent Infrastructure</p>
-        </div>
+    <div className="w-full space-y-8">
+      {/* Header */}
+      <div className="text-center">
+        <h1 className="text-4xl font-bold text-white mb-2">Agentic Wallet</h1>
+        <p className="text-slate-400">Autonomous DeFi Agent Infrastructure</p>
+      </div>
 
-        {/* Form */}
-        <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6 space-y-6">
+      {/* Form */}
+      <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6 space-y-6">
           {/* Email Input */}
           <form onSubmit={handleEmailSignup} className="space-y-4">
             <div>
