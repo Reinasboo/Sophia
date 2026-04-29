@@ -62,13 +62,8 @@ export default function AgentsPage() {
     const total = agents.length;
     const active = (agents as Agent[]).filter((a: Agent) => a.status !== 'stopped').length;
     const stopped = (agents as Agent[]).filter((a: Agent) => a.status === 'stopped').length;
-    // H-3 FIX: Calculate totalVolumeToday from agent volumes
-    const totalVolumeToday = (agents as Agent[]).reduce(
-      (sum, a) => sum + (a.volumeToday || 0),
-      0
-    );
 
-    return { total, active, stopped, totalVolumeToday };
+    return { total, active, stopped };
   }, [agents]);
 
   if (isLoading) {
@@ -130,12 +125,6 @@ export default function AgentsPage() {
                     value: stats.stopped,
                     icon: Power,
                     color: 'text-text-muted',
-                  },
-                  {
-                    label: 'Volume (24h)',
-                    value: `${stats.totalVolumeToday.toFixed(2)} SOL`,
-                    icon: TrendingUp,
-                    color: 'text-primary',
                   },
                 ].map((stat) => {
                   const Icon = stat.icon;
