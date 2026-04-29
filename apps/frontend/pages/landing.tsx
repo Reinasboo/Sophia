@@ -1,12 +1,34 @@
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import { ArrowRight, Shield, Zap, BarChart3, Code2, Lock, Rocket } from 'lucide-react';
+import { ArrowRight, Shield, Zap, BarChart3, Code2, Lock, Rocket, LogIn, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { PrivySignin } from '../components/PrivySignin';
 
 export default function Landing() {
   const router = useRouter();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isShowingAuth, setIsShowingAuth] = useState(false);
+
+  useEffect(() => {
+    const apiKey = localStorage.getItem('sophia_api_key');
+    setIsAuthenticated(!!apiKey);
+  }, []);
 
   const handleGetStarted = () => {
     router.push('/');
+  };
+
+  const handleLoginClick = () => {
+    setIsShowingAuth(true);
+  };
+
+  const handleSignupClick = () => {
+    setIsShowingAuth(true);
+  };
+
+  const handleAuthSuccess = () => {
+    setIsShowingAuth(false);
+    router.push('/agents');
   };
 
   return (
@@ -32,12 +54,32 @@ export default function Landing() {
                 Sophia
               </span>
             </div>
-            <button
-              onClick={handleGetStarted}
-              className="px-6 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 font-semibold transition-all duration-300 transform hover:scale-105"
-            >
-              Get Started
-            </button>
+            <div className="flex items-center gap-4">
+              {isAuthenticated ? (
+                <button
+                  onClick={handleGetStarted}
+                  className="px-6 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 font-semibold transition-all duration-300 transform hover:scale-105"
+                >
+                  Dashboard
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={handleLoginClick}
+                    className="px-6 py-2 rounded-lg border border-slate-700 hover:border-cyan-500 text-slate-300 hover:text-cyan-400 font-semibold transition-all duration-300 flex items-center gap-2"
+                  >
+                    <LogIn className="w-4 h-4" />
+                    Login
+                  </button>
+                  <button
+                    onClick={handleSignupClick}
+                    className="px-6 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 font-semibold transition-all duration-300 transform hover:scale-105"
+                  >
+                    Sign Up
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         </nav>
 
@@ -341,6 +383,23 @@ export default function Landing() {
             </p>
           </div>
         </footer>
+
+        {/* Auth Modal */}
+        {isShowingAuth && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div className="relative bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl max-w-md w-full mx-4">
+              <button
+                onClick={() => setIsShowingAuth(false)}
+                className="absolute top-4 right-4 p-2 rounded-lg hover:bg-slate-800 transition-colors"
+              >
+                <X className="w-5 h-5 text-slate-400" />
+              </button>
+              <div className="p-8">
+                <PrivySignin onSuccess={handleAuthSuccess} />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

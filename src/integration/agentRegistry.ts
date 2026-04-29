@@ -38,6 +38,7 @@ export interface ExternalAgentRegistration {
   readonly supportedIntents: SupportedIntentType[];
   readonly metadata?: Record<string, unknown>;
   readonly verificationMethods?: string[]; // 'none' | 'challenge-response' | 'hmac-signature'
+  readonly tenantId?: string; // MULTI-TENANT: Agent owner
 }
 
 export interface ExternalAgentRecord {
@@ -57,6 +58,7 @@ export interface ExternalAgentRecord {
   readonly challengeToken?: string; // Challenge to be verified for challenge-response
   readonly challengeVerified?: boolean; // Whether challenge was completed
   readonly hmacSecret?: string; // Secret for HMAC webhook signatures (shown once)
+  readonly tenantId?: string; // MULTI-TENANT: Agent owner
 }
 
 /** Public-safe view (no token hash, no secrets) */
@@ -74,6 +76,7 @@ export interface ExternalAgentInfo {
   readonly metadata?: Record<string, unknown>;
   readonly verificationMethods?: string[];
   readonly challengeVerified?: boolean;
+  readonly tenantId?: string; // MULTI-TENANT: Agent owner
 }
 
 export interface RegistrationResult {
@@ -246,6 +249,7 @@ export class AgentRegistry {
       metadata: reg.metadata,
       verificationMethods: reg.verificationMethods || ['none'],
       challengeVerified: false,
+      tenantId: reg.tenantId, // MULTI-TENANT: Populate from request context
     };
 
     this.agents.set(agentId, record);
@@ -256,6 +260,7 @@ export class AgentRegistry {
       agentId,
       name: reg.agentName,
       type: reg.agentType,
+      tenantId: reg.tenantId,
     });
 
     return success({ agentId, controlToken });
@@ -325,6 +330,24 @@ export class AgentRegistry {
 
   getActiveAgents(): ExternalAgentInfo[] {
     return this.getAllAgents().filter((a) => a.status === 'active');
+  }
+
+  /**
+   * MULTI-TENANT: Get agents by tenant ID
+   * Returns all non-revoked agents that belong to the specified tenant
+   */
+  getAgentsByTenant(tenantId: string): ExternalAgentInfo[] {
+    return Array.from(this.agents.values())
+      .filter((a) => a.tenantId === tenantId && a.status !== 'revoked')
+      .map((a) => this.toPublicInfo(a));
+  }
+
+  /**
+   * MULTI-TENANT: Validate that an agent belongs to a tenant
+   */
+  agentBelongsToTenant(agentId: string, tenantId: string): boolean {
+    const agent = this.agents.get(agentId);
+    return !!agent && agent.tenantId === tenantId;
   }
 
   // ── Lifecycle ────────────────────────────

@@ -41,6 +41,26 @@ import { saveState, loadState } from '../utils/store.js';
 
 const logger = createLogger('ORCHESTRATOR');
 
+/**
+ * H-8 FIX: Wrap a promise with a timeout to prevent hanging operations.
+ * If the promise doesn't resolve within timeoutMs, it rejects with a timeout error.
+ */
+async function withTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  operationName: string
+): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(
+        () => reject(new Error(`${operationName} exceeded timeout of ${timeoutMs}ms`)),
+        timeoutMs
+      )
+    ),
+  ]);
+}
+
 interface ManagedAgent {
   agent: BaseAgent;
   intervalId?: NodeJS.Timeout;
@@ -120,8 +140,14 @@ export class Orchestrator {
       return failure(new Error(`Maximum agent limit reached (${this.maxAgents})`));
     }
 
-    // Create wallet for agent
-    const walletResult = this.walletManager.createWallet(config.name);
+    // MULTI-TENANT: Require tenantId for agent creation
+    const tenantId = config.tenantId;
+    if (!tenantId) {
+      return failure(new Error('tenantId is required for agent creation'));
+    }
+
+    // Create wallet for agent (scoped to tenant)
+    const walletResult = this.walletManager.createWallet(config.name, tenantId);
     if (!walletResult.ok) {
       return failure(walletResult.error);
     }
@@ -137,7 +163,7 @@ export class Orchestrator {
 
     if (!agentResult.ok) {
       // Clean up wallet if agent creation fails
-      this.walletManager.deleteWallet(wallet.id);
+      this.walletManager.deleteWallet(wallet.id, tenantId);
       return failure(agentResult.error);
     }
 
@@ -159,6 +185,7 @@ export class Orchestrator {
     logger.info('Agent created and bound to wallet', {
       agentId: agent.id,
       walletId: wallet.id,
+      tenantId,
       strategy: config.strategy,
     });
 
@@ -342,13 +369,27 @@ export class Orchestrator {
       }
 
       // Let agent think - wrap in error boundary
+      // H-8 FIX: Add 5-second timeout to prevent hanging orchestrator
       let decision;
       try {
-        decision = await agent.think(context.value);
+        decision = await withTimeout(agent.think(context.value), 5000, 'Agent think()');
       } catch (thinkError) {
         const errMsg = thinkError instanceof Error ? thinkError.message : String(thinkError);
-        logger.error('Agent think() threw error', { agentId, error: errMsg });
-        agent.setStatus('error', `Think failed: ${errMsg}`);
+        
+        // Special handling for timeout errors
+        if (errMsg.includes('timeout')) {
+          logger.error('Agent think() timed out - pausing agent', {
+            agentId,
+            timeout: 5000,
+          });
+          agent.setStatus('error', `Think timeout (5s exceeded)`);
+          // Pause the agent to prevent repeated timeouts
+          this.pauseAgent(agentId);
+        } else {
+          logger.error('Agent think() threw error', { agentId, error: errMsg });
+          agent.setStatus('error', `Think failed: ${errMsg}`);
+        }
+        
         agent.recordAction(false);
         return;
       }
@@ -1137,6 +1178,16 @@ export class Orchestrator {
   }
 
   /**
+   * MULTI-TENANT FIX: Get agents filtered by tenant ID
+   * Returns only agents that belong to the specified tenant
+   */
+  getAgentsByTenant(tenantId: string): AgentInfo[] {
+    return Array.from(this.agents.values())
+      .map((m) => m.agent.getInfo())
+      .filter((agent) => agent.tenantId === tenantId);
+  }
+
+  /**
    * Get agent by ID
    */
   getAgent(agentId: string): Result<AgentInfo, Error> {
@@ -1156,6 +1207,16 @@ export class Orchestrator {
 
     const walletId = managed.agent.getWalletId();
     return this.transactions.filter((tx) => tx.walletId === walletId);
+  }
+
+  /**
+   * MULTI-TENANT: Get all transactions for a specific tenant
+   * Filters transactions by wallets that belong to the tenant
+   */
+  getTransactionsByTenant(tenantId: string): TransactionRecord[] {
+    const walletIds = this.walletManager.getWalletIdsByTenant(tenantId);
+    const walletIdSet = new Set(walletIds);
+    return this.transactions.filter((tx) => walletIdSet.has(tx.walletId));
   }
 
   /**
@@ -1246,77 +1307,112 @@ export class Orchestrator {
    * auto-started so the system picks up where it left off.
    *
    * Called once from index.ts after startServer().
+   * This method is wrapped in try-catch to ensure server stays running
+   * even if persistence layer has issues.
    */
   restoreFromStore(): void {
-    // Restore transaction history first so agents have context
-    this.loadTransactions();
-
-    const saved = loadState<SavedAgent[]>('agents');
-    if (!saved || saved.length === 0) return;
-
-    let restored = 0;
-    const toStart: string[] = [];
-
-    for (const s of saved) {
-      // Skip if wallet no longer exists
-      const pubKeyResult = this.walletManager.getPublicKey(s.walletId);
-      if (!pubKeyResult.ok) {
-        logger.warn('Skipping agent restore — wallet missing', {
-          agentId: s.id,
-          walletId: s.walletId,
+    try {
+      // Restore transaction history first so agents have context
+      try {
+        this.loadTransactions();
+      } catch (error) {
+        logger.error('Failed to load transaction history', {
+          error: error instanceof Error ? error.message : String(error),
         });
-        continue;
+        // Continue anyway — transactions are not critical for server operation
       }
 
-      if (this.agents.size >= this.maxAgents) {
-        logger.warn('Agent limit reached during restore, some agents skipped');
-        break;
+      const saved = loadState<SavedAgent[]>('agents');
+      if (!saved || saved.length === 0) return;
+
+      let restored = 0;
+      const toStart: string[] = [];
+
+      for (const s of saved) {
+        try {
+          // Skip if wallet no longer exists
+          const pubKeyResult = this.walletManager.getPublicKey(s.walletId);
+          if (!pubKeyResult.ok) {
+            logger.warn('Skipping agent restore — wallet missing', {
+              agentId: s.id,
+              walletId: s.walletId,
+            });
+            continue;
+          }
+
+          if (this.agents.size >= this.maxAgents) {
+            logger.warn('Agent limit reached during restore, some agents skipped');
+            break;
+          }
+
+          const agentResult = createAgent({
+            config: {
+              name: s.name,
+              strategy: s.strategy,
+              strategyParams: s.strategyParams,
+              executionSettings: s.executionSettings,
+            },
+            walletId: s.walletId,
+            walletPublicKey: s.walletPublicKey,
+            idOverride: s.id,
+            createdAtOverride: new Date(s.createdAt),
+          });
+
+          if (!agentResult.ok) {
+            logger.warn('Failed to restore agent', {
+              agentId: s.id,
+              error: agentResult.error.message,
+            });
+            continue;
+          }
+
+          const agent = agentResult.value;
+          if (s.lastActionAt) {
+            Object.assign(agent, { lastActionAt: new Date(s.lastActionAt) });
+          }
+
+          this.agents.set(agent.id, { agent });
+          restored++;
+
+          if (s.wasRunning) {
+            toStart.push(agent.id);
+          }
+        } catch (error) {
+          logger.error('Error during agent restoration', {
+            agentId: s.id,
+            error: error instanceof Error ? error.message : String(error),
+          });
+          // Continue to next agent
+        }
       }
 
-      const agentResult = createAgent({
-        config: {
-          name: s.name,
-          strategy: s.strategy,
-          strategyParams: s.strategyParams,
-          executionSettings: s.executionSettings,
-        },
-        walletId: s.walletId,
-        walletPublicKey: s.walletPublicKey,
-        idOverride: s.id,
-        createdAtOverride: new Date(s.createdAt),
+      if (restored > 0) {
+        logger.info('Agents restored from disk', { count: restored, autoStarting: toStart.length });
+      }
+
+      // Auto-start agents that were running before shutdown
+      for (const agentId of toStart) {
+        try {
+          const result = this.startAgent(agentId);
+          if (!result.ok) {
+            logger.warn('Failed to auto-start restored agent', {
+              agentId,
+              error: result.error.message,
+            });
+          }
+        } catch (error) {
+          logger.error('Error auto-starting agent', {
+            agentId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+      }
+    } catch (error) {
+      // Final catch-all to ensure this never crashes the process
+      logger.error('Critical error during restoreFromStore', {
+        error: error instanceof Error ? error.message : String(error),
       });
-
-      if (!agentResult.ok) {
-        logger.warn('Failed to restore agent', { agentId: s.id, error: agentResult.error.message });
-        continue;
-      }
-
-      const agent = agentResult.value;
-      if (s.lastActionAt) {
-        Object.assign(agent, { lastActionAt: new Date(s.lastActionAt) });
-      }
-
-      this.agents.set(agent.id, { agent });
-      restored++;
-
-      if (s.wasRunning) {
-        toStart.push(agent.id);
-      }
-    }
-
-    if (restored > 0) {
-      logger.info('Agents restored from disk', { count: restored, autoStarting: toStart.length });
-    }
-
-    // Auto-start agents that were running before shutdown
-    for (const agentId of toStart) {
-      const result = this.startAgent(agentId);
-      if (!result.ok) {
-        logger.warn('Failed to auto-start restored agent', {
-          agentId,
-          error: result.error.message,
-        });
-      }
+      // Server stays running without restored agents — acceptable degradation
     }
   }
 }

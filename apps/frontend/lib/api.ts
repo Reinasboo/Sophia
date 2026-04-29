@@ -3,6 +3,8 @@
  *
  * Handles all API communication with the backend.
  * The frontend is READ-ONLY for observing system state.
+ * 
+ * MULTI-TENANT FIX: All requests now include tenant auth via Bearer token
  */
 
 import type {
@@ -27,6 +29,25 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://sophia-production-1
 // server-only environment variable (no NEXT_PUBLIC_ prefix).
 // Direct browser calls to mutation endpoints will be rejected.
 
+/** Get tenant API key from localStorage */
+function getTenantApiKey(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem('sophia_api_key');
+}
+
+/** Headers for authenticated requests (includes tenant Bearer token) */
+function authHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {};
+  const apiKey = getTenantApiKey();
+  
+  // MULTI-TENANT FIX: Include API key as Bearer token for all requests
+  if (apiKey) {
+    headers['Authorization'] = `Bearer ${apiKey}`;
+  }
+  
+  return headers;
+}
+
 /** Headers for admin-authenticated mutation requests (proxied server-side) */
 function adminHeaders(): Record<string, string> {
   // No key exposed here — the Next.js proxy route handles injection.
@@ -39,6 +60,7 @@ async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<Api
       ...options,
       headers: {
         'Content-Type': 'application/json',
+        ...authHeaders(), // MULTI-TENANT FIX: Include auth headers in all requests
         ...options?.headers,
       },
     });
@@ -153,6 +175,42 @@ export async function getExplorerUrl(signature: string): Promise<ApiResponse<{ u
   return fetchApi(`/api/explorer/${signature}`);
 }
 
+/**
+ * Derive WebSocket URL from environment or current location
+ * Priority:
+ * 1. NEXT_PUBLIC_WS_URL (if set in environment)
+ * 2. Derived from NEXT_PUBLIC_API_URL (convert http/https to ws/wss)
+ * 3. Derived from window.location (for client-side fallback)
+ * 4. Localhost fallback (dev only)
+ */
+function getWebSocketUrl(): string {
+  // 1. Try explicit env var
+  if (process.env.NEXT_PUBLIC_WS_URL) {
+    return process.env.NEXT_PUBLIC_WS_URL;
+  }
+
+  // 2. Derive from API URL (http/https -> ws/wss)
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (apiUrl) {
+    if (apiUrl.startsWith('https://')) {
+      return apiUrl.replace(/^https:/, 'wss:');
+    }
+    if (apiUrl.startsWith('http://')) {
+      return apiUrl.replace(/^http:/, 'ws:');
+    }
+  }
+
+  // 3. Derive from current location (client-side)
+  if (typeof window !== 'undefined' && window.location) {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const host = window.location.host;
+    return `${protocol}//${host}`;
+  }
+
+  // 4. Fallback to localhost (development only)
+  return 'ws://localhost:3002';
+}
+
 // WebSocket connection
 export function createWebSocket(
   onMessage: (event: SystemEvent) => void,
@@ -163,7 +221,7 @@ export function createWebSocket(
     return null;
   }
 
-  const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3002';
+  const wsUrl = getWebSocketUrl();
   const ws = new WebSocket(wsUrl);
 
   ws.onopen = () => {

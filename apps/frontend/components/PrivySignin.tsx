@@ -35,8 +35,7 @@ export const PrivySignin: React.FC<PrivySigninProps> = ({ onSuccess }) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email,
-          provider: 'email',
+          accessToken: email, // Phase 1: use email as test token
         }),
       });
 
@@ -44,17 +43,18 @@ export const PrivySignin: React.FC<PrivySigninProps> = ({ onSuccess }) => {
         throw new Error('Sign up failed');
       }
 
-      const data = await response.json();
-      if (!data.success) {
-        throw new Error('Sign up failed');
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.error || 'Sign up failed');
       }
 
-      const { tenantId, apiKey } = data.data;
-      localStorage.setItem('tenantId', tenantId);
-      localStorage.setItem('apiKey', apiKey);
+      // MULTI-TENANT FIX: Store credentials with correct keys
+      const { tenantId, apiKey } = result;
+      localStorage.setItem('sophia_tenant_id', tenantId);
+      localStorage.setItem('sophia_api_key', apiKey);
 
       onSuccess?.();
-      router.push('/');
+      router.push('/agents');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Sign up failed');
     } finally {

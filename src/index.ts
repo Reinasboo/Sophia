@@ -66,7 +66,14 @@ async function main(): Promise<void> {
     // Restore persisted agents (wallets and BYOA records are loaded in their
     // respective constructors; agents need an explicit call because startup
     // auto-starts timers that cannot run from a constructor).
-    getOrchestrator().restoreFromStore();
+    // This is wrapped in restoreFromStore() which has try-catch to prevent crashes
+    try {
+      getOrchestrator().restoreFromStore();
+    } catch (restoreError) {
+      logger.error('Restoration error (server still running)', {
+        error: restoreError instanceof Error ? restoreError.message : String(restoreError),
+      });
+    }
 
     logger.info('System started successfully');
     logger.info(`API available at http://localhost:${config.PORT}`);

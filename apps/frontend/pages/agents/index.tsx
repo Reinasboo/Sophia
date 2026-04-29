@@ -62,7 +62,11 @@ export default function AgentsPage() {
     const total = agents.length;
     const active = (agents as Agent[]).filter((a: Agent) => a.status !== 'stopped').length;
     const stopped = (agents as Agent[]).filter((a: Agent) => a.status === 'stopped').length;
-    const totalVolumeToday = 0; // TODO: Add volumeToday to Agent type
+    // H-3 FIX: Calculate totalVolumeToday from agent volumes
+    const totalVolumeToday = (agents as Agent[]).reduce(
+      (sum, a) => sum + (a.volumeToday || 0),
+      0
+    );
 
     return { total, active, stopped, totalVolumeToday };
   }, [agents]);

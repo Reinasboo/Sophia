@@ -41,7 +41,7 @@ const logger = createLogger('WALLET');
  * - All signing happens internally
  */
 export class WalletManager {
-  private wallets: Map<string, InternalWallet> = new Map();
+  private walletsByTenant: Map<string, Map<string, InternalWallet>> = new Map();
   private policies: Map<string, Policy> = new Map();
   private dailyTransfers: Map<string, number> = new Map();
   private encryptionSecret: string;
@@ -89,9 +89,10 @@ export class WalletManager {
   }
 
   /**
-   * Create a new wallet with encrypted key storage
+   * Create a new wallet with encrypted key storage (tenant-scoped)
+   * MULTI-TENANT: Wallets belong to a tenant
    */
-  createWallet(label?: string): Result<WalletInfo, Error> {
+  createWallet(label?: string, tenantId?: string): Result<WalletInfo, Error> {
     try {
       const keypair = Keypair.generate();
       const walletId = generateSecureId('wallet');
@@ -107,7 +108,13 @@ export class WalletManager {
         label,
       };
 
-      this.wallets.set(walletId, wallet);
+      // Store wallet in tenant bucket (or global if no tenant)
+      const effectiveTenantId = tenantId || '__global__';
+      if (!this.walletsByTenant.has(effectiveTenantId)) {
+        this.walletsByTenant.set(effectiveTenantId, new Map());
+      }
+      this.walletsByTenant.get(effectiveTenantId)!.set(walletId, wallet);
+
       this.policies.set(walletId, { ...DEFAULT_POLICY });
       this.dailyTransfers.set(walletId, 0);
 
@@ -115,6 +122,7 @@ export class WalletManager {
         walletId,
         publicKey: wallet.publicKey,
         label,
+        tenantId: effectiveTenantId,
       });
 
       this.saveToStore();
@@ -128,10 +136,34 @@ export class WalletManager {
   }
 
   /**
+   * MULTI-TENANT: Find wallet by ID (searches across all tenants)
+   * Returns the wallet if found, null otherwise
+   */
+  private findWallet(walletId: string): InternalWallet | null {
+    for (const tenantBucket of this.walletsByTenant.values()) {
+      const wallet = tenantBucket.get(walletId);
+      if (wallet) {
+        return wallet;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Get all wallet IDs for a tenant
+   * MULTI-TENANT: Used to filter transactions/operations by tenant
+   */
+  getWalletIdsByTenant(tenantId: string): string[] {
+    const tenantBucket = this.walletsByTenant.get(tenantId);
+    if (!tenantBucket) return [];
+    return Array.from(tenantBucket.keys());
+  }
+
+  /**
    * Get wallet info by ID
    */
   getWallet(walletId: string): Result<WalletInfo, Error> {
-    const wallet = this.wallets.get(walletId);
+    const wallet = this.findWallet(walletId);
 
     if (!wallet) {
       return failure(notFoundError('Wallet', walletId));
@@ -142,16 +174,26 @@ export class WalletManager {
 
   /**
    * Get all wallets (public info only)
+   * MULTI-TENANT: Optional tenantId filter
    */
-  getAllWallets(): WalletInfo[] {
-    return Array.from(this.wallets.values()).map((w) => this.toWalletInfo(w));
+  getAllWallets(tenantId?: string): WalletInfo[] {
+    if (tenantId) {
+      const tenantBucket = this.walletsByTenant.get(tenantId) || new Map();
+      return Array.from(tenantBucket.values()).map((w) => this.toWalletInfo(w));
+    }
+    // Return all wallets across all tenants (legacy behavior, usually for admin)
+    let allWallets: InternalWallet[] = [];
+    for (const tenantBucket of this.walletsByTenant.values()) {
+      allWallets = allWallets.concat(Array.from(tenantBucket.values()));
+    }
+    return allWallets.map((w) => this.toWalletInfo(w));
   }
 
   /**
    * Get wallet public key
    */
   getPublicKey(walletId: string): Result<PublicKey, Error> {
-    const wallet = this.wallets.get(walletId);
+    const wallet = this.findWallet(walletId);
 
     if (!wallet) {
       return failure(notFoundError('Wallet', walletId));
@@ -174,7 +216,7 @@ export class WalletManager {
     walletId: string,
     transaction: Transaction | VersionedTransaction
   ): Result<Transaction | VersionedTransaction, Error> {
-    const wallet = this.wallets.get(walletId);
+    const wallet = this.findWallet(walletId);
 
     if (!wallet) {
       return failure(notFoundError('Wallet', walletId));
@@ -244,8 +286,8 @@ export class WalletManager {
       const autonomousIntent = intent as import('../utils/types.js').AutonomousIntent;
       const action = autonomousIntent.action;
       if (action === 'transfer_sol' || action === 'transfer_token') {
-        // @ts-expect-error: Intent params are validated at submission time
-        const amount: unknown = intent.params?.amount;
+        // Safely extract amount from params (Record<string, unknown>)
+        const amount: unknown = autonomousIntent.params['amount'];
         if (typeof amount === 'number' && amount > policy.maxTransferAmount * 2) {
           return failure(
             new Error(
@@ -371,17 +413,21 @@ export class WalletManager {
 
   /**
    * Delete a wallet (removes from memory)
+   * MULTI-TENANT: Optional tenantId for scoped deletion
    */
-  deleteWallet(walletId: string): Result<true, Error> {
-    if (!this.wallets.has(walletId)) {
+  deleteWallet(walletId: string, tenantId?: string): Result<true, Error> {
+    const effectiveTenantId = tenantId || '__global__';
+    const tenantBucket = this.walletsByTenant.get(effectiveTenantId);
+
+    if (!tenantBucket || !tenantBucket.has(walletId)) {
       return failure(new Error(`Wallet not found: ${walletId}`));
     }
 
-    this.wallets.delete(walletId);
+    tenantBucket.delete(walletId);
     this.policies.delete(walletId);
     this.dailyTransfers.delete(walletId);
 
-    logger.info('Wallet deleted', { walletId });
+    logger.info('Wallet deleted', { walletId, tenantId: effectiveTenantId });
 
     this.saveToStore();
     return success(true);
@@ -402,7 +448,14 @@ export class WalletManager {
   // ── Persistence ──────────────────────────────────────────────────────────────
 
   private saveToStore(): void {
-    const walletsArr = Array.from(this.wallets.values());
+    // Flatten tenant structure for storage
+    const walletsArr: Array<InternalWallet & { tenantId: string }> = [];
+    for (const [tenantId, wallets] of this.walletsByTenant.entries()) {
+      for (const wallet of wallets.values()) {
+        walletsArr.push({ ...wallet, tenantId });
+      }
+    }
+
     const policiesObj: Record<string, Policy> = {};
     for (const [id, policy] of this.policies.entries()) {
       policiesObj[id] = policy;
@@ -411,18 +464,26 @@ export class WalletManager {
   }
 
   private loadFromStore(): void {
-    const saved = loadState<{ wallets: InternalWallet[]; policies: Record<string, Policy> }>(
-      'wallets'
-    );
+    const saved = loadState<{
+      wallets: Array<InternalWallet & { tenantId?: string }>;
+      policies: Record<string, Policy>;
+    }>('wallets');
     if (!saved) return;
 
     let loaded = 0;
     for (const w of saved.wallets) {
       const wallet: InternalWallet = {
-        ...w,
+        id: w.id,
+        publicKey: w.publicKey,
+        encryptedSecretKey: w.encryptedSecretKey,
         createdAt: new Date(w.createdAt),
+        label: w.label,
       };
-      this.wallets.set(wallet.id, wallet);
+      const tenantId = w.tenantId || '__global__';
+      if (!this.walletsByTenant.has(tenantId)) {
+        this.walletsByTenant.set(tenantId, new Map());
+      }
+      this.walletsByTenant.get(tenantId)!.set(wallet.id, wallet);
       this.policies.set(wallet.id, saved.policies[wallet.id] ?? { ...DEFAULT_POLICY });
       this.dailyTransfers.set(wallet.id, 0);
       loaded++;

@@ -25,6 +25,11 @@ import {
   ExternalIntent,
   SupportedIntentType,
 } from './integration/index.js';
+import {
+  tenantContextMiddleware,
+  protectedRoute,
+  getTenantIdOrFail,
+} from './integration/tenant-middleware.js';
 import { getStrategyRegistry } from './agent/strategy-registry.js';
 import { openAPISpec } from './openapi.js';
 import {
@@ -149,8 +154,12 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
 });
 
 // ============================================
-// ADMIN AUTH MIDDLEWARE
+// TENANT CONTEXT MIDDLEWARE
 // ============================================
+
+// MULTI-TENANT FIX: Extract tenant context from Authorization header
+// Validates bearer token and attaches tenantId to req.tenantContext
+app.use(tenantContextMiddleware());
 
 /**
  * C-1/C-2: Require admin API key for mutation endpoints.
@@ -353,7 +362,11 @@ app.get(
 
 app.get(
   '/api/agents',
+  protectedRoute(),
   asyncHandler(async (req: Request, res: Response) => {
+    const tenantId = getTenantIdOrFail(req, res);
+    if (!tenantId) return;
+
     const orchestrator = getOrchestrator();
     const walletManager = getWalletManager();
     const client = getSolanaClient();
@@ -365,11 +378,12 @@ app.get(
     );
     const offset = Math.max(parseInt(String(req.query['offset'] ?? '0'), 10) || 0, 0);
 
-    const allAgents = orchestrator.getAllAgents();
-    const total = allAgents.length;
+    // MULTI-TENANT FIX: Get agents for THIS tenant only
+    const tenantAgents = orchestrator.getAgentsByTenant(tenantId);
+    const total = tenantAgents.length;
 
-    // Apply pagination to the original list
-    const paginatedAgents = allAgents.slice(offset, offset + limit);
+    // Apply pagination to the filtered list
+    const paginatedAgents = tenantAgents.slice(offset, offset + limit);
 
     // Enrich with balance information - use allSettled to handle partial failures
     const enrichedAgents = await Promise.allSettled(
@@ -475,8 +489,11 @@ app.get(
 
 app.post(
   '/api/agents',
-  requireAdminAuth,
+  protectedRoute(),
   asyncHandler(async (req: Request, res: Response) => {
+    const tenantId = getTenantIdOrFail(req, res);
+    if (!tenantId) return; // getTenantIdOrFail already sent error response
+
     const validation = CreateAgentSchema.safeParse(req.body);
     if (!validation.success) {
       sendError(
@@ -489,7 +506,11 @@ app.post(
     }
 
     const orchestrator = getOrchestrator();
-    const result = await orchestrator.createAgent(validation.data as AgentConfig);
+    const agentConfig: AgentConfig = {
+      ...validation.data,
+      tenantId, // MULTI-TENANT: Populate from auth context
+    } as AgentConfig;
+    const result = await orchestrator.createAgent(agentConfig);
 
     if (!result.ok) {
       sendError(res, result.error.message, HTTP_STATUS.BAD_REQUEST, ERROR_CODE.OPERATION_FAILED);
@@ -637,9 +658,13 @@ app.get(
 
 app.get(
   '/api/transactions',
+  protectedRoute(),
   asyncHandler(async (req: Request, res: Response) => {
+    const tenantId = getTenantIdOrFail(req, res);
+    if (!tenantId) return;
+
     const orchestrator = getOrchestrator();
-    const allTransactions = orchestrator.getAllTransactions();
+    const tenantTransactions = orchestrator.getTransactionsByTenant(tenantId);
 
     // Pagination
     // M-3 FIX: parseInt can silently return NaN; use a safe parser with an
@@ -652,11 +677,11 @@ app.get(
     const page = parsePositiveInt(req.query['page'], 1);
     const limit = Math.min(parsePositiveInt(req.query['limit'], 50), 500);
     const start = (page - 1) * limit;
-    const transactions = allTransactions.slice(start, start + limit);
+    const transactions = tenantTransactions.slice(start, start + limit);
 
     sendSuccess(res, {
       transactions,
-      total: allTransactions.length,
+      total: tenantTransactions.length,
       page,
       limit,
     });
@@ -738,8 +763,11 @@ const SubmitIntentSchema = z
  */
 app.post(
   '/api/byoa/register',
-  requireAdminAuth,
+  protectedRoute(),
   asyncHandler(async (req: Request, res: Response) => {
+    const tenantId = getTenantIdOrFail(req, res);
+    if (!tenantId) return;
+
     const validation = RegisterAgentSchema.safeParse(req.body);
     if (!validation.success) {
       sendError(
@@ -755,13 +783,14 @@ app.post(
     const registry = getAgentRegistry();
     const binder = getWalletBinder();
 
-    // 1. Register agent
+    // 1. Register agent (with tenantId)
     const regResult = registry.register({
       agentName: data.agentName,
       agentType: data.agentType,
       agentEndpoint: data.agentEndpoint,
       supportedIntents: data.supportedIntents as SupportedIntentType[],
       metadata: data.metadata,
+      tenantId, // MULTI-TENANT: Populate from auth context
     });
 
     if (!regResult.ok) {
@@ -776,8 +805,8 @@ app.post(
 
     const { agentId, controlToken } = regResult.value;
 
-    // 2. Create and bind a wallet
-    const bindResult = binder.bindNewWallet(agentId);
+    // 2. Create and bind a wallet (tenant-scoped)
+    const bindResult = binder.bindNewWallet(agentId, tenantId);
     if (!bindResult.ok) {
       // Clean up the registration
       registry.revokeAgent(agentId);
@@ -796,6 +825,7 @@ app.post(
       agentId,
       agentName: data.agentName,
       walletPublicKey,
+      tenantId,
     });
 
     // 3. Return credentials (control token shown ONCE)
@@ -821,8 +851,11 @@ app.post(
  */
 app.post(
   '/api/byoa/verify/challenge-generate',
-  requireAdminAuth,
+  protectedRoute(),
   asyncHandler(async (req: Request, res: Response) => {
+    const tenantId = getTenantIdOrFail(req, res);
+    if (!tenantId) return;
+
     const { agentId } = req.body;
     if (!agentId || typeof agentId !== 'string') {
       sendError(res, 'agentId is required', HTTP_STATUS.BAD_REQUEST, ERROR_CODE.VALIDATION_FAILED);
@@ -830,6 +863,12 @@ app.post(
     }
 
     const registry = getAgentRegistry();
+    
+    // MULTI-TENANT: Validate agent belongs to tenant
+    if (!registry.agentBelongsToTenant(agentId, tenantId)) {
+      sendError(res, 'Agent not found', HTTP_STATUS.NOT_FOUND, ERROR_CODE.AGENT_NOT_FOUND);
+      return;
+    }
 
     // Generate random challenge
     const challenge = Array.from(crypto.getRandomValues(new Uint8Array(32)))
@@ -942,16 +981,21 @@ app.post(
 );
 
 /**
- * List all connected external agents (for frontend observation).
+ * List all connected external agents for the authenticated tenant.
  */
 app.get(
   '/api/byoa/agents',
-  asyncHandler(async (_req: Request, res: Response) => {
+  protectedRoute(),
+  asyncHandler(async (req: Request, res: Response) => {
+    const tenantId = getTenantIdOrFail(req, res);
+    if (!tenantId) return;
+
     const registry = getAgentRegistry();
     const client = getSolanaClient();
     const walletManager = getWalletManager();
 
-    const agents = registry.getAllAgents();
+    // MULTI-TENANT: Filter agents by tenant
+    const agents = registry.getAgentsByTenant(tenantId);
 
     // Enrich with balance information - use allSettled to handle partial failures
     const enriched = await Promise.allSettled(
@@ -996,14 +1040,18 @@ app.get(
 
 /**
  * Get a single external agent detail.
+ * MULTI-TENANT: Requires authentication; validates agent belongs to tenant
  */
 app.get(
   '/api/byoa/agents/:id',
+  protectedRoute(),
   asyncHandler(async (req: Request, res: Response) => {
     const registry = getAgentRegistry();
     const router = getIntentRouter();
     const client = getSolanaClient();
     const walletManager = getWalletManager();
+    const tenantId = getTenantIdOrFail(req, res);
+    if (!tenantId) return;
 
     const agentResult = registry.getAgent(req.params['id'] ?? '');
     if (!agentResult.ok) {
@@ -1012,6 +1060,10 @@ app.get(
     }
 
     const agent = agentResult.value;
+    if (!registry.agentBelongsToTenant(agent.id, tenantId)) {
+      sendError(res, 'Agent not found', HTTP_STATUS.NOT_FOUND, ERROR_CODE.AGENT_NOT_FOUND);
+      return;
+    }
     let balance = 0;
     let tokenBalances: unknown[] = [];
 
@@ -1050,13 +1102,25 @@ app.get(
 
 /**
  * Get intent history for a specific external agent.
+ * MULTI-TENANT: Requires authentication; validates agent belongs to tenant
  */
 app.get(
   '/api/byoa/agents/:id/intents',
+  protectedRoute(),
   asyncHandler(async (req: Request, res: Response) => {
+    const registry = getAgentRegistry();
     const router = getIntentRouter();
+    const tenantId = getTenantIdOrFail(req, res);
+    if (!tenantId) return;
+
+    const agentId = req.params['id'] ?? '';
+    if (!registry.agentBelongsToTenant(agentId, tenantId)) {
+      sendError(res, 'Agent not found', HTTP_STATUS.NOT_FOUND, ERROR_CODE.AGENT_NOT_FOUND);
+      return;
+    }
+
     const limit = Math.min(parseInt(req.query['limit'] as string) || 100, 500);
-    const intents = router.getIntentHistory(req.params['id'] ?? '', limit);
+    const intents = router.getIntentHistory(agentId, limit);
 
     sendSuccess(res, intents);
   })
@@ -1068,10 +1132,19 @@ app.get(
  */
 app.post(
   '/api/byoa/agents/:id/deactivate',
-  requireAdminAuth,
+  protectedRoute(),
   asyncHandler(async (req: Request, res: Response) => {
     const registry = getAgentRegistry();
-    const result = registry.deactivateAgent(req.params['id'] ?? '');
+    const tenantId = getTenantIdOrFail(req, res);
+    if (!tenantId) return;
+
+    const agentId = req.params['id'] ?? '';
+    if (!registry.agentBelongsToTenant(agentId, tenantId)) {
+      sendError(res, 'Agent not found', HTTP_STATUS.NOT_FOUND, ERROR_CODE.AGENT_NOT_FOUND);
+      return;
+    }
+
+    const result = registry.deactivateAgent(agentId);
 
     if (!result.ok) {
       sendError(res, result.error.message, HTTP_STATUS.BAD_REQUEST, ERROR_CODE.DEACTIVATION_FAILED);
@@ -1088,10 +1161,19 @@ app.post(
  */
 app.post(
   '/api/byoa/agents/:id/activate',
-  requireAdminAuth,
+  protectedRoute(),
   asyncHandler(async (req: Request, res: Response) => {
     const registry = getAgentRegistry();
-    const result = registry.activateAgent(req.params['id'] ?? '');
+    const tenantId = getTenantIdOrFail(req, res);
+    if (!tenantId) return;
+
+    const agentId = req.params['id'] ?? '';
+    if (!registry.agentBelongsToTenant(agentId, tenantId)) {
+      sendError(res, 'Agent not found', HTTP_STATUS.NOT_FOUND, ERROR_CODE.AGENT_NOT_FOUND);
+      return;
+    }
+
+    const result = registry.activateAgent(agentId);
 
     if (!result.ok) {
       sendError(res, result.error.message, HTTP_STATUS.BAD_REQUEST, ERROR_CODE.ACTIVATION_FAILED);
@@ -1108,10 +1190,19 @@ app.post(
  */
 app.post(
   '/api/byoa/agents/:id/revoke',
-  requireAdminAuth,
+  protectedRoute(),
   asyncHandler(async (req: Request, res: Response) => {
     const registry = getAgentRegistry();
-    const result = registry.revokeAgent(req.params['id'] ?? '');
+    const tenantId = getTenantIdOrFail(req, res);
+    if (!tenantId) return;
+
+    const agentId = req.params['id'] ?? '';
+    if (!registry.agentBelongsToTenant(agentId, tenantId)) {
+      sendError(res, 'Agent not found', HTTP_STATUS.NOT_FOUND, ERROR_CODE.AGENT_NOT_FOUND);
+      return;
+    }
+
+    const result = registry.revokeAgent(agentId);
 
     if (!result.ok) {
       sendError(res, result.error.message, HTTP_STATUS.BAD_REQUEST, ERROR_CODE.REVOCATION_FAILED);
@@ -1137,10 +1228,17 @@ app.post(
  */
 app.post(
   '/api/byoa/agents/:id/rotate-token',
-  requireAdminAuth,
+  protectedRoute(),
   asyncHandler(async (req: Request, res: Response) => {
     const registry = getAgentRegistry();
+    const tenantId = getTenantIdOrFail(req, res);
+    if (!tenantId) return;
+
     const agentId = req.params['id'] ?? '';
+    if (!registry.agentBelongsToTenant(agentId, tenantId)) {
+      sendError(res, 'Agent not found', HTTP_STATUS.NOT_FOUND, ERROR_CODE.AGENT_NOT_FOUND);
+      return;
+    }
 
     const agentResult = registry.getAgent(agentId);
     if (!agentResult.ok) {
@@ -1172,16 +1270,29 @@ app.post(
 
 /**
  * Get all intent history (for dashboard).
+ * MULTI-TENANT: Requires authentication; returns intents from user's agents only
  * Includes intents from both BYOA external agents and built-in orchestrated agents.
  */
 app.get(
   '/api/byoa/intents',
+  protectedRoute(),
   asyncHandler(async (req: Request, res: Response) => {
     const router = getIntentRouter();
-    const limit = Math.min(parseInt(req.query['limit'] as string) || 100, 500);
-    const intents = router.getIntentHistory(undefined, limit);
+    const orchestrator = getOrchestrator();
+    const tenantId = getTenantIdOrFail(req, res);
+    if (!tenantId) return;
 
-    sendSuccess(res, intents);
+    const limit = Math.min(parseInt(req.query['limit'] as string) || 100, 500);
+    
+    // Get all agents for this tenant
+    const tenantAgents = orchestrator.getAgentsByTenant(tenantId);
+    const tenantAgentIds = tenantAgents.map(a => a.id);
+    
+    // Get all intents and filter to tenant's agents
+    const allIntents = router.getIntentHistory(undefined, limit * 2); // fetch more to account for filtering
+    const filteredIntents = allIntents.filter(intent => tenantAgentIds.includes(intent.agentId));
+    
+    sendSuccess(res, filteredIntents.slice(0, limit));
   })
 );
 
@@ -1191,12 +1302,24 @@ app.get(
  */
 app.get(
   '/api/intents',
+  protectedRoute(),
   asyncHandler(async (req: Request, res: Response) => {
     const router = getIntentRouter();
-    const limit = Math.min(parseInt(req.query['limit'] as string) || 200, 1000);
-    const intents = router.getIntentHistory(undefined, limit);
+    const orchestrator = getOrchestrator();
+    const tenantId = getTenantIdOrFail(req, res);
+    if (!tenantId) return;
 
-    sendSuccess(res, intents);
+    const limit = Math.min(parseInt(req.query['limit'] as string) || 200, 1000);
+    
+    // Get all agents for this tenant
+    const tenantAgents = orchestrator.getAgentsByTenant(tenantId);
+    const tenantAgentIds = tenantAgents.map(a => a.id);
+    
+    // Get all intents and filter to tenant's agents
+    const allIntents = router.getIntentHistory(undefined, limit * 2); // fetch more to account for filtering
+    const filteredIntents = allIntents.filter(intent => tenantAgentIds.includes(intent.agentId));
+    
+    sendSuccess(res, filteredIntents.slice(0, limit));
   })
 );
 
@@ -1240,24 +1363,34 @@ function setupWebSocket(port: number): void {
     ws.isAlive = true;
     ws.lastHeartbeat = Date.now();
 
+    // Helper: safely send JSON to WebSocket
+    const safeSend = (obj: unknown) => {
+      try {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify(obj));
+        }
+      } catch (error) {
+        logger.warn('Failed to send WebSocket message', {
+          error: sanitizeError(error),
+          readyState: ws.readyState,
+        });
+      }
+    };
+
     // Send initial connection message
-    ws.send(
-      JSON.stringify({
-        type: 'connection_established',
-        timestamp: new Date().toISOString(),
-        data: { clientCount: wss?.clients.size || 0 },
-      })
-    );
+    safeSend({
+      type: 'connection_established',
+      timestamp: new Date().toISOString(),
+      data: { clientCount: wss?.clients.size || 0 },
+    });
 
     // Send initial state
     const orchestrator = getOrchestrator();
     const agents = orchestrator.getAllAgents();
-    ws.send(
-      JSON.stringify({
-        type: 'initial_state',
-        data: { agents },
-      })
-    );
+    safeSend({
+      type: 'initial_state',
+      data: { agents },
+    });
 
     // Respond to client pings
     ws.on('pong', () => {
@@ -1271,19 +1404,43 @@ function setupWebSocket(port: number): void {
     // Handle client messages (pings, etc.)
     ws.on('message', (data: Buffer) => {
       try {
-        const message = JSON.parse(data.toString());
-        if (message.type === 'ping') {
-          ws.send(JSON.stringify({ type: 'pong', timestamp: new Date().toISOString() }));
+        // Safely decode buffer to string
+        let messageStr: string;
+        try {
+          messageStr = data.toString('utf8');
+        } catch (error) {
+          logger.warn('Failed to decode WebSocket message buffer', { error: sanitizeError(error) });
+          return;
+        }
+
+        // Safely parse JSON
+        let message: unknown;
+        try {
+          message = JSON.parse(messageStr);
+        } catch (error) {
+          logger.warn('Failed to parse WebSocket message JSON', { error: sanitizeError(error) });
+          return;
+        }
+
+        // Handle ping messages
+        if (message && typeof message === 'object' && 'type' in message && message.type === 'ping') {
+          safeSend({ type: 'pong', timestamp: new Date().toISOString() });
         }
       } catch (error) {
-        logger.warn('Failed to parse WebSocket message', { error: sanitizeError(error) });
+        logger.error('Unexpected error in WebSocket message handler', {
+          error: sanitizeError(error),
+        });
       }
     });
 
-    // Subscribe to events
+    // Subscribe to events (with error handling)
     const unsubscribe = eventBus.subscribe((event: SystemEvent) => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify(event));
+      try {
+        safeSend(event);
+      } catch (error) {
+        logger.error('Failed to send event to WebSocket client', {
+          error: sanitizeError(error),
+        });
       }
     });
 

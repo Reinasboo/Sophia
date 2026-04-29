@@ -46,6 +46,23 @@ const STORAGE_KEYS = {
   SYNC_STATE: 'sophia_sync_state',
 } as const;
 
+/**
+ * Generate a cryptographically secure random ID using Web Crypto API.
+ * Falls back to Date.now() + counter if crypto is unavailable (shouldn't happen in modern browsers).
+ */
+function generateSecureRandomId(prefix: string): string {
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    const randomBytes = new Uint8Array(8);
+    crypto.getRandomValues(randomBytes);
+    const hex = Array.from(randomBytes)
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
+    return `${prefix}_${Date.now()}_${hex}`;
+  }
+  // Fallback (shouldn't happen in production)
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+}
+
 class OfflineManager {
   private offlineState: OfflineState = {
     isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
@@ -173,7 +190,7 @@ class OfflineManager {
     try {
       const intents = this.getPendingIntents();
       const newIntent: PendingIntent = {
-        id: `intent_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        id: generateSecureRandomId('intent'),
         agentId,
         intentType,
         amount,

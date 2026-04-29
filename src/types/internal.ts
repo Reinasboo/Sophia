@@ -72,6 +72,7 @@ export interface AgentConfig {
   readonly strategy: string;
   readonly strategyParams?: Record<string, unknown>;
   readonly executionSettings?: Partial<ExecutionSettings>;
+  readonly tenantId?: string; // MULTI-TENANT: Agent owner
 }
 
 // ============================================

@@ -47,6 +47,8 @@ export interface Agent {
   readonly createdAt: Date;
   readonly lastActionAt?: Date;
   readonly errorMessage?: string;
+  readonly volumeToday?: number; // H-3: SOL volume in last 24h
+  readonly tenantId?: string; // MULTI-TENANT: Agent owner (populated from auth context)
 }
 
 // ============================================

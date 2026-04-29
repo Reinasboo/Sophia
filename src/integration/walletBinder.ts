@@ -69,8 +69,9 @@ export class WalletBinder {
   /**
    * Create a new wallet and bind it to the given external agent.
    * This is typically called immediately after registration.
+   * MULTI-TENANT: Wallet is created in the agent's tenant scope
    */
-  bindNewWallet(agentId: string): Result<WalletBindingResult, Error> {
+  bindNewWallet(agentId: string, tenantId?: string): Result<WalletBindingResult, Error> {
     // Verify agent exists
     const agentResult = this.registry.getAgent(agentId);
     if (!agentResult.ok) {
@@ -87,10 +88,12 @@ export class WalletBinder {
     }
 
     // Create wallet via existing manager (key generation + encryption inside)
-    const walletResult = this.walletManager.createWallet(`byoa:${agent.name}`);
+    // MULTI-TENANT: Pass tenantId to scope wallet creation
+    const walletResult = this.walletManager.createWallet(`byoa:${agent.name}`, tenantId);
     if (!walletResult.ok) {
       logger.error('Failed to create wallet for external agent', {
         agentId,
+        tenantId,
         error: walletResult.error.message,
       });
       return failure(walletResult.error);
@@ -102,7 +105,7 @@ export class WalletBinder {
     const bindResult = this.registry.bindWallet(agentId, wallet.id, wallet.publicKey);
     if (!bindResult.ok) {
       // Best-effort cleanup — delete the orphan wallet
-      this.walletManager.deleteWallet(wallet.id);
+      this.walletManager.deleteWallet(wallet.id, tenantId);
       return failure(bindResult.error);
     }
 
@@ -114,6 +117,7 @@ export class WalletBinder {
       agentId,
       walletId: wallet.id,
       walletPublicKey: wallet.publicKey,
+      tenantId,
     });
 
     return success({
