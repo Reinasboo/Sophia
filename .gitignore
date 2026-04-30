@@ -82,3 +82,6 @@ pnpm-lock.yaml
 # Miscellaneous
 *.tgz
 .npmrc
+
+.vercel
+.env*.local
