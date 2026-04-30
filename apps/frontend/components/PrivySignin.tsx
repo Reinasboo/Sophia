@@ -136,8 +136,5 @@ export const PrivySignin: React.FC<PrivySigninProps> = ({ onSuccess }) => {
           </div>
         </div>
       </div>
-    </div>
-  );
-};
 
 export default PrivySignin;
