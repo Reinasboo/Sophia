@@ -135,7 +135,9 @@ export const PrivySignin: React.FC<PrivySigninProps> = ({ onSuccess }) => {
             <p>Your data is encrypted and isolated per tenant</p>
           </div>
         </div>
-
+      </div>
+    </div>
+  );
 };
 
 export default PrivySignin;
