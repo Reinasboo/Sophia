@@ -1,14 +1,6 @@
 /**
  * Privy Signin Component - Phase 1 (Placeholder)
- *
- * ROADMAP:
- * - Phase 1 (Current): Type definitions + layout
- * - Phase 2 (May): Install @privy-io/react-auth + full OAuth2 integration
- * - Phase 3 (June): Passkey + social auth
- *
- * For now, shows the UI structure without Privy SDK dependency.
  */
-
 import React from 'react';
 import { useRouter } from 'next/router';
 
@@ -29,26 +21,17 @@ export const PrivySignin: React.FC<PrivySigninProps> = ({ onSuccess }) => {
     setError(null);
 
     try {
-      // Phase 2: Replace with real Privy flow
-      // For now, create a test tenant
       const response = await fetch('/api/auth/privy-callback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          accessToken: email, // Phase 1: use email as test token
-        }),
+        body: JSON.stringify({ accessToken: email }),
       });
 
-      if (!response.ok) {
-        throw new Error('Sign up failed');
-      }
+      if (!response.ok) throw new Error('Sign up failed');
 
       const result = await response.json();
-      if (!result.success) {
-        throw new Error(result.error || 'Sign up failed');
-      }
+      if (!result.success) throw new Error(result.error || 'Sign up failed');
 
-      // MULTI-TENANT FIX: Store credentials with correct keys
       const { tenantId, apiKey } = result;
       localStorage.setItem('sophia_tenant_id', tenantId);
       localStorage.setItem('sophia_api_key', apiKey);
@@ -64,76 +47,58 @@ export const PrivySignin: React.FC<PrivySigninProps> = ({ onSuccess }) => {
 
   return (
     <div className="w-full space-y-8">
-      {/* Header */}
       <div className="text-center">
         <h1 className="text-4xl font-bold text-white mb-2">Agentic Wallet</h1>
         <p className="text-slate-400">Autonomous DeFi Agent Infrastructure</p>
       </div>
 
-      {/* Form */}
       <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6 space-y-6">
-          {/* Email Input */}
-          <form onSubmit={handleEmailSignup} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Email Address</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@email.com"
-                disabled={loading}
-                className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 disabled:opacity-50"
-              />
-            </div>
-
-            {error && <div className="text-sm text-red-400">{error}</div>}
-
-            <button
-              type="submit"
-              disabled={loading || !email}
-              className="w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition"
-            >
-              {loading ? 'Signing up...' : 'Sign Up with Email'}
-            </button>
-          </form>
-
-          {/* Divider */}
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-700" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-slate-900/50 text-slate-400">or</span>
-            </div>
+        <form onSubmit={handleEmailSignup} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">Email Address</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="your@email.com"
+              disabled={loading}
+              className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 disabled:opacity-50"
+            />
           </div>
+          {error && <div className="text-sm text-red-400">{error}</div>}
+          <button
+            type="submit"
+            disabled={loading || !email}
+            className="w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition"
+          >
+            {loading ? 'Signing up...' : 'Sign Up with Email'}
+          </button>
+        </form>
 
-          {/* Placeholder for Phase 2 auth methods */}
-          <div className="space-y-2 opacity-50 pointer-events-none">
-            <button
-              disabled
-              className="w-full px-4 py-2 bg-slate-800 border border-slate-700 text-slate-400 font-medium rounded-lg cursor-not-allowed"
-            >
-              SMS (Phase 2)
-            </button>
-            <button
-              disabled
-              className="w-full px-4 py-2 bg-slate-800 border border-slate-700 text-slate-400 font-medium rounded-lg cursor-not-allowed"
-            >
-              Wallet Connection (Phase 2)
-            </button>
-            <button
-              disabled
-              className="w-full px-4 py-2 bg-slate-800 border border-slate-700 text-slate-400 font-medium rounded-lg cursor-not-allowed"
-            >
-              Social Login (Phase 2)
-            </button>
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-slate-700" />
           </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-slate-900/50 text-slate-400">or</span>
+          </div>
+        </div>
 
-          {/* SOC 2 Message */}
-          <div className="text-center text-xs text-slate-500">
-            <p>🔒 SOC 2 Type II Compliant • Enterprise Security</p>
-            <p>Your data is encrypted and isolated per tenant</p>
-          </div>
+        <div className="space-y-2 opacity-50 pointer-events-none">
+          <button disabled className="w-full px-4 py-2 bg-slate-800 border border-slate-700 text-slate-400 font-medium rounded-lg cursor-not-allowed">
+            SMS (Phase 2)
+          </button>
+          <button disabled className="w-full px-4 py-2 bg-slate-800 border border-slate-700 text-slate-400 font-medium rounded-lg cursor-not-allowed">
+            Wallet Connection (Phase 2)
+          </button>
+          <button disabled className="w-full px-4 py-2 bg-slate-800 border border-slate-700 text-slate-400 font-medium rounded-lg cursor-not-allowed">
+            Social Login (Phase 2)
+          </button>
+        </div>
+
+        <div className="text-center text-xs text-slate-500">
+          <p>🔒 SOC 2 Type II Compliant • Enterprise Security</p>
+          <p>Your data is encrypted and isolated per tenant</p>
         </div>
       </div>
     </div>
