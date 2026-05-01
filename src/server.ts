@@ -73,7 +73,9 @@ function isValidCorsOrigin(origin: string): boolean {
 
 // M-8: Configurable CORS origins via env var
 const config = getConfig();
-const corsOrigins = config.CORS_ORIGINS
+
+// Build list of allowed origins
+const corsOriginsList = config.CORS_ORIGINS
   ? config.CORS_ORIGINS.split(',')
       .map((o: string) => o.trim())
       .filter(Boolean)
@@ -84,21 +86,51 @@ const corsOrigins = config.CORS_ORIGINS
         }
         return true;
       })
-  : [`http://localhost:${config.PORT}`, `http://localhost:3000`, 'http://127.0.0.1:3000'];
+  : [
+      `http://localhost:${config.PORT}`,
+      `http://localhost:3000`,
+      'http://127.0.0.1:3000',
+      // Production defaults: Include Vercel frontend URL when deployed
+      'https://frontend-virid-two-71.vercel.app',
+    ];
 
-if (corsOrigins.length === 0) {
+// CORS origin validator with regex support for production
+const corsOriginValidator = (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+  if (!origin) {
+    callback(null, true); // Allow requests with no origin (like mobile apps)
+    return;
+  }
+
+  // Check if origin is in the allowed list
+  if (corsOriginsList.includes(origin)) {
+    callback(null, true);
+    return;
+  }
+
+  // In production, allow Vercel and Railway domains
+  if (process.env['NODE_ENV'] === 'production') {
+    if (/\.vercel\.app$/.test(origin) || /\.railway\.app$/.test(origin)) {
+      callback(null, true);
+      return;
+    }
+  }
+
+  callback(new Error('CORS policy violation'));
+};
+
+if (corsOriginsList.length === 0) {
   logger.warn('No valid CORS origins configured. Using secure defaults.');
 }
 
 app.use(
   cors({
-    origin: corsOrigins,
+    origin: corsOriginValidator,
     methods: ['GET', 'POST', 'PATCH'],
   })
 );
 
 // L-3 FIX: Explicitly handle OPTIONS preflight so browsers get correct CORS headers.
-app.options('*', cors({ origin: corsOrigins, methods: ['GET', 'POST', 'PATCH'] }));
+app.options('*', cors({ origin: corsOriginValidator, methods: ['GET', 'POST', 'PATCH'] }));
 
 // H-3 FIX: Only trust the immediate upstream reverse proxy (first hop).
 // This prevents X-Forwarded-For spoofing for rate-limit bypass.
@@ -1343,11 +1375,17 @@ function setupWebSocket(port: number): void {
       origin?: string;
       req: { headers: Record<string, string | string[] | undefined> };
     }) => {
-      const origin = info.origin ?? info.req.headers['origin'] ?? '';
+      const origin = info.origin ?? (Array.isArray(info.req.headers['origin']) ? info.req.headers['origin'][0] : info.req.headers['origin']) ?? '';
       // Allow connections with no origin (e.g. CLI tools, server-to-server)
-      if (!origin) return true;
+      if (!origin || typeof origin !== 'string') return true;
       // Allow configured CORS origins
-      if (corsOrigins.some((allowed: string) => origin === allowed)) return true;
+      if (corsOriginsList.some((allowed: string) => origin === allowed)) return true;
+      // In production, allow Vercel and Railway domains
+      if (process.env['NODE_ENV'] === 'production') {
+        if (/\.vercel\.app$/.test(origin) || /\.railway\.app$/.test(origin)) {
+          return true;
+        }
+      }
       logger.warn('WebSocket connection rejected — origin not allowed', { origin });
       return false;
     },
