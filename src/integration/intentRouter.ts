@@ -441,7 +441,7 @@ export class IntentRouter {
       case 'AUTONOMOUS':
         return this.executeAutonomous(walletId, agent.id, ext.params, intentId);
       case 'SERVICE_PAYMENT':
-        return this.executeServicePayment(walletId, agent.id, ext.params, intentId);
+        return this.executeServicePayment(walletId, agent.id, ext.params, intentId, agent.tenantId);
       default:
         throw new Error(`Unsupported intent type: ${ext.type}`);
     }
@@ -1303,7 +1303,8 @@ export class IntentRouter {
     walletId: string,
     agentId: string,
     params: Record<string, unknown>,
-    intentId: string
+    intentId: string,
+    tenantId?: string
   ): Promise<Record<string, unknown>> {
     const serviceId = typeof params['serviceId'] === 'string' ? params['serviceId'] : '';
     const amount = typeof params['amount'] === 'number' ? params['amount'] : 0;
@@ -1325,7 +1326,8 @@ export class IntentRouter {
         serviceId,
         amount,
       } as ServicePaymentIntent,
-      params['programId'] as string | undefined
+      params['programId'] as string | undefined,
+      tenantId
     );
 
     if (!policyCheckResult.ok) {
@@ -1365,7 +1367,7 @@ export class IntentRouter {
     this.walletManager.recordTransfer(walletId);
 
     // ── 5. Record service payment in policy manager
-    this.servicePolicyManager.recordServicePayment(walletId, serviceId, amount, intentId);
+    this.servicePolicyManager.recordServicePayment(walletId, serviceId, amount, intentId, tenantId);
 
     // ── 6. Emit event
     eventBus.emit({

@@ -27,9 +27,11 @@ const logger = createLogger('SERVICE_POLICY');
 /**
  * Service Policy Manager — enforces service-scoped payment policies
  */
+const GLOBAL_TENANT_ID = '__global__';
+
 export class ServicePolicyManager {
   private policies: Map<string, ServicePolicy> = new Map();
-  private usage: Map<string, ServiceUsageRecord> = new Map(); // key: `${walletId}:${serviceId}`
+  private usage: Map<string, ServiceUsageRecord> = new Map(); // key: `${tenantId}:${walletId}:${serviceId}`
   private nonces: Set<string> = new Set(); // Replay attack prevention
   private maxNonces: number = 10000;
 
@@ -38,10 +40,18 @@ export class ServicePolicyManager {
     this.scheduleUsageReset();
   }
 
+  private policyKey(serviceId: string, tenantId?: string): string {
+    return `${tenantId ?? GLOBAL_TENANT_ID}:${serviceId}`;
+  }
+
+  private usageKey(walletId: string, serviceId: string, tenantId?: string): string {
+    return `${tenantId ?? GLOBAL_TENANT_ID}:${walletId}:${serviceId}`;
+  }
+
   /**
    * Register a service policy
    */
-  registerServicePolicy(policy: ServicePolicy): Result<true, Error> {
+  registerServicePolicy(policy: ServicePolicy, tenantId?: string): Result<true, Error> {
     if (!policy.serviceId) {
       return failure(new Error('serviceId is required'));
     }
@@ -52,12 +62,18 @@ export class ServicePolicyManager {
       return failure(new Error('Cooldown must be 0–86400 seconds'));
     }
 
-    this.policies.set(policy.serviceId, policy);
+    const scopedPolicy: ServicePolicy = {
+      ...policy,
+      tenantId: tenantId ?? policy.tenantId ?? GLOBAL_TENANT_ID,
+    };
+
+    this.policies.set(this.policyKey(scopedPolicy.serviceId, scopedPolicy.tenantId), scopedPolicy);
     logger.info('Service policy registered', {
-      serviceId: policy.serviceId,
-      capPerTx: policy.capPerTransaction,
-      dailyBudget: policy.dailyBudgetAmount,
-      cooldown: policy.cooldownSeconds,
+      serviceId: scopedPolicy.serviceId,
+      tenantId: scopedPolicy.tenantId,
+      capPerTx: scopedPolicy.capPerTransaction,
+      dailyBudget: scopedPolicy.dailyBudgetAmount,
+      cooldown: scopedPolicy.cooldownSeconds,
     });
 
     this.saveToStore();
@@ -67,8 +83,8 @@ export class ServicePolicyManager {
   /**
    * Get a service policy
    */
-  getServicePolicy(serviceId: string): Result<ServicePolicy, Error> {
-    const policy = this.policies.get(serviceId);
+  getServicePolicy(serviceId: string, tenantId?: string): Result<ServicePolicy, Error> {
+    const policy = this.policies.get(this.policyKey(serviceId, tenantId));
     if (!policy) {
       return failure(new Error(`Service policy not found: ${serviceId}`));
     }
@@ -80,17 +96,24 @@ export class ServicePolicyManager {
    */
   updateServicePolicy(
     serviceId: string,
-    updates: Partial<ServicePolicy>
+    updates: Partial<ServicePolicy>,
+    tenantId?: string
   ): Result<ServicePolicy, Error> {
-    const current = this.policies.get(serviceId);
+    const policyKey = this.policyKey(serviceId, tenantId ?? updates.tenantId);
+    const current = this.policies.get(policyKey);
     if (!current) {
       return failure(new Error(`Service policy not found: ${serviceId}`));
     }
 
-    const updated: ServicePolicy = { ...current, ...updates, serviceId };
-    this.policies.set(serviceId, updated);
+    const updated: ServicePolicy = {
+      ...current,
+      ...updates,
+      serviceId,
+      tenantId: updates.tenantId ?? current.tenantId ?? tenantId ?? GLOBAL_TENANT_ID,
+    };
+    this.policies.set(this.policyKey(serviceId, updated.tenantId), updated);
 
-    logger.info('Service policy updated', { serviceId, updates });
+    logger.info('Service policy updated', { serviceId, tenantId: updated.tenantId, updates });
     this.saveToStore();
     return success(updated);
   }
@@ -109,9 +132,10 @@ export class ServicePolicyManager {
   validateServicePayment(
     walletId: string,
     intent: ServicePaymentIntent,
-    programId?: string
+    programId?: string,
+    tenantId?: string
   ): Result<true, Error> {
-    const policyResult = this.getServicePolicy(intent.serviceId);
+    const policyResult = this.getServicePolicy(intent.serviceId, tenantId);
     if (!policyResult.ok) {
       return failure(policyResult.error);
     }
@@ -128,7 +152,7 @@ export class ServicePolicyManager {
     }
 
     // ── 2. Daily budget
-    const usage = this.getOrCreateUsage(walletId, intent.serviceId);
+    const usage = this.getOrCreateUsage(walletId, intent.serviceId, tenantId);
 
     if (usage.totalSpentToday + intent.amount > policy.dailyBudgetAmount) {
       return failure(
@@ -191,14 +215,15 @@ export class ServicePolicyManager {
     walletId: string,
     serviceId: string,
     amount: number,
-    nonce: string
+    nonce: string,
+    tenantId?: string
   ): Result<true, Error> {
     // Check for replay attack (nonce already used)
     if (this.nonces.has(nonce)) {
       return failure(new Error('Nonce already used - replay attack detected'));
     }
 
-    const usage = this.getOrCreateUsage(walletId, serviceId);
+    const usage = this.getOrCreateUsage(walletId, serviceId, tenantId);
     const updatedUsage: ServiceUsageRecord = {
       ...usage,
       totalSpentToday: usage.totalSpentToday + amount,
@@ -206,8 +231,7 @@ export class ServicePolicyManager {
       callCountToday: usage.callCountToday + 1,
     };
 
-    const usageKey = `${walletId}:${serviceId}`;
-    this.usage.set(usageKey, updatedUsage);
+    this.usage.set(this.usageKey(walletId, serviceId, tenantId), updatedUsage);
 
     // Track nonce for replay prevention
     this.nonces.add(nonce);
@@ -234,8 +258,8 @@ export class ServicePolicyManager {
   /**
    * Get usage record for a wallet + service
    */
-  getUsageRecord(walletId: string, serviceId: string): Result<ServiceUsageRecord, Error> {
-    const usage = this.usage.get(`${walletId}:${serviceId}`);
+  getUsageRecord(walletId: string, serviceId: string, tenantId?: string): Result<ServiceUsageRecord, Error> {
+    const usage = this.usage.get(this.usageKey(walletId, serviceId, tenantId));
     if (!usage) {
       return failure(new Error(`No usage record found for ${walletId}:${serviceId}`));
     }
@@ -245,14 +269,14 @@ export class ServicePolicyManager {
   /**
    * Reset usage for a wallet + service (e.g., for testing)
    */
-  resetUsage(walletId: string, serviceId: string): Result<true, Error> {
-    const policy = this.getServicePolicy(serviceId);
+  resetUsage(walletId: string, serviceId: string, tenantId?: string): Result<true, Error> {
+    const policy = this.getServicePolicy(serviceId, tenantId);
     if (!policy.ok) {
       return failure(new Error(`Cannot reset: ${policy.error.message}`));
     }
 
-    this.usage.delete(`${walletId}:${serviceId}`);
-    logger.info('Usage reset', { walletId, serviceId });
+    this.usage.delete(this.usageKey(walletId, serviceId, tenantId));
+    logger.info('Usage reset', { walletId, serviceId, tenantId });
     this.saveToStore();
     return success(true);
   }
@@ -260,8 +284,8 @@ export class ServicePolicyManager {
   /**
    * Internal: get or create usage record
    */
-  private getOrCreateUsage(walletId: string, serviceId: string): ServiceUsageRecord {
-    const key = `${walletId}:${serviceId}`;
+  private getOrCreateUsage(walletId: string, serviceId: string, tenantId?: string): ServiceUsageRecord {
+    const key = this.usageKey(walletId, serviceId, tenantId);
     let usage = this.usage.get(key);
 
     if (!usage) {
@@ -270,6 +294,7 @@ export class ServicePolicyManager {
 
       usage = {
         serviceId,
+        tenantId: tenantId ?? GLOBAL_TENANT_ID,
         walletId,
         totalSpentToday: 0,
         callCountToday: 0,
@@ -292,7 +317,7 @@ export class ServicePolicyManager {
       };
 
       this.usage.set(key, resetUsage);
-      logger.info('Daily usage reset (auto)', { walletId, serviceId });
+      logger.info('Daily usage reset (auto)', { walletId, serviceId, tenantId: usage.tenantId });
       return resetUsage;
     }
 
@@ -349,15 +374,21 @@ export class ServicePolicyManager {
 
     if (saved.policies) {
       for (const p of saved.policies) {
-        this.policies.set(p.serviceId, p);
+        const tenantId = p.tenantId ?? GLOBAL_TENANT_ID;
+        this.policies.set(this.policyKey(p.serviceId, tenantId), {
+          ...p,
+          tenantId,
+        });
       }
       logger.info('Service policies restored', { count: saved.policies.length });
     }
 
     if (saved.usage) {
       for (const u of saved.usage) {
-        this.usage.set(`${u.walletId}:${u.serviceId}`, {
+        const tenantId = u.tenantId ?? GLOBAL_TENANT_ID;
+        this.usage.set(this.usageKey(u.walletId, u.serviceId, tenantId), {
           ...u,
+          tenantId,
           lastCallAt: u.lastCallAt ? new Date(u.lastCallAt) : undefined,
           dailyResetAt: new Date(u.dailyResetAt),
         });

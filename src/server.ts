@@ -12,8 +12,8 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { z } from 'zod';
 import { PublicKey } from '@solana/web3.js';
 import { getOrchestrator, eventBus } from './orchestrator/index.js';
-import { getWalletManager } from './wallet/index.js';
-import { getSolanaClient } from './rpc/index.js';
+import { getWalletManager, getServicePolicyManager } from './wallet/index.js';
+import { getSolanaClient, X402Handler, getX402Handler } from './rpc/index.js';
 import { getConfig, getExplorerUrl } from './utils/config.js';
 import { createLogger } from './utils/logger.js';
 import { secureCompare } from './utils/encryption.js';
@@ -797,6 +797,22 @@ const SubmitIntentSchema = z
     { message: 'AUTONOMOUS intents require params.action (string)' }
   );
 
+const ServicePolicySchema = z.object({
+  serviceId: z.string().min(1).max(100),
+  capPerTransaction: z.number().positive(),
+  dailyBudgetAmount: z.number().positive(),
+  cooldownSeconds: z.number().int().min(0).max(86400).default(0),
+  allowedPrograms: z.array(z.string().min(1)).optional(),
+  blockedPrograms: z.array(z.string().min(1)).optional(),
+  metadata: safeRecord.optional(),
+});
+
+const X402DescriptorRequestSchema = z.object({
+  paymentAddress: z.string().min(1),
+  amount: z.number().positive(),
+  durationSeconds: z.number().int().min(1).max(86400).default(300),
+});
+
 /**
  * Register an external agent and receive a wallet + control token.
  * The control token is returned ONCE; the caller must store it securely.
@@ -881,6 +897,148 @@ app.post(
       },
       HTTP_STATUS.CREATED
     );
+  })
+);
+
+app.get(
+  '/api/byoa/service-policies',
+  protectedRoute(),
+  asyncHandler(async (req: Request, res: Response) => {
+    const tenantId = getTenantIdOrFail(req, res);
+    if (!tenantId) return;
+
+    const policyManager = getServicePolicyManager();
+    const policies = policyManager
+      .listAllPolicies()
+      .filter((policy) => (policy.tenantId ?? '__global__') === tenantId);
+
+    sendSuccess(res, policies);
+  })
+);
+
+app.get(
+  '/api/byoa/service-policies/:serviceId',
+  protectedRoute(),
+  asyncHandler(async (req: Request, res: Response) => {
+    const tenantId = getTenantIdOrFail(req, res);
+    if (!tenantId) return;
+
+    const serviceId = req.params['serviceId'] ?? '';
+    const policyManager = getServicePolicyManager();
+    const policyResult = policyManager.getServicePolicy(serviceId, tenantId);
+
+    if (!policyResult.ok) {
+      sendError(res, policyResult.error.message, HTTP_STATUS.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+      return;
+    }
+
+    sendSuccess(res, policyResult.value);
+  })
+);
+
+app.post(
+  '/api/byoa/service-policies',
+  protectedRoute(),
+  asyncHandler(async (req: Request, res: Response) => {
+    const tenantId = getTenantIdOrFail(req, res);
+    if (!tenantId) return;
+
+    const validation = ServicePolicySchema.safeParse(req.body);
+    if (!validation.success) {
+      sendError(
+        res,
+        validation.error.message,
+        HTTP_STATUS.BAD_REQUEST,
+        ERROR_CODE.VALIDATION_FAILED
+      );
+      return;
+    }
+
+    const policyManager = getServicePolicyManager();
+    const result = policyManager.registerServicePolicy(validation.data, tenantId);
+    if (!result.ok) {
+      sendError(res, result.error.message, HTTP_STATUS.BAD_REQUEST, ERROR_CODE.OPERATION_FAILED);
+      return;
+    }
+
+    sendSuccess(
+      res,
+      {
+        ...validation.data,
+        tenantId,
+      },
+      HTTP_STATUS.CREATED
+    );
+  })
+);
+
+app.patch(
+  '/api/byoa/service-policies/:serviceId',
+  protectedRoute(),
+  asyncHandler(async (req: Request, res: Response) => {
+    const tenantId = getTenantIdOrFail(req, res);
+    if (!tenantId) return;
+
+    const serviceId = req.params['serviceId'] ?? '';
+    const validation = ServicePolicySchema.partial().safeParse(req.body);
+    if (!validation.success) {
+      sendError(
+        res,
+        validation.error.message,
+        HTTP_STATUS.BAD_REQUEST,
+        ERROR_CODE.VALIDATION_FAILED
+      );
+      return;
+    }
+
+    const policyManager = getServicePolicyManager();
+    const result = policyManager.updateServicePolicy(serviceId, validation.data, tenantId);
+    if (!result.ok) {
+      sendError(res, result.error.message, HTTP_STATUS.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+      return;
+    }
+
+    sendSuccess(res, result.value);
+  })
+);
+
+app.post(
+  '/api/byoa/service-policies/:serviceId/x402-descriptor',
+  protectedRoute(),
+  asyncHandler(async (req: Request, res: Response) => {
+    const tenantId = getTenantIdOrFail(req, res);
+    if (!tenantId) return;
+
+    const serviceId = req.params['serviceId'] ?? '';
+    const policyManager = getServicePolicyManager();
+    const policyResult = policyManager.getServicePolicy(serviceId, tenantId);
+    if (!policyResult.ok) {
+      sendError(res, policyResult.error.message, HTTP_STATUS.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+      return;
+    }
+
+    const validation = X402DescriptorRequestSchema.safeParse(req.body);
+    if (!validation.success) {
+      sendError(
+        res,
+        validation.error.message,
+        HTTP_STATUS.BAD_REQUEST,
+        ERROR_CODE.VALIDATION_FAILED
+      );
+      return;
+    }
+
+    const { paymentAddress, amount, durationSeconds } = validation.data;
+    const x402 = getX402Handler(paymentAddress);
+    const descriptor = x402.generatePaymentDescriptor(amount, durationSeconds);
+
+    sendSuccess(res, {
+      serviceId,
+      tenantId,
+      policy: policyResult.value,
+      descriptor,
+      encodedHeader: X402Handler.encodeX402Header(descriptor),
+    });
   })
 );
 

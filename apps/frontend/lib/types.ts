@@ -224,3 +224,32 @@ export interface BYOARegistrationResult {
   walletPublicKey: string;
   message?: string;
 }
+
+export interface ServicePolicy {
+  readonly serviceId: string;
+  readonly tenantId?: string;
+  readonly capPerTransaction: number;
+  readonly dailyBudgetAmount: number;
+  readonly cooldownSeconds: number;
+  readonly allowedPrograms?: string[];
+  readonly blockedPrograms?: string[];
+  readonly metadata?: Record<string, unknown>;
+}
+
+export interface ServiceUsageRecord {
+  readonly serviceId: string;
+  readonly tenantId?: string;
+  readonly walletId: string;
+  readonly totalSpentToday: number;
+  readonly lastCallAt?: string | Date;
+  readonly callCountToday: number;
+  readonly dailyResetAt: string | Date;
+}
+
+export interface X402PaymentDescriptor {
+  readonly paymentAddress: string;
+  readonly amount: number;
+  readonly requestId: string;
+  readonly expiresAt: string | Date;
+  readonly accessToken?: string;
+}

@@ -467,5 +467,164 @@ export const openAPISpec = {
         },
       },
     },
+    '/api/byoa/service-policies': {
+      get: {
+        tags: ['BYOA Service Policies'],
+        summary: 'List tenant-scoped service policies',
+        security: [{ bearerToken: [] }],
+        responses: {
+          '200': {
+            description: 'List of service policies',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      serviceId: { type: 'string' },
+                      capPerTransaction: { type: 'number' },
+                      dailyBudgetAmount: { type: 'number' },
+                      cooldownSeconds: { type: 'integer' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '401': { description: 'Unauthorized' },
+        },
+      },
+      post: {
+        tags: ['BYOA Service Policies'],
+        summary: 'Create a new service policy',
+        security: [{ bearerToken: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  serviceId: { type: 'string' },
+                  capPerTransaction: { type: 'number' },
+                  dailyBudgetAmount: { type: 'number' },
+                  cooldownSeconds: { type: 'integer', default: 0 },
+                },
+                required: ['serviceId', 'capPerTransaction', 'dailyBudgetAmount'],
+              },
+            },
+          },
+        },
+        responses: {
+          '201': { description: 'Service policy created' },
+          '400': { description: 'Invalid policy' },
+          '401': { description: 'Unauthorized' },
+        },
+      },
+    },
+    '/api/byoa/service-policies/{serviceId}': {
+      get: {
+        tags: ['BYOA Service Policies'],
+        summary: 'Get service policy by ID',
+        security: [{ bearerToken: [] }],
+        parameters: [
+          {
+            name: 'serviceId',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+          },
+        ],
+        responses: {
+          '200': { description: 'Service policy details' },
+          '401': { description: 'Unauthorized' },
+          '404': { description: 'Service policy not found' },
+        },
+      },
+      patch: {
+        tags: ['BYOA Service Policies'],
+        summary: 'Update service policy',
+        security: [{ bearerToken: [] }],
+        parameters: [
+          {
+            name: 'serviceId',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+          },
+        ],
+        requestBody: {
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  capPerTransaction: { type: 'number' },
+                  dailyBudgetAmount: { type: 'number' },
+                  cooldownSeconds: { type: 'integer' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': { description: 'Service policy updated' },
+          '401': { description: 'Unauthorized' },
+          '404': { description: 'Service policy not found' },
+        },
+      },
+    },
+    '/api/byoa/service-policies/{serviceId}/x402-descriptor': {
+      post: {
+        tags: ['BYOA Service Policies'],
+        summary: 'Generate x402 payment descriptor',
+        security: [{ bearerToken: [] }],
+        parameters: [
+          {
+            name: 'serviceId',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  paymentAddress: { type: 'string', description: 'Service Solana account' },
+                  amount: { type: 'number', description: 'Amount in lamports' },
+                  durationSeconds: { type: 'integer', default: 300 },
+                },
+                required: ['paymentAddress', 'amount'],
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'x402 payment descriptor generated',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    serviceId: { type: 'string' },
+                    policy: { type: 'object' },
+                    descriptor: { type: 'object' },
+                    encodedHeader: { type: 'string', description: 'Base64-encoded x402 header' },
+                  },
+                },
+              },
+            },
+          },
+          '401': { description: 'Unauthorized' },
+          '404': { description: 'Service policy not found' },
+        },
+      },
+    },
   },
 };

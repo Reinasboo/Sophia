@@ -178,6 +178,7 @@ export const DEFAULT_POLICY: Policy = {
  */
 export interface ServicePolicy {
   readonly serviceId: string; // e.g., "api.inference.ai" or "swap.dex"
+  readonly tenantId?: string; // MULTI-TENANT: owner scope for the service
   readonly capPerTransaction: number; // SOL — max spend per call
   readonly dailyBudgetAmount: number; // SOL — total daily spend limit
   readonly cooldownSeconds: number; // Min seconds between consecutive calls (0 = no cooldown)
@@ -191,6 +192,7 @@ export interface ServicePolicy {
  */
 export interface ServiceUsageRecord {
   readonly serviceId: string;
+  readonly tenantId?: string; // MULTI-TENANT: usage scoped to service owner
   readonly walletId: string;
   readonly totalSpentToday: number;
   readonly lastCallAt?: Date;

@@ -19,6 +19,8 @@ import type {
   IntentHistoryRecord,
   StrategyDefinition,
   BYOARegistrationResult,
+  ServicePolicy,
+  X402PaymentDescriptor,
 } from './types';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://sophia-production-1a83.up.railway.app';
@@ -356,4 +358,49 @@ export async function verifyChallengeResponse(
 
 export async function revokeExternalAgent(id: string): Promise<ApiResponse<void>> {
   return fetchApi(`/api/byoa/agents/${id}/revoke`, { method: 'POST', headers: adminHeaders() });
+}
+
+export async function getServicePolicies(): Promise<ApiResponse<ServicePolicy[]>> {
+  return fetchApi('/api/byoa/service-policies');
+}
+
+export async function getServicePolicy(serviceId: string): Promise<ApiResponse<ServicePolicy>> {
+  return fetchApi(`/api/byoa/service-policies/${serviceId}`);
+}
+
+export async function createServicePolicy(data: ServicePolicy): Promise<ApiResponse<ServicePolicy>> {
+  return fetchApi('/api/byoa/service-policies', {
+    method: 'POST',
+    headers: adminHeaders(),
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateServicePolicy(
+  serviceId: string,
+  data: Partial<ServicePolicy>
+): Promise<ApiResponse<ServicePolicy>> {
+  return fetchApi(`/api/byoa/service-policies/${serviceId}`, {
+    method: 'PATCH',
+    headers: adminHeaders(),
+    body: JSON.stringify(data),
+  });
+}
+
+export async function createX402Descriptor(
+  serviceId: string,
+  data: { paymentAddress: string; amount: number; durationSeconds?: number }
+): Promise<
+  ApiResponse<{
+    serviceId: string;
+    tenantId: string;
+    policy: ServicePolicy;
+    descriptor: X402PaymentDescriptor;
+    encodedHeader: string;
+  }>
+> {
+  return fetchApi(`/api/byoa/service-policies/${serviceId}/x402-descriptor`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
 }

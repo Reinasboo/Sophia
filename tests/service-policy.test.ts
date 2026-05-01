@@ -55,6 +55,46 @@ describe('ServicePolicyManager', () => {
       expect(result.value).toBe(true);
     });
 
+    it('should isolate service policies and usage by tenant', () => {
+      const policy: ServicePolicy = {
+        serviceId: 'tenant-service',
+        capPerTransaction: 100_000,
+        dailyBudgetAmount: 200_000,
+        cooldownSeconds: 0,
+        allowedPrograms: [],
+        blockedPrograms: [],
+      };
+
+      expect(manager.registerServicePolicy(policy, 'tenant-a').ok).toBe(true);
+      expect(manager.getServicePolicy('tenant-service', 'tenant-a').ok).toBe(true);
+      expect(manager.getServicePolicy('tenant-service', 'tenant-b').ok).toBe(false);
+
+      const intent: ServicePaymentIntent = {
+        id: uuidv4(),
+        agentId: 'agent-tenant-a',
+        createdAt: new Date(),
+        type: 'SERVICE_PAYMENT',
+        walletPublicKey: 'wallet-tenant-a',
+        serviceId: 'tenant-service',
+        amount: 50_000,
+        recipient: 'recipient-pk',
+      };
+
+      const validation = manager.validateServicePayment('wallet-tenant-a', intent, undefined, 'tenant-a');
+      expect(validation.ok).toBe(true);
+
+      const record = manager.recordServicePayment(
+        'wallet-tenant-a',
+        'tenant-service',
+        50_000,
+        intent.id,
+        'tenant-a'
+      );
+      expect(record.ok).toBe(true);
+      expect(manager.getUsageRecord('wallet-tenant-a', 'tenant-service', 'tenant-a').ok).toBe(true);
+      expect(manager.getUsageRecord('wallet-tenant-a', 'tenant-service', 'tenant-b').ok).toBe(false);
+    });
+
     it('should reject policy with negative caps', () => {
       const policy: ServicePolicy = {
         serviceId: 'test-service',

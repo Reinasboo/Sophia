@@ -21,6 +21,7 @@ const ALLOWED_PATHS = new Set([
   '/api/agents/stop',
   '/api/byoa/register',
   '/api/byoa/agents',
+  '/api/byoa/service-policies',
 ]);
 
 const ALLOWED_METHODS = new Set(['POST', 'PATCH', 'DELETE']);
