@@ -66,7 +66,8 @@ export default function AgentsPage() {
     return { total, active, stopped };
   }, [agents]);
 
-  if (isLoading) {
+  // useAuthProtected will auto-redirect if not authenticated, but show loading while checking
+  if (isLoading || !isAuthenticated) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="text-center space-y-4">
@@ -81,10 +82,6 @@ export default function AgentsPage() {
         </div>
       </div>
     );
-  }
-
-  if (!isAuthenticated) {
-    return null;
   }
 
   return (

@@ -2,7 +2,6 @@
  * Privy Signin Component - Phase 1 (Placeholder)
  */
 import React from 'react';
-import { useRouter } from 'next/router';
 
 interface PrivySigninProps {
   onSuccess?: () => void;
@@ -10,7 +9,6 @@ interface PrivySigninProps {
 }
 
 export const PrivySignin: React.FC<PrivySigninProps> = ({ onSuccess }) => {
-  const router = useRouter();
   const [email, setEmail] = React.useState('');
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -36,8 +34,8 @@ export const PrivySignin: React.FC<PrivySigninProps> = ({ onSuccess }) => {
       localStorage.setItem('sophia_tenant_id', tenantId);
       localStorage.setItem('sophia_api_key', apiKey);
 
+      // Let parent handle navigation
       onSuccess?.();
-      router.push('/agents');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Sign up failed');
     } finally {

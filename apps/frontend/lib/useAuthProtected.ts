@@ -26,10 +26,10 @@ export function useAuthProtected() {
       // Not authenticated - redirect to landing/login
       setIsAuthenticated(false);
       setIsLoading(false);
-      // Don't redirect on mount to avoid race conditions
-      // Let page handle redirect based on isAuthenticated
+      // Redirect to landing page if not authenticated
+      router.push('/landing');
     }
-  }, []);
+  }, [router]);
 
   return { isLoading, isAuthenticated };
 }
