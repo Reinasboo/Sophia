@@ -15,7 +15,11 @@ export default function Landing() {
   }, []);
 
   const handleGetStarted = () => {
-    router.push('/');
+    if (isAuthenticated) {
+      router.push('/agents');
+    } else {
+      setIsShowingAuth(true);
+    }
   };
 
   const handleLoginClick = () => {
