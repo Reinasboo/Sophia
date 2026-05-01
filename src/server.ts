@@ -1375,9 +1375,9 @@ interface WebSocketClient extends WebSocket {
   lastHeartbeat?: number;
 }
 
-function setupWebSocket(port: number): void {
+function setupWebSocket(server: import('http').Server): void {
   wss = new WebSocketServer({
-    port,
+    server,
     // H-2: Validate origin for WebSocket connections
     verifyClient: (info: {
       origin?: string;
@@ -1543,7 +1543,7 @@ function setupWebSocket(port: number): void {
     }
   }, 30_000); // 30 second heartbeat interval
 
-  logger.info('WebSocket server started', { port, heartbeatIntervalMs: 30_000 });
+  logger.info('WebSocket server started', { attachedToHttpServer: true, heartbeatIntervalMs: 30_000 });
 }
 
 // ============================================
@@ -1559,7 +1559,7 @@ export function startServer(): void {
     logger.info('API server started', { port: config.PORT });
   });
 
-  setupWebSocket(config.WS_PORT);
+  setupWebSocket(httpServer);
 }
 
 // Graceful shutdown — drain in-flight requests before exiting
