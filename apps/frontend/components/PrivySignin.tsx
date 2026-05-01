@@ -1,5 +1,6 @@
 /**
  * Privy Signin Component - Phase 1 (Placeholder)
+ * Brand-compliant: Uses magenta (#ff0080) and cyan (#00d9ff)
  */
 import React from 'react';
 
@@ -47,27 +48,27 @@ export const PrivySignin: React.FC<PrivySigninProps> = ({ onSuccess }) => {
     <div className="w-full space-y-8">
       <div className="text-center">
         <h1 className="text-4xl font-bold text-white mb-2">Agentic Wallet</h1>
-        <p className="text-slate-400">Autonomous DeFi Agent Infrastructure</p>
+        <p className="text-text-secondary">Autonomous DeFi Agent Infrastructure</p>
       </div>
 
-      <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6 space-y-6">
+      <div className="bg-surface-elevated border border-surface-muted rounded-lg p-6 space-y-6">
         <form onSubmit={handleEmailSignup} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">Email Address</label>
+            <label className="block text-sm font-medium text-text-secondary mb-2">Email Address</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="your@email.com"
               disabled={loading}
-              className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 disabled:opacity-50"
+              className="w-full px-4 py-2 bg-surface-muted border border-surface-muted rounded-lg text-white placeholder-text-tertiary focus:outline-none focus:border-secondary disabled:opacity-50 transition-colors"
             />
           </div>
-          {error && <div className="text-sm text-red-400">{error}</div>}
+          {error && <div className="text-sm text-status-error">{error}</div>}
           <button
             type="submit"
             disabled={loading || !email}
-            className="w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition"
+            className="w-full px-4 py-2 bg-primary hover:bg-primary-600 text-black font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
           >
             {loading ? 'Signing up...' : 'Sign Up with Email'}
           </button>
@@ -75,26 +76,26 @@ export const PrivySignin: React.FC<PrivySigninProps> = ({ onSuccess }) => {
 
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-slate-700" />
+            <div className="w-full border-t border-surface-muted" />
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-slate-900/50 text-slate-400">or</span>
+            <span className="px-2 bg-surface-elevated text-text-tertiary">or</span>
           </div>
         </div>
 
         <div className="space-y-2 opacity-50 pointer-events-none">
-          <button disabled className="w-full px-4 py-2 bg-slate-800 border border-slate-700 text-slate-400 font-medium rounded-lg cursor-not-allowed">
+          <button disabled className="w-full px-4 py-2 bg-surface-muted border border-surface-muted text-text-tertiary font-medium rounded-lg cursor-not-allowed">
             SMS (Phase 2)
           </button>
-          <button disabled className="w-full px-4 py-2 bg-slate-800 border border-slate-700 text-slate-400 font-medium rounded-lg cursor-not-allowed">
+          <button disabled className="w-full px-4 py-2 bg-surface-muted border border-surface-muted text-text-tertiary font-medium rounded-lg cursor-not-allowed">
             Wallet Connection (Phase 2)
           </button>
-          <button disabled className="w-full px-4 py-2 bg-slate-800 border border-slate-700 text-slate-400 font-medium rounded-lg cursor-not-allowed">
+          <button disabled className="w-full px-4 py-2 bg-surface-muted border border-surface-muted text-text-tertiary font-medium rounded-lg cursor-not-allowed">
             Social Login (Phase 2)
           </button>
         </div>
 
-        <div className="text-center text-xs text-slate-500">
+        <div className="text-center text-xs text-text-tertiary">
           <p>🔒 SOC 2 Type II Compliant • Enterprise Security</p>
           <p>Your data is encrypted and isolated per tenant</p>
         </div>
