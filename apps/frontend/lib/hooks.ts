@@ -93,7 +93,14 @@ export function useAgents(pollInterval: number = 5000) {
   const fetchAgents = useCallback(async () => {
     const response = await api.getAgents();
     if (response.success && response.data) {
-      setAgents(response.data);
+      const payload = response.data as unknown;
+      const normalizedAgents = Array.isArray(payload)
+        ? payload
+        : Array.isArray((payload as { data?: unknown }).data)
+          ? ((payload as { data: Agent[] }).data)
+          : [];
+
+      setAgents(normalizedAgents);
       setError(null);
     } else {
       setError(response.error || 'Failed to fetch agents');
