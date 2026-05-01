@@ -126,11 +126,19 @@ app.use(
   cors({
     origin: corsOriginValidator,
     methods: ['GET', 'POST', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   })
 );
 
 // L-3 FIX: Explicitly handle OPTIONS preflight so browsers get correct CORS headers.
-app.options('*', cors({ origin: corsOriginValidator, methods: ['GET', 'POST', 'PATCH'] }));
+app.options(
+  '*',
+  cors({
+    origin: corsOriginValidator,
+    methods: ['GET', 'POST', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  })
+);
 
 // H-3 FIX: Only trust the immediate upstream reverse proxy (first hop).
 // This prevents X-Forwarded-For spoofing for rate-limit bypass.
