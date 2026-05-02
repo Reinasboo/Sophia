@@ -200,7 +200,22 @@ export type SupportedIntentType =
   | 'TRANSFER_TOKEN'
   | 'QUERY_BALANCE'
   | 'AUTONOMOUS'
-  | 'SERVICE_PAYMENT';
+  | 'SERVICE_PAYMENT'
+  | 'swap'
+  | 'stake'
+  | 'unstake'
+  | 'liquid_stake'
+  | 'provide_liquidity'
+  | 'remove_liquidity'
+  | 'deposit_lending'
+  | 'withdraw_lending'
+  | 'borrow_lending'
+  | 'repay_lending'
+  | 'farm_deposit'
+  | 'farm_harvest'
+  | 'wrap_token'
+  | 'unwrap_token'
+  | 'composite_strategy';
 
 /**
  * Public external agent information — safe to expose.

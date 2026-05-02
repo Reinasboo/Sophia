@@ -41,6 +41,8 @@ import {
   validateBearerToken,
   asyncHandler,
 } from './utils/api-response.js';
+import { getDataTracker, attachDataTracker, handleHeliusWebhook } from './data/index.js';
+import { getDeFiRegistry } from './defi/index.js';
 
 const logger = createLogger('API');
 
@@ -693,6 +695,217 @@ app.get(
 );
 
 // ============================================
+// DEFI QUERY ENDPOINTS
+// ============================================
+
+app.get(
+  '/api/defi/dex/routes',
+  protectedRoute(),
+  asyncHandler(async (req: Request, res: Response) => {
+    const tenantId = getTenantIdOrFail(req, res);
+    if (!tenantId) return;
+
+    const inputMint = String(req.query['inputMint'] ?? '');
+    const outputMint = String(req.query['outputMint'] ?? '');
+    const amount = Number(req.query['amount'] ?? 0);
+    const slippage = req.query['slippage'] ? Number(req.query['slippage']) : undefined;
+
+    if (!inputMint || !outputMint || !Number.isFinite(amount) || amount <= 0) {
+      sendError(
+        res,
+        'inputMint, outputMint, and positive amount are required',
+        HTTP_STATUS.BAD_REQUEST,
+        ERROR_CODE.VALIDATION_FAILED
+      );
+      return;
+    }
+
+    const registry = getDeFiRegistry();
+    const dexQuotes = await Promise.all(
+      Array.from(registry.dex.entries()).map(async ([name, adapter]) => {
+        const quote = await adapter.routeSwap({ inputMint, outputMint, amount, slippage });
+        return { dex: name, quote };
+      })
+    );
+
+    const routes = dexQuotes
+      .filter((item) => item.quote.ok && item.quote.value)
+      .map((item) => ({ dex: item.dex, quote: item.quote.value }));
+
+    sendSuccess(res, {
+      tenantId,
+      inputMint,
+      outputMint,
+      amount,
+      slippage,
+      routes,
+    });
+  })
+);
+
+app.get(
+  '/api/defi/staking/validators',
+  protectedRoute(),
+  asyncHandler(async (req: Request, res: Response) => {
+    const tenantId = getTenantIdOrFail(req, res);
+    if (!tenantId) return;
+
+    const protocol = String(req.query['protocol'] ?? 'marinade');
+    const registry = getDeFiRegistry();
+    const adapter = registry.staking.get(protocol);
+
+    if (!adapter) {
+      sendError(res, 'Staking protocol not found', HTTP_STATUS.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+      return;
+    }
+
+    const validators = await adapter.getValidators();
+    if (!validators.ok) {
+      sendError(
+        res,
+        validators.error?.message ?? 'Failed to fetch validators',
+        HTTP_STATUS.BAD_REQUEST,
+        ERROR_CODE.OPERATION_FAILED
+      );
+      return;
+    }
+
+    sendSuccess(res, { tenantId, protocol, validators: validators.value });
+  })
+);
+
+app.get(
+  '/api/defi/staking/:protocol/apy',
+  protectedRoute(),
+  asyncHandler(async (req: Request, res: Response) => {
+    const tenantId = getTenantIdOrFail(req, res);
+    if (!tenantId) return;
+
+    const protocol = req.params['protocol'] ?? '';
+    const registry = getDeFiRegistry();
+    const adapter = registry.staking.get(protocol);
+
+    if (!adapter) {
+      sendError(res, 'Staking protocol not found', HTTP_STATUS.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+      return;
+    }
+
+    const apyResult = await adapter.getApy();
+    if (!apyResult.ok) {
+      sendError(
+        res,
+        apyResult.error?.message ?? 'Failed to fetch APY',
+        HTTP_STATUS.BAD_REQUEST,
+        ERROR_CODE.OPERATION_FAILED
+      );
+      return;
+    }
+
+    sendSuccess(res, { tenantId, protocol, apy: apyResult.value });
+  })
+);
+
+app.get(
+  '/api/defi/lending/reserves',
+  protectedRoute(),
+  asyncHandler(async (req: Request, res: Response) => {
+    const tenantId = getTenantIdOrFail(req, res);
+    if (!tenantId) return;
+
+    const protocol = req.query['protocol'] ? String(req.query['protocol']) : undefined;
+    const registry = getDeFiRegistry();
+
+    if (protocol) {
+      const adapter = registry.lending.get(protocol);
+      if (!adapter) {
+        sendError(
+          res,
+          'Lending protocol not found',
+          HTTP_STATUS.NOT_FOUND,
+          ERROR_CODE.NOT_FOUND
+        );
+        return;
+      }
+
+      const reserves = await adapter.getReserves();
+      if (!reserves.ok) {
+        sendError(
+          res,
+          reserves.error?.message ?? 'Failed to fetch lending reserves',
+          HTTP_STATUS.BAD_REQUEST,
+          ERROR_CODE.OPERATION_FAILED
+        );
+        return;
+      }
+
+      sendSuccess(res, { tenantId, protocol, reserves: reserves.value });
+      return;
+    }
+
+    const allReserves = await Promise.all(
+      Array.from(registry.lending.entries()).map(async ([name, adapter]) => {
+        const reserves = await adapter.getReserves();
+        return { protocol: name, reserves };
+      })
+    );
+
+    const markets = allReserves
+      .filter((entry) => entry.reserves.ok && entry.reserves.value)
+      .map((entry) => ({ protocol: entry.protocol, reserves: entry.reserves.value }));
+
+    sendSuccess(res, { tenantId, markets });
+  })
+);
+
+app.get(
+  '/api/defi/lending/:protocol/borrowing-power',
+  protectedRoute(),
+  asyncHandler(async (req: Request, res: Response) => {
+    const tenantId = getTenantIdOrFail(req, res);
+    if (!tenantId) return;
+
+    const protocol = req.params['protocol'] ?? '';
+    const walletAddress = String(req.query['walletAddress'] ?? '');
+
+    if (!walletAddress) {
+      sendError(
+        res,
+        'walletAddress query parameter is required',
+        HTTP_STATUS.BAD_REQUEST,
+        ERROR_CODE.VALIDATION_FAILED
+      );
+      return;
+    }
+
+    const registry = getDeFiRegistry();
+    const adapter = registry.lending.get(protocol);
+
+    if (!adapter) {
+      sendError(res, 'Lending protocol not found', HTTP_STATUS.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+      return;
+    }
+
+    const powerResult = await adapter.getBorrowingPower(walletAddress);
+    if (!powerResult.ok) {
+      sendError(
+        res,
+        powerResult.error?.message ?? 'Failed to fetch borrowing power',
+        HTTP_STATUS.BAD_REQUEST,
+        ERROR_CODE.OPERATION_FAILED
+      );
+      return;
+    }
+
+    sendSuccess(res, {
+      tenantId,
+      protocol,
+      walletAddress,
+      borrowingPower: powerResult.value,
+    });
+  })
+);
+
+// ============================================
 // TRANSACTION ENDPOINTS
 // ============================================
 
@@ -766,7 +979,29 @@ const RegisterAgentSchema = z.object({
   agentEndpoint: z.string().url().optional(),
   supportedIntents: z
     .array(
-      z.enum(['REQUEST_AIRDROP', 'TRANSFER_SOL', 'TRANSFER_TOKEN', 'QUERY_BALANCE', 'AUTONOMOUS'])
+      z.enum([
+        'REQUEST_AIRDROP',
+        'TRANSFER_SOL',
+        'TRANSFER_TOKEN',
+        'QUERY_BALANCE',
+        'AUTONOMOUS',
+        'SERVICE_PAYMENT',
+        'swap',
+        'stake',
+        'unstake',
+        'liquid_stake',
+        'provide_liquidity',
+        'remove_liquidity',
+        'deposit_lending',
+        'withdraw_lending',
+        'borrow_lending',
+        'repay_lending',
+        'farm_deposit',
+        'farm_harvest',
+        'wrap_token',
+        'unwrap_token',
+        'composite_strategy',
+      ])
     )
     .min(1),
   metadata: safeRecord.optional(),
@@ -783,6 +1018,22 @@ const SubmitIntentSchema = z
       'TRANSFER_TOKEN',
       'QUERY_BALANCE',
       'AUTONOMOUS',
+      'SERVICE_PAYMENT',
+      'swap',
+      'stake',
+      'unstake',
+      'liquid_stake',
+      'provide_liquidity',
+      'remove_liquidity',
+      'deposit_lending',
+      'withdraw_lending',
+      'borrow_lending',
+      'repay_lending',
+      'farm_deposit',
+      'farm_harvest',
+      'wrap_token',
+      'unwrap_token',
+      'composite_strategy',
     ]),
     params: safeRecord.default({}),
   })
@@ -1522,6 +1773,286 @@ app.get(
 );
 
 // ============================================
+// DATA TRACKING & INDEXING
+// ============================================
+
+/**
+ * Helius webhook endpoint — receive real-time transaction events
+ * POST https://your-domain/api/webhook/helius
+ * No auth required (Helius-only endpoint); set up at https://api.helius.xyz/webhooks
+ */
+app.post(
+  '/api/webhook/helius',
+  asyncHandler(async (req: Request, res: Response) => {
+    try {
+      const payload = req.body;
+
+      // Validate payload structure
+      if (!payload.webhookID || !Array.isArray(payload.events)) {
+        sendError(res, 'Invalid Helius webhook payload', HTTP_STATUS.BAD_REQUEST, ERROR_CODE.VALIDATION_FAILED);
+        return;
+      }
+
+      // Extract tenant from managed wallets (fallback to "default")
+      // In production, you'd look up which tenant owns each wallet
+      const tenantId = 'default'; // TODO: Implement multi-tenant wallet mapping
+      const managedWallets: string[] = []; // TODO: Load from wallet manager
+
+      const result = await handleHeliusWebhook(payload, tenantId, managedWallets);
+
+      if (!result.ok) {
+        sendError(res, result.error.message, HTTP_STATUS.INTERNAL_SERVER_ERROR, ERROR_CODE.OPERATION_FAILED);
+        return;
+      }
+
+      sendSuccess(res, { indexed: result.value.indexed, errors: result.value.errors });
+    } catch (err) {
+      logger.error('Helius webhook error', { error: String(err) });
+      sendError(res, 'Webhook processing failed', HTTP_STATUS.INTERNAL_SERVER_ERROR, ERROR_CODE.OPERATION_FAILED);
+    }
+  })
+);
+
+/**
+ * Query indexed transactions
+ * GET /api/data/transactions?wallet=...&type=transfer_sol&limit=100
+ */
+app.get(
+  '/api/data/transactions',
+  protectedRoute(),
+  asyncHandler(async (req: Request, res: Response) => {
+    const tenantId = getTenantIdOrFail(req, res);
+    if (!tenantId) return;
+
+    const tracker = getDataTracker();
+    const filter = {
+      tenantId,
+      walletAddress: req.query['wallet'] as string | undefined,
+      type: req.query['type'] as string | undefined,
+      status: req.query['status'] as string | undefined,
+      limit: req.query['limit'] ? Math.min(parseInt(req.query['limit'] as string), 1000) : 100,
+      offset: req.query['offset'] ? parseInt(req.query['offset'] as string) : 0,
+    };
+
+    const result = await tracker.queryTransactions(filter);
+
+    if (!result.ok) {
+      sendError(res, result.error.message, HTTP_STATUS.BAD_REQUEST, ERROR_CODE.OPERATION_FAILED);
+      return;
+    }
+
+    sendSuccess(res, result.value);
+  })
+);
+
+/**
+ * Get single indexed transaction by signature
+ */
+app.get(
+  '/api/data/transactions/:signature',
+  protectedRoute(),
+  asyncHandler(async (req: Request, res: Response) => {
+    const tenantId = getTenantIdOrFail(req, res);
+    if (!tenantId) return;
+
+    const tracker = getDataTracker();
+    const signature = req.params['signature'];
+    if (!signature) {
+      sendError(res, 'Signature is required', HTTP_STATUS.BAD_REQUEST, ERROR_CODE.VALIDATION_FAILED);
+      return;
+    }
+    const result = await tracker.getTransaction(signature);
+
+    if (!result.ok) {
+      sendError(res, result.error.message, HTTP_STATUS.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+      return;
+    }
+
+    // Verify tenant owns this transaction
+    if (result.value.tenantId !== tenantId) {
+      sendError(res, 'Access denied', HTTP_STATUS.FORBIDDEN, ERROR_CODE.UNAUTHORIZED);
+      return;
+    }
+
+    sendSuccess(res, result.value);
+  })
+);
+
+/**
+ * Query indexed intents
+ * GET /api/data/intents?agentId=...&status=executed&limit=50
+ */
+app.get(
+  '/api/data/intents',
+  protectedRoute(),
+  asyncHandler(async (req: Request, res: Response) => {
+    const tenantId = getTenantIdOrFail(req, res);
+    if (!tenantId) return;
+
+    const tracker = getDataTracker();
+    const filter = {
+      tenantId,
+      agentId: req.query['agentId'] as string | undefined,
+      status: req.query['status'] as string | undefined,
+      limit: req.query['limit'] ? Math.min(parseInt(req.query['limit'] as string), 1000) : 100,
+      offset: req.query['offset'] ? parseInt(req.query['offset'] as string) : 0,
+    };
+
+    const result = await tracker.queryIntents(filter);
+
+    if (!result.ok) {
+      sendError(res, result.error.message, HTTP_STATUS.BAD_REQUEST, ERROR_CODE.OPERATION_FAILED);
+      return;
+    }
+
+    sendSuccess(res, result.value);
+  })
+);
+
+/**
+ * Query system events for tenant
+ * GET /api/data/events?limit=100
+ */
+app.get(
+  '/api/data/events',
+  protectedRoute(),
+  asyncHandler(async (req: Request, res: Response) => {
+    const tenantId = getTenantIdOrFail(req, res);
+    if (!tenantId) return;
+
+    const tracker = getDataTracker();
+    const limit = req.query['limit'] ? Math.min(parseInt(req.query['limit'] as string), 1000) : 100;
+
+    const result = await tracker.queryEvents(tenantId, limit);
+
+    if (!result.ok) {
+      sendError(res, result.error.message, HTTP_STATUS.BAD_REQUEST, ERROR_CODE.OPERATION_FAILED);
+      return;
+    }
+
+    sendSuccess(res, result.value);
+  })
+);
+
+/**
+ * Unified DeFi activity timeline for dashboard
+ * GET /api/data/timeline?limit=100
+ */
+app.get(
+  '/api/data/timeline',
+  protectedRoute(),
+  asyncHandler(async (req: Request, res: Response) => {
+    const tenantId = getTenantIdOrFail(req, res);
+    if (!tenantId) return;
+
+    const limit = req.query['limit'] ? Math.min(parseInt(req.query['limit'] as string), 500) : 100;
+    const tracker = getDataTracker();
+
+    const [txResult, intentResult, eventResult] = await Promise.all([
+      tracker.queryTransactions({ tenantId, limit: 500 }),
+      tracker.queryIntents({ tenantId, limit: 500 }),
+      tracker.queryEvents(tenantId, 500),
+    ]);
+
+    if (!txResult.ok || !intentResult.ok || !eventResult.ok) {
+      sendError(
+        res,
+        'Failed to build timeline from indexed data',
+        HTTP_STATUS.INTERNAL_SERVER_ERROR,
+        ERROR_CODE.OPERATION_FAILED
+      );
+      return;
+    }
+
+    const defiIntentTypes = new Set([
+      'swap',
+      'stake',
+      'unstake',
+      'liquid_stake',
+      'provide_liquidity',
+      'remove_liquidity',
+      'deposit_lending',
+      'withdraw_lending',
+      'borrow_lending',
+      'repay_lending',
+      'farm_deposit',
+      'farm_harvest',
+      'wrap_token',
+      'unwrap_token',
+      'composite_strategy',
+    ]);
+
+    const timeline = [
+      ...txResult.value
+        .filter((tx) => defiIntentTypes.has(tx.type))
+        .map((tx) => ({
+          id: tx.id,
+          kind: 'transaction',
+          timestamp: tx.createdAt,
+          txType: tx.type,
+          signature: tx.signature,
+          walletAddress: tx.walletAddress,
+          amount: tx.amount,
+          protocol: tx.programId,
+          status: tx.status,
+          data: tx.parsedData,
+        })),
+      ...intentResult.value
+        .filter((intent) => defiIntentTypes.has(intent.intentType))
+        .map((intent) => ({
+          id: intent.id,
+          kind: 'intent',
+          timestamp: intent.executedAt ?? intent.createdAt,
+          intentType: intent.intentType,
+          agentId: intent.agentId,
+          status: intent.status,
+          signature: intent.signature,
+          params: intent.params,
+          result: intent.result,
+          error: intent.error,
+        })),
+      ...eventResult.value
+        .filter((event) => event.data['category'] === 'defi')
+        .map((event) => ({
+          id: event.id,
+          kind: 'event',
+          timestamp: event.createdAt,
+          eventType: event.eventType,
+          entityId: event.entityId,
+          data: event.data,
+        })),
+    ]
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      .slice(0, limit);
+
+    sendSuccess(res, {
+      tenantId,
+      total: timeline.length,
+      timeline,
+    });
+  })
+);
+
+/**
+ * Get data pipeline health status
+ * Returns indexing lag, transaction count, and health status
+ */
+app.get(
+  '/api/data/health',
+  asyncHandler(async (req: Request, res: Response) => {
+    const tracker = getDataTracker();
+    const result = tracker.getHealth();
+
+    if (!result.ok) {
+      sendError(res, result.error.message, HTTP_STATUS.INTERNAL_SERVER_ERROR, ERROR_CODE.OPERATION_FAILED);
+      return;
+    }
+
+    sendSuccess(res, result.value);
+  })
+);
+
+// ============================================
 // WEBSOCKET SERVER
 // ============================================
 
@@ -1712,6 +2243,11 @@ let httpServer: import('http').Server | null = null;
 
 export function startServer(): void {
   const config = getConfig();
+
+  // Initialize data tracker and attach to event bus
+  const tracker = getDataTracker();
+  attachDataTracker(eventBus as any); // EventBus is compatible with EventEmitter
+  logger.info('Data tracker initialized and attached to event bus');
 
   httpServer = app.listen(config.PORT, () => {
     logger.info('API server started', { port: config.PORT });

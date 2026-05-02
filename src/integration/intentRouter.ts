@@ -47,8 +47,33 @@ import {
 import type { InstructionDescriptor } from '../types/internal.js';
 import { getAgentRegistry, AgentRegistry, ExternalAgentRecord } from './agentRegistry.js';
 import { eventBus } from '../orchestrator/event-emitter.js';
+import { getDeFiRegistry } from '../defi/index.js';
+import type { DeFiIntent } from '../defi/intent-types.js';
+import { getDataTracker } from '../data/index.js';
 
 const logger = createLogger('BYOA_INTENT');
+
+const DEFI_INTENT_TYPES: SupportedIntentType[] = [
+  'swap',
+  'stake',
+  'unstake',
+  'liquid_stake',
+  'provide_liquidity',
+  'remove_liquidity',
+  'deposit_lending',
+  'withdraw_lending',
+  'borrow_lending',
+  'repay_lending',
+  'farm_deposit',
+  'farm_harvest',
+  'wrap_token',
+  'unwrap_token',
+  'composite_strategy',
+];
+
+function isDeFiIntentType(type: SupportedIntentType): type is DeFiIntent['type'] {
+  return DEFI_INTENT_TYPES.includes(type);
+}
 
 // ────────────────────────────────────────────
 // Program reference for autonomous execute_instructions
@@ -197,6 +222,25 @@ function sanitizeIntentParams(
         : undefined;
       sanitized['amount'] = params['amount'] ? '***' : undefined;
       sanitized['description'] = params['description'] ? '[REDACTED]' : undefined;
+      break;
+
+    case 'swap':
+    case 'stake':
+    case 'unstake':
+    case 'liquid_stake':
+    case 'provide_liquidity':
+    case 'remove_liquidity':
+    case 'deposit_lending':
+    case 'withdraw_lending':
+    case 'borrow_lending':
+    case 'repay_lending':
+    case 'farm_deposit':
+    case 'farm_harvest':
+    case 'wrap_token':
+    case 'unwrap_token':
+    case 'composite_strategy':
+      sanitized['protocol'] = params['protocol'];
+      sanitized['amount'] = params['amount'] ? '***' : undefined;
       break;
 
     default:
@@ -371,6 +415,17 @@ export class IntentRouter {
 
     // ── 6. Execute ─────────────────────────
     try {
+      const tracker = getDataTracker();
+      await tracker.recordIntent({
+        id: intentId,
+        tenantId: agent.tenantId ?? 'legacy',
+        agentId: agent.id,
+        intentType: externalIntent.type,
+        status: 'pending',
+        params: externalIntent.params,
+        createdAt,
+      });
+
       const result = await this.executeIntent(agent, externalIntent, intentId);
 
       // Record transaction in rate limiter (after successful submission)
@@ -413,9 +468,21 @@ export class IntentRouter {
         agentId: agent.id,
         type: externalIntent.type,
       });
+
+      await tracker.updateIntentResult(intentId, {
+        status: 'executed',
+        result,
+        signature: typeof result['signature'] === 'string' ? result['signature'] : undefined,
+      });
+
       return success(intentResult);
     } catch (error) {
       const errMsg = error instanceof Error ? error.message : String(error);
+      const tracker = getDataTracker();
+      await tracker.updateIntentResult(intentId, {
+        status: 'failed',
+        error: errMsg,
+      });
       return this.reject(intentId, agent.id, externalIntent, errMsg, createdAt);
     }
   }
@@ -442,9 +509,119 @@ export class IntentRouter {
         return this.executeAutonomous(walletId, agent.id, ext.params, intentId);
       case 'SERVICE_PAYMENT':
         return this.executeServicePayment(walletId, agent.id, ext.params, intentId, agent.tenantId);
+
+      case 'swap':
+      case 'stake':
+      case 'unstake':
+      case 'liquid_stake':
+      case 'provide_liquidity':
+      case 'remove_liquidity':
+      case 'deposit_lending':
+      case 'withdraw_lending':
+      case 'borrow_lending':
+      case 'repay_lending':
+      case 'farm_deposit':
+      case 'farm_harvest':
+      case 'wrap_token':
+      case 'unwrap_token':
+      case 'composite_strategy':
+        return this.executeDeFiIntent(agent, ext);
+
       default:
         throw new Error(`Unsupported intent type: ${ext.type}`);
     }
+  }
+
+  private async executeDeFiIntent(
+    agent: ExternalAgentRecord,
+    ext: ExternalIntent
+  ): Promise<Record<string, unknown>> {
+    if (!isDeFiIntentType(ext.type)) {
+      throw new Error(`Unsupported DeFi intent type: ${ext.type}`);
+    }
+
+    if (!agent.walletId) {
+      throw new Error('Agent has no bound wallet');
+    }
+
+    const walletKeyResult = this.walletManager.getPublicKey(agent.walletId);
+    if (!walletKeyResult.ok) {
+      throw walletKeyResult.error;
+    }
+
+    const tenantId = agent.tenantId ?? 'legacy';
+    const registry = getDeFiRegistry();
+    const intent = {
+      type: ext.type,
+      ...ext.params,
+    } as DeFiIntent;
+
+    const execResult = await registry.executeIntent(walletKeyResult.value, intent, tenantId);
+    if (!execResult.ok) {
+      throw execResult.error;
+    }
+
+    const result = execResult.value;
+    const tracker = getDataTracker();
+
+    eventBus.emit({
+      id: uuidv4(),
+      type: 'transaction',
+      timestamp: new Date(),
+      transaction: {
+        id: uuidv4(),
+        walletId: agent.walletId,
+        type: result.type === 'swap' ? 'swap' : 'raw_execute',
+        status: 'confirmed',
+        amount: result.inputAmount,
+        signature: result.signature,
+        createdAt: new Date(),
+        confirmedAt: new Date(),
+      },
+    });
+
+    await tracker.indexTransaction({
+      signature: result.signature,
+      tenantId,
+      walletAddress: walletKeyResult.value.toBase58(),
+      type: result.type,
+      status: 'success',
+      amount: result.inputAmount ?? result.outputAmount,
+      programId: result.protocol,
+      instructionCount: 1,
+      parsedData: {
+        intentType: result.type,
+        protocol: result.protocol,
+        inputAmount: result.inputAmount,
+        outputAmount: result.outputAmount,
+        priceImpact: result.priceImpact,
+      },
+      blockTime: result.timestamp.getTime(),
+    });
+
+    await tracker.recordEvent({
+      tenantId,
+      eventType: 'intent_executed',
+      entityId: result.signature,
+      entityType: 'transaction',
+      data: {
+        category: 'defi',
+        intentType: result.type,
+        protocol: result.protocol,
+      },
+      createdAt: new Date(),
+    });
+
+    return {
+      signature: result.signature,
+      type: result.type,
+      protocol: result.protocol,
+      inputAmount: result.inputAmount,
+      outputAmount: result.outputAmount,
+      priceImpact: result.priceImpact,
+      confirmations: result.confirmations,
+      executedAt: result.timestamp,
+    };
   }
 
   // ── REQUEST_AIRDROP ──────────────────────
