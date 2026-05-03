@@ -31,9 +31,8 @@ export const PrivySignin: React.FC<PrivySigninProps> = ({ onSuccess }) => {
       const result = await response.json();
       if (!result.success) throw new Error(result.error || 'Sign up failed');
 
-      const { tenantId, apiKey } = result;
+      const { tenantId } = result;
       localStorage.setItem('sophia_tenant_id', tenantId);
-      localStorage.setItem('sophia_api_key', apiKey);
 
       // Let parent handle navigation
       onSuccess?.();
