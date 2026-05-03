@@ -2247,7 +2247,7 @@ export function startServer(): void {
 
   // Initialize data tracker and attach to event bus
   const tracker = getDataTracker();
-  attachDataTracker(eventBus as any); // EventBus is compatible with EventEmitter
+  attachDataTracker(eventBus);
   logger.info('Data tracker initialized and attached to event bus');
 
   httpServer = app.listen(config.PORT, () => {
