@@ -15,14 +15,20 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 const ADMIN_API_KEY = process.env.ADMIN_API_KEY || '';
 
 // Only allow mutations to specific safe paths
-const ALLOWED_PATHS = new Set([
-  '/api/agents',
-  '/api/agents/start',
-  '/api/agents/stop',
-  '/api/byoa/register',
-  '/api/byoa/agents',
-  '/api/byoa/service-policies',
-]);
+const ALLOWED_PATH_PATTERNS = [
+  /^\/api\/agents$/,
+  /^\/api\/agents\/[^/]+\/config$/,
+  /^\/api\/agents\/(?:start|stop)$/,
+  /^\/api\/byoa\/register$/,
+  /^\/api\/byoa\/agents$/,
+  /^\/api\/byoa\/agents\/[^/]+\/(?:activate|deactivate|revoke)$/,
+  /^\/api\/byoa\/service-policies(?:\/[^/]+(?:\/x402-descriptor)?)?$/,
+  /^\/api\/byoa\/verify\/(?:challenge-generate|challenge-submit)$/,
+];
+
+function isAllowedPath(targetPath: string): boolean {
+  return ALLOWED_PATH_PATTERNS.some((pattern) => pattern.test(targetPath));
+}
 
 const ALLOWED_METHODS = new Set(['POST', 'PATCH', 'DELETE']);
 
@@ -46,7 +52,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const targetPath = typeof req.query['path'] === 'string' ? req.query['path'] : '';
 
   // Validate path to prevent open redirect / path traversal
-  if (!targetPath || !ALLOWED_PATHS.has(targetPath) || targetPath.includes('..')) {
+  if (!targetPath || !isAllowedPath(targetPath) || targetPath.includes('..')) {
     return res.status(400).json({ success: false, error: 'Invalid proxy target path' });
   }
 

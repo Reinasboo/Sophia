@@ -1,12 +1,5 @@
-import type { GetServerSideProps } from 'next';
+import { LandingExperience } from '../components/LandingExperience';
 
-export const getServerSideProps: GetServerSideProps = async () => ({
-  redirect: {
-    destination: '/',
-    permanent: true,
-  },
-});
-
-export default function LandingRedirect() {
-  return null;
+export default function LandingPage() {
+  return <LandingExperience />;
 }

@@ -48,7 +48,7 @@ export const PrivySignin: React.FC<PrivySigninProps> = ({ onSuccess }) => {
     <div className="w-full space-y-8">
       <div className="text-center">
         <h1 className="text-4xl font-bold text-white mb-2">Agentic Wallet</h1>
-        <p className="text-text-secondary">Autonomous DeFi Agent Infrastructure</p>
+        <p className="text-text-secondary">Login or register to access your control plane</p>
       </div>
 
       <div className="bg-surface-elevated border border-surface-muted rounded-lg p-6 space-y-6">
@@ -70,7 +70,7 @@ export const PrivySignin: React.FC<PrivySigninProps> = ({ onSuccess }) => {
             disabled={loading || !email}
             className="w-full px-4 py-2 bg-primary hover:bg-primary-600 text-black font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
           >
-            {loading ? 'Signing up...' : 'Sign Up with Email'}
+            {loading ? 'Processing...' : 'Login / Register with Email'}
           </button>
         </form>
 

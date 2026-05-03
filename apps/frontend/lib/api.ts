@@ -58,11 +58,14 @@ function adminHeaders(): Record<string, string> {
 
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {
   try {
-    const response = await fetch(`${API_BASE}${endpoint}`, {
+    const method = options?.method?.toUpperCase() ?? 'GET';
+    const requestUrl = method === 'GET' ? `${API_BASE}${endpoint}` : `/api/proxy-admin?path=${encodeURIComponent(endpoint)}`;
+
+    const response = await fetch(requestUrl, {
       ...options,
       headers: {
         'Content-Type': 'application/json',
-        ...authHeaders(), // MULTI-TENANT FIX: Include auth headers in all requests
+        ...(method === 'GET' ? authHeaders() : {}),
         ...options?.headers,
       },
     });

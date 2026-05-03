@@ -15,6 +15,7 @@ import {
   Wallet,
   Workflow,
 } from 'lucide-react';
+import { PrivySignin } from './PrivySignin';
 
 const stats = [
   { label: 'Built-in strategies', value: '4' },
@@ -132,6 +133,12 @@ export function LandingExperience() {
 
             <div className="hidden items-center gap-3 md:flex">
               <button
+                onClick={() => router.push('/landing#auth')}
+                className="rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white/85 transition hover:border-white/30 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+              >
+                Login / Register
+              </button>
+              <button
                 onClick={() => router.push('/byoa-register')}
                 className="rounded-xl border border-cyan-400/30 bg-white/5 px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:border-cyan-300/60 hover:bg-cyan-400/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
               >
@@ -170,10 +177,10 @@ export function LandingExperience() {
 
               <div className="flex flex-col gap-4 sm:flex-row">
                 <button
-                  onClick={() => router.push('/dashboard')}
+                  onClick={() => router.push('/landing#auth')}
                   className="inline-flex items-center justify-center gap-3 rounded-2xl bg-gradient-brand-accent px-6 py-4 text-base font-semibold text-white shadow-[0_0_40px_rgba(255,0,128,0.24)] transition hover:translate-y-[-1px] hover:shadow-[0_0_55px_rgba(0,217,255,0.18)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
                 >
-                  Manage Your Agents
+                  Login / Register
                   <ArrowRight className="h-5 w-5" />
                 </button>
                 <button
@@ -339,24 +346,31 @@ export function LandingExperience() {
               </div>
             </div>
 
-            <div className="rounded-[1.8rem] border border-white/10 bg-black/30 p-8 backdrop-blur-2xl">
-              <SectionLabel>System architecture</SectionLabel>
-              <div className="mt-6 grid gap-4">
-                {modules.map((module, index) => (
-                  <div
-                    key={module.title}
-                    className="flex items-start gap-4 rounded-2xl border border-white/10 bg-white/[0.04] p-5"
-                  >
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-brand-accent text-sm font-bold text-black">
-                      0{index + 1}
-                    </div>
-                    <div>
-                      <h3 className="text-base font-semibold text-white">{module.title}</h3>
-                      <p className="mt-1 text-sm leading-7 text-white/62">{module.body}</p>
-                    </div>
-                  </div>
-                ))}
+            <div id="auth" className="rounded-[1.8rem] border border-white/10 bg-black/30 p-8 backdrop-blur-2xl scroll-mt-24">
+              <SectionLabel>Login / Register</SectionLabel>
+              <div className="mt-5">
+                <PrivySignin onSuccess={() => router.push('/dashboard')} />
               </div>
+            </div>
+          </section>
+
+          <section className="mt-24 rounded-[1.8rem] border border-white/10 bg-black/30 p-8 backdrop-blur-2xl">
+            <SectionLabel>System architecture</SectionLabel>
+            <div className="mt-6 grid gap-4">
+              {modules.map((module, index) => (
+                <div
+                  key={module.title}
+                  className="flex items-start gap-4 rounded-2xl border border-white/10 bg-white/[0.04] p-5"
+                >
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-brand-accent text-sm font-bold text-black">
+                    0{index + 1}
+                  </div>
+                  <div>
+                    <h3 className="text-base font-semibold text-white">{module.title}</h3>
+                    <p className="mt-1 text-sm leading-7 text-white/62">{module.body}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </section>
 
