@@ -15,7 +15,7 @@
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { randomBytes } from 'crypto';
-import { verifyPrivyAccessToken } from '../../../../../src/utils/privy-auth.js';
+import { verifyPrivyAccessToken } from '@/lib/privy-auth';
 
 // H-1 FIX: Simple in-memory rate limiter for auth endpoint
 const authRateLimit = new Map<string, { count: number; resetAt: number }>();
