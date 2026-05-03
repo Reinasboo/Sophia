@@ -61,7 +61,7 @@ tmp/
 *.tsbuildinfo
 
 # Persistence (contains encrypted wallet key material and operational data)
-data/
+/data/
 .cli-wallet.json
 
 # Security-sensitive files — never commit

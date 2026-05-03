@@ -18,6 +18,7 @@ import { getConfig, getExplorerUrl } from './utils/config.js';
 import { createLogger } from './utils/logger.js';
 import { secureCompare } from './utils/encryption.js';
 import { ApiResponse, SystemEvent, AgentConfig } from './utils/types.js';
+import type { IndexedTransaction, IndexedIntent, IndexedEvent } from './data/index.js';
 import {
   getAgentRegistry,
   getWalletBinder,
@@ -1984,7 +1985,7 @@ app.get(
 
     const timeline = [
       ...txResult.value
-        .filter((tx) => defiIntentTypes.has(tx.type))
+        .filter((tx: IndexedTransaction) => defiIntentTypes.has(tx.type))
         .map((tx) => ({
           id: tx.id,
           kind: 'transaction',
@@ -1998,7 +1999,7 @@ app.get(
           data: tx.parsedData,
         })),
       ...intentResult.value
-        .filter((intent) => defiIntentTypes.has(intent.intentType))
+        .filter((intent: IndexedIntent) => defiIntentTypes.has(intent.intentType))
         .map((intent) => ({
           id: intent.id,
           kind: 'intent',
@@ -2012,7 +2013,7 @@ app.get(
           error: intent.error,
         })),
       ...eventResult.value
-        .filter((event) => event.data['category'] === 'defi')
+        .filter((event: IndexedEvent) => event.data['category'] === 'defi')
         .map((event) => ({
           id: event.id,
           kind: 'event',
