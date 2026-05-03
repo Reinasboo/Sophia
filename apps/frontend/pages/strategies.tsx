@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { PageLayout } from '@/components';
 import { useStrategies } from '@/lib/hooks';
+import { useAuthProtected } from '@/lib/useAuthProtected';
 import { cn } from '@/lib/utils';
 import type { StrategyDefinition, StrategyFieldDescriptor } from '@/lib/types';
 
@@ -127,10 +128,27 @@ function StrategyCard({ strategy, isExpanded, onToggleExpand, onConfigure }: Str
 export default function StrategiesPage() {
   const router = useRouter();
   const { strategies, loading, error } = useStrategies();
+  const { isLoading: authLoading, isAuthenticated } = useAuthProtected();
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [expandedStrategy, setExpandedStrategy] = useState<string | null>(null);
   const [selectedConfig, setSelectedConfig] = useState<StrategyDefinition | null>(null);
+
+  // Show loading while checking authentication
+  if (authLoading) {
+    return (
+      <PageLayout title="Strategies" subtitle="Configure and manage agent strategies">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-cyan-400" />
+        </div>
+      </PageLayout>
+    );
+  }
+
+  // Redirect handled by useAuthProtected hook
+  if (!isAuthenticated) {
+    return null;
+  }
 
   const filteredStrategies = useMemo(() => {
     if (!strategies) return [];

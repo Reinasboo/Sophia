@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { PageLayout } from '@/components';
 import { useTransactions } from '@/lib/hooks';
+import { useAuthProtected } from '@/lib/useAuthProtected';
 import { cn } from '@/lib/utils';
 import type { Transaction } from '@/lib/types';
 
@@ -150,10 +151,27 @@ function TransactionRow({ transaction, isExpanded, onToggle }: TransactionRowPro
 
 export default function TransactionsPage() {
   const { transactions, loading, error, refetch } = useTransactions();
+  const { isLoading: authLoading, isAuthenticated } = useAuthProtected();
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [expandedTx, setExpandedTx] = useState<string | null>(null);
+
+  // Show loading while checking authentication
+  if (authLoading) {
+    return (
+      <PageLayout title="Transactions" subtitle="Monitor and audit all wallet transactions">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-cyan-400" />
+        </div>
+      </PageLayout>
+    );
+  }
+
+  // Redirect handled by useAuthProtected hook
+  if (!isAuthenticated) {
+    return null;
+  }
 
   const filteredTxs = useMemo(() => {
     let result = [...(transactions || [])];

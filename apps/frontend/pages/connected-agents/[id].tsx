@@ -24,10 +24,12 @@ import {
   Power,
   PowerOff,
   Trash2,
+  Loader2,
 } from 'lucide-react';
 import { useState } from 'react';
 import { PageLayout, IntentHistory } from '@/components';
 import { useExternalAgent } from '@/lib/hooks';
+import { useAuthProtected } from '@/lib/useAuthProtected';
 import * as api from '@/lib/api';
 import { cn } from '@/lib/utils';
 import type { ExternalAgentStatus } from '@/lib/types';
@@ -63,8 +65,25 @@ export default function ConnectedAgentDetailPage() {
   const router = useRouter();
   const agentId = typeof router.query.id === 'string' ? router.query.id : null;
   const { data, loading, error, refetch } = useExternalAgent(agentId);
+  const { isLoading: authLoading, isAuthenticated } = useAuthProtected();
   const [actionLoading, setActionLoading] = useState(false);
   const [confirmRevoke, setConfirmRevoke] = useState(false);
+
+  // Show loading while checking authentication
+  if (authLoading) {
+    return (
+      <PageLayout title="Agent Details" subtitle="View and manage connected agent">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-cyan-400" />
+        </div>
+      </PageLayout>
+    );
+  }
+
+  // Redirect handled by useAuthProtected hook
+  if (!isAuthenticated) {
+    return null;
+  }
 
   const handleActivate = async () => {
     if (!agentId) return;

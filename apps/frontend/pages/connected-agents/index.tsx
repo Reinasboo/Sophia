@@ -21,9 +21,11 @@ import {
   Copy,
   Trash2,
   MoreVertical,
+  Loader2,
 } from 'lucide-react';
 import { PageLayout } from '@/components';
 import { useConnectedAgents } from '@/lib/hooks';
+import { useAuthProtected } from '@/lib/useAuthProtected';
 import { cn } from '@/lib/utils';
 import type { ExternalAgent } from '@/lib/types';
 
@@ -135,12 +137,29 @@ function AgentRow({ agent, onSelect, onRevoke }: AgentRowProps) {
 
 export default function ConnectedAgentsPage() {
   const { agents, loading, error, refresh, revoke } = useConnectedAgents();
+  const { isLoading: authLoading, isAuthenticated } = useAuthProtected();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedAgent, setSelectedAgent] = useState<ExternalAgent | null>(null);
   const [showRevokeModal, setShowRevokeModal] = useState<ExternalAgent | null>(null);
   const [isRevoking, setIsRevoking] = useState(false);
   const [revokeError, setRevokeError] = useState<string | null>(null);
+
+  // Show loading while checking authentication
+  if (authLoading) {
+    return (
+      <PageLayout title="Connected Agents" subtitle="Manage external agent connections and permissions">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-cyan-400" />
+        </div>
+      </PageLayout>
+    );
+  }
+
+  // Redirect handled by useAuthProtected hook
+  if (!isAuthenticated) {
+    return null;
+  }
 
   const filteredAgents = useMemo(() => {
     if (!agents) return [];
