@@ -4,16 +4,16 @@ import React, { useState, useMemo } from 'react';
 import Head from 'next/head';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  TrendingUp,
   CheckCircle2,
   XCircle,
-  Clock,
-  HelpCircle,
   Copy,
   ExternalLink,
   ChevronDown,
   Search,
   Loader2,
+  Sparkles,
+  TrendingUp,
+  HelpCircle,
 } from 'lucide-react';
 import { Sidebar, Header } from '@/components';
 import { useIntentHistory } from '@/lib/hooks';
@@ -37,38 +37,38 @@ function IntentRow({ intent, isExpanded, onToggle }: IntentRowProps) {
   return (
     <motion.div
       layout
-      className="border border-slate-700/30 rounded-lg overflow-hidden bg-slate-900/20 backdrop-blur-sm hover:border-cyan-500/30 transition-colors"
+      className="rounded-[1.4rem] border border-white/10 bg-white/[0.05] backdrop-blur-xl p-4 transition duration-300 hover:-translate-y-1 hover:border-cyan-400/30 hover:bg-white/[0.08]"
     >
       <button
         onClick={onToggle}
-        className="w-full flex items-center justify-between p-4 hover:bg-slate-800/50 transition-colors text-left"
+        className="w-full flex items-center justify-between transition-colors text-left"
       >
         <div className="flex items-center gap-4 flex-1 min-w-0">
-          <div className="p-2 rounded-lg bg-slate-800/50">
+          <div className="p-2 rounded-xl bg-white/10">
             <Icon className="w-5 h-5 text-cyan-400" />
           </div>
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-sm font-medium text-slate-50">Intent</span>
+              <span className="text-sm font-medium text-white">Intent</span>
               <span
                 className={cn('text-xs px-2 py-0.5 rounded font-medium capitalize', statusColors)}
               >
                 {intent.status}
               </span>
             </div>
-            <p className="text-xs text-slate-500 truncate font-mono">{intent.intentId}</p>
+            <p className="text-xs text-white/50 truncate font-mono">{intent.intentId}</p>
           </div>
 
           <div className="text-right">
-            <p className="text-sm text-slate-400">{new Date(intent.createdAt).toLocaleString()}</p>
+            <p className="text-sm text-white/60">{new Date(intent.createdAt).toLocaleString()}</p>
           </div>
         </div>
 
         <motion.div
           animate={{ rotate: isExpanded ? 180 : 0 }}
           transition={{ duration: 0.2 }}
-          className="ml-2 text-slate-400"
+          className="ml-2 text-white/45"
         >
           <ChevronDown className="w-4 h-4" />
         </motion.div>
@@ -81,19 +81,19 @@ function IntentRow({ intent, isExpanded, onToggle }: IntentRowProps) {
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="border-t border-slate-700/30 bg-slate-800/30 px-4 py-4"
+            className="border-t border-white/10 pt-4"
           >
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div>
-                  <p className="text-xs text-slate-400 mb-1 uppercase tracking-wider">Intent ID</p>
-                  <code className="text-xs text-slate-300 bg-slate-700/50 rounded px-2 py-1 block font-mono break-all">
+                  <p className="text-xs text-white/60 font-medium mb-1 uppercase tracking-wider">Intent ID</p>
+                  <code className="text-xs text-white/78 bg-white/10 rounded-xl px-2 py-1 block font-mono break-all">
                     {intent.intentId}
                   </code>
                 </div>
                 <div>
-                  <p className="text-xs text-slate-400 mb-1 uppercase tracking-wider">Created</p>
-                  <p className="text-sm text-slate-300">
+                  <p className="text-xs text-white/60 font-medium mb-1 uppercase tracking-wider">Created</p>
+                  <p className="text-sm text-white/78">
                     {new Date(intent.createdAt).toLocaleString()}
                   </p>
                 </div>
@@ -101,9 +101,9 @@ function IntentRow({ intent, isExpanded, onToggle }: IntentRowProps) {
 
               {intent.params && Object.keys(intent.params).length > 0 && (
                 <div>
-                  <p className="text-xs text-slate-400 mb-2 uppercase tracking-wider">Parameters</p>
-                  <div className="bg-slate-700/50 rounded-lg p-3 text-xs">
-                    <pre className="text-slate-300 font-mono overflow-x-auto whitespace-pre-wrap break-words">
+                  <p className="text-xs text-white/60 font-medium mb-2 uppercase tracking-wider">Parameters</p>
+                  <div className="bg-white/10 rounded-xl p-3 text-xs">
+                    <pre className="text-white/78 font-mono overflow-x-auto whitespace-pre-wrap break-words">
                       {JSON.stringify(intent.params, null, 2)}
                     </pre>
                   </div>
@@ -112,9 +112,9 @@ function IntentRow({ intent, isExpanded, onToggle }: IntentRowProps) {
 
               {intent.result && Object.keys(intent.result).length > 0 && (
                 <div>
-                  <p className="text-xs text-slate-400 mb-2 uppercase tracking-wider">Result</p>
-                  <div className="bg-slate-700/50 rounded-lg p-3 text-xs">
-                    <pre className="text-slate-300 font-mono overflow-x-auto whitespace-pre-wrap break-words">
+                  <p className="text-xs text-white/60 font-medium mb-2 uppercase tracking-wider">Result</p>
+                  <div className="bg-white/10 rounded-xl p-3 text-xs">
+                    <pre className="text-white/78 font-mono overflow-x-auto whitespace-pre-wrap break-words">
                       {JSON.stringify(intent.result, null, 2)}
                     </pre>
                   </div>
@@ -123,20 +123,20 @@ function IntentRow({ intent, isExpanded, onToggle }: IntentRowProps) {
 
               {intent.error && (
                 <div>
-                  <p className="text-xs text-slate-400 mb-2 uppercase tracking-wider">Error</p>
-                  <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-xs">
+                  <p className="text-xs text-white/60 font-medium mb-2 uppercase tracking-wider">Error</p>
+                  <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 text-xs">
                     <p className="text-red-300">{intent.error}</p>
                   </div>
                 </div>
               )}
 
-              <div className="pt-3 border-t border-slate-700/30 flex items-center gap-2 flex-wrap">
-                <button className="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-300 hover:text-cyan-300 bg-slate-800/50 hover:bg-slate-700 rounded transition-colors">
+              <div className="pt-3 border-t border-white/10 flex items-center gap-2 flex-wrap">
+                <button className="flex items-center gap-2 px-3 py-1.5 text-xs text-white/70 hover:text-cyan-300 bg-white/10 hover:bg-white/20 rounded-lg transition-colors">
                   <Copy className="w-3.5 h-3.5" />
                   Copy ID
                 </button>
                 {intent.status === 'executed' && (
-                  <button className="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-300 hover:text-cyan-300 bg-slate-800/50 hover:bg-slate-700 rounded transition-colors">
+                  <button className="flex items-center gap-2 px-3 py-1.5 text-xs text-white/70 hover:text-cyan-300 bg-white/10 hover:bg-white/20 rounded-lg transition-colors">
                     <ExternalLink className="w-3.5 h-3.5" />
                     View Details
                   </button>
@@ -222,11 +222,11 @@ export default function IntentHistoryPage() {
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: idx * 0.05 }}
-                      className="bg-gradient-to-br from-slate-800/50 to-transparent border border-slate-700/50 rounded-lg p-4 backdrop-blur-sm"
+                      className="rounded-[1.4rem] border border-white/10 bg-white/[0.05] p-4 backdrop-blur-xl"
                     >
                       <div className="flex items-start justify-between">
                         <div>
-                          <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">
+                          <p className="text-xs text-white/60 font-medium uppercase tracking-wider mb-1">
                             {stat.label}
                           </p>
                           <p className={cn('text-2xl font-bold', stat.color)}>{stat.value}</p>
@@ -245,20 +245,20 @@ export default function IntentHistoryPage() {
               className="flex items-center gap-3 flex-wrap"
             >
               <div className="relative flex-1 min-w-[240px]">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/45" />
                 <input
                   type="text"
                   placeholder="Search intents…"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full bg-slate-800/50 border border-slate-700/50 hover:border-cyan-500/30 focus:border-cyan-500 text-slate-50 placeholder:text-slate-500 rounded-lg px-4 py-2.5 text-sm transition-all backdrop-blur-sm"
+                  className="w-full rounded-xl border border-cyan-400/30 bg-white/5 px-4 py-2.5 text-sm font-semibold text-cyan-100 placeholder:text-white/40 transition hover:border-cyan-300/60 hover:bg-cyan-400/10"
                 />
               </div>
 
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="bg-slate-800/50 border border-slate-700/50 hover:border-cyan-500/30 text-slate-50 rounded-lg px-3 py-2.5 text-sm transition-all backdrop-blur-sm cursor-pointer"
+                className="rounded-xl border border-cyan-400/30 bg-white/5 px-3 py-2.5 text-sm font-semibold text-cyan-100 transition hover:border-cyan-300/60 hover:bg-cyan-400/10 cursor-pointer"
               >
                 <option value="all">All Statuses</option>
                 <option value="executed">Executed</option>

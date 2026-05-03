@@ -190,7 +190,7 @@ export default function ByoaRegisterPage() {
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-gradient-brand-subtle rounded-xl border border-surface-muted hover:border-secondary/50 p-8 transition-colors duration-200"
+              className="rounded-[1.4rem] border border-white/10 bg-white/[0.05] p-8 backdrop-blur-xl transition-colors duration-200"
             >
               <div className="mb-8">
                 <div className="flex items-center gap-2 mb-6">
@@ -242,20 +242,19 @@ export default function ByoaRegisterPage() {
                 >
                   {currentStep === 'type' && (
                     <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-slate-50">Select Agent Type</h3>
-                      <p className="text-sm text-slate-400 mb-6">
+                      <h3 className="text-lg font-semibold text-white">Select Agent Type</h3>
+                      <p className="text-sm text-white/60 mb-6">
                         Choose how your agent will communicate with Sophia.
                       </p>
 
                       <div className="grid grid-cols-2 gap-4">
-                        {/* Local Agent Option */}
                         <button
                           onClick={() => setFormData((prev) => ({ ...prev, agentType: 'local' }))}
                           className={cn(
                             'p-6 rounded-lg border-2 transition-all text-left',
                             formData.agentType === 'local'
-                              ? 'border-cyan-500 bg-cyan-500/10'
-                              : 'border-slate-700/50 bg-slate-800/30 hover:border-slate-600'
+                              ? 'border-cyan-400/60 bg-cyan-400/10'
+                              : 'border-white/10 bg-white/[0.02] hover:border-white/20'
                           )}
                         >
                           <div className="font-semibold text-slate-50 mb-2">Local Agent</div>
@@ -267,14 +266,13 @@ export default function ByoaRegisterPage() {
                           </div>
                         </button>
 
-                        {/* Remote Agent Option */}
                         <button
                           onClick={() => setFormData((prev) => ({ ...prev, agentType: 'remote' }))}
                           className={cn(
                             'p-6 rounded-lg border-2 transition-all text-left',
                             formData.agentType === 'remote'
-                              ? 'border-cyan-500 bg-cyan-500/10'
-                              : 'border-slate-700/50 bg-slate-800/30 hover:border-slate-600'
+                              ? 'border-cyan-400/60 bg-cyan-400/10'
+                              : 'border-white/10 bg-white/[0.02] hover:border-white/20'
                           )}
                         >
                           <div className="font-semibold text-slate-50 mb-2">Remote Agent</div>
@@ -288,8 +286,8 @@ export default function ByoaRegisterPage() {
                       </div>
 
                       {formData.agentType && (
-                        <div className="mt-6 p-4 bg-cyan-500/10 border border-cyan-500/30 rounded-lg">
-                          <p className="text-sm text-cyan-300">
+                        <div className="mt-6 p-4 bg-cyan-500/10 border border-cyan-500/30 rounded-[1.4rem]">
+                          <p className="text-sm text-cyan-200">
                             ✓ Selected:{' '}
                             <span className="font-semibold capitalize">{formData.agentType}</span>{' '}
                             Agent
@@ -301,8 +299,8 @@ export default function ByoaRegisterPage() {
 
                   {currentStep === 'info' && (
                     <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-slate-50">Agent Information</h3>
-                      <p className="text-sm text-slate-400 mb-4">
+                      <h3 className="text-lg font-semibold text-white">Agent Information</h3>
+                      <p className="text-sm text-white/60 mb-4">
                         Enter the basic information about your agent.
                       </p>
 
@@ -315,7 +313,7 @@ export default function ByoaRegisterPage() {
                           placeholder="My Trading Agent"
                           value={formData.agentName}
                           onChange={(e) => updateFormData('agentName', e.target.value)}
-                          className="w-full bg-slate-800/50 border border-slate-700/50 hover:border-cyan-500/30 focus:border-cyan-500 text-slate-50 placeholder:text-slate-500 rounded-lg px-4 py-3 text-sm transition-all"
+                          className="w-full rounded-xl border border-cyan-400/30 bg-white/5 px-4 py-3 text-sm font-semibold text-cyan-100 placeholder:text-white/40 transition hover:border-cyan-300/60 hover:bg-cyan-400/10"
                         />
                       </div>
 
@@ -328,9 +326,9 @@ export default function ByoaRegisterPage() {
                           placeholder="agent_abc123def456"
                           value={formData.agentId}
                           onChange={(e) => updateFormData('agentId', e.target.value)}
-                          className="w-full bg-slate-800/50 border border-slate-700/50 hover:border-cyan-500/30 focus:border-cyan-500 text-slate-50 placeholder:text-slate-500 rounded-lg px-4 py-3 text-sm transition-all"
+                          className="w-full rounded-xl border border-cyan-400/30 bg-white/5 px-4 py-3 text-sm font-semibold text-cyan-100 placeholder:text-white/40 transition hover:border-cyan-300/60 hover:bg-cyan-400/10"
                         />
-                        <p className="text-xs text-slate-500 mt-1">
+                        <p className="text-xs text-white/50 mt-1">
                           Unique identifier for your agent
                         </p>
                       </div>
@@ -339,16 +337,14 @@ export default function ByoaRegisterPage() {
 
                   {currentStep === 'intents' && (
                     <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-slate-50">Supported Intents</h3>
-                      <p className="text-sm text-slate-400 mb-6">
-                        Select which operations your agent will support.
-                      </p>
+                      <h3 className="text-lg font-semibold text-white">Supported Intents</h3>
+                      <p className="text-sm text-white/60 mb-6">Select which operations your agent will support.</p>
 
                       <div className="space-y-3">
                         {AVAILABLE_INTENTS.map((intent) => (
                           <label
                             key={intent.value}
-                            className="flex items-start gap-3 p-4 border border-slate-700/50 rounded-lg hover:border-cyan-500/30 cursor-pointer transition-all"
+                            className="flex items-start gap-3 p-4 rounded-xl border border-white/10 bg-white/[0.02] hover:border-cyan-400/60 cursor-pointer transition-all"
                           >
                             <input
                               type="checkbox"
@@ -362,24 +358,22 @@ export default function ByoaRegisterPage() {
                                 } else {
                                   setFormData((prev) => ({
                                     ...prev,
-                                    supportedIntents: prev.supportedIntents.filter(
-                                      (i) => i !== intent.value
-                                    ),
+                                    supportedIntents: prev.supportedIntents.filter((i) => i !== intent.value),
                                   }));
                                 }
                               }}
                               className="w-4 h-4 rounded border border-slate-600 text-cyan-500 focus:ring-cyan-500 accent-cyan-500 mt-1 flex-shrink-0"
                             />
                             <div>
-                              <div className="font-medium text-slate-50">{intent.label}</div>
-                              <div className="text-xs text-slate-400">{intent.description}</div>
+                              <div className="font-medium text-white">{intent.label}</div>
+                              <div className="text-xs text-white/60">{intent.description}</div>
                             </div>
                           </label>
                         ))}
                       </div>
 
                       {formData.supportedIntents.length === 0 && (
-                        <div className="text-xs text-yellow-300 bg-yellow-500/10 border border-yellow-500/30 rounded p-3">
+                        <div className="text-xs text-yellow-300 bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-3">
                           Select at least one intent to continue.
                         </div>
                       )}
@@ -388,13 +382,11 @@ export default function ByoaRegisterPage() {
 
                   {currentStep === 'verification' && (
                     <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-slate-50">Verification Methods</h3>
-                      <p className="text-sm text-slate-400 mb-6">
-                        Select optional security verification methods for your agent.
-                      </p>
+                      <h3 className="text-lg font-semibold text-white">Verification Methods</h3>
+                      <p className="text-sm text-white/60 mb-6">Select optional security verification methods for your agent.</p>
 
                       <div className="space-y-3">
-                        <label className="flex items-start gap-3 p-4 border border-slate-700/50 rounded-lg hover:border-cyan-500/30 cursor-pointer transition-all">
+                        <label className="flex items-start gap-3 p-4 rounded-xl border border-white/10 bg-white/[0.02] hover:border-cyan-400/60 cursor-pointer transition-all">
                           <input
                             type="checkbox"
                             checked={formData.verificationMethods.includes('challenge-response')}
@@ -402,34 +394,24 @@ export default function ByoaRegisterPage() {
                               if (e.target.checked) {
                                 setFormData((prev) => ({
                                   ...prev,
-                                  verificationMethods: [
-                                    ...prev.verificationMethods,
-                                    'challenge-response',
-                                  ],
+                                  verificationMethods: [...prev.verificationMethods, 'challenge-response'],
                                 }));
                               } else {
                                 setFormData((prev) => ({
                                   ...prev,
-                                  verificationMethods: prev.verificationMethods.filter(
-                                    (m) => m !== 'challenge-response'
-                                  ),
+                                  verificationMethods: prev.verificationMethods.filter((m) => m !== 'challenge-response'),
                                 }));
                               }
                             }}
                             className="w-4 h-4 rounded border border-slate-600 text-cyan-500 focus:ring-cyan-500 accent-cyan-500 mt-1 flex-shrink-0"
                           />
                           <div>
-                            <div className="font-medium text-slate-50">
-                              Challenge-Response Handshake
-                            </div>
-                            <div className="text-xs text-slate-400">
-                              Verify endpoint ownership with a cryptographic challenge during
-                              registration
-                            </div>
+                            <div className="font-medium text-white">Challenge-Response Handshake</div>
+                            <div className="text-xs text-white/60">Verify endpoint ownership with a cryptographic challenge during registration</div>
                           </div>
                         </label>
 
-                        <label className="flex items-start gap-3 p-4 border border-slate-700/50 rounded-lg hover:border-cyan-500/30 cursor-pointer transition-all">
+                        <label className="flex items-start gap-3 p-4 rounded-xl border border-white/10 bg-white/[0.02] hover:border-cyan-400/60 cursor-pointer transition-all">
                           <input
                             type="checkbox"
                             checked={formData.verificationMethods.includes('hmac-signature')}
@@ -437,37 +419,27 @@ export default function ByoaRegisterPage() {
                               if (e.target.checked) {
                                 setFormData((prev) => ({
                                   ...prev,
-                                  verificationMethods: [
-                                    ...prev.verificationMethods,
-                                    'hmac-signature',
-                                  ],
+                                  verificationMethods: [...prev.verificationMethods, 'hmac-signature'],
                                 }));
                               } else {
                                 setFormData((prev) => ({
                                   ...prev,
-                                  verificationMethods: prev.verificationMethods.filter(
-                                    (m) => m !== 'hmac-signature'
-                                  ),
+                                  verificationMethods: prev.verificationMethods.filter((m) => m !== 'hmac-signature'),
                                 }));
                               }
                             }}
                             className="w-4 h-4 rounded border border-slate-600 text-cyan-500 focus:ring-cyan-500 accent-cyan-500 mt-1 flex-shrink-0"
                           />
                           <div>
-                            <div className="font-medium text-slate-50">HMAC Webhook Signatures</div>
-                            <div className="text-xs text-slate-400">
-                              Sign all webhook notifications with HMAC-SHA256 for integrity
-                              verification
-                            </div>
+                            <div className="font-medium text-white">HMAC Webhook Signatures</div>
+                            <div className="text-xs text-white/60">Sign all webhook notifications with HMAC-SHA256 for integrity verification</div>
                           </div>
                         </label>
                       </div>
 
-                      <div className="text-xs text-slate-400 bg-slate-800/50 border border-slate-700/50 rounded p-3">
-                        <p className="font-medium text-slate-300 mb-1">Note:</p>
-                        <p>
-                          You can skip verification (no checkboxes selected) for basic integrations.
-                        </p>
+                      <div className="text-xs text-white/60 bg-white/[0.04] border border-white/10 rounded-xl p-3">
+                        <p className="font-medium text-white/80 mb-1">Note:</p>
+                        <p>You can skip verification (no checkboxes selected) for basic integrations.</p>
                       </div>
                     </div>
                   )}
@@ -485,10 +457,8 @@ export default function ByoaRegisterPage() {
                         </div>
                       </div>
 
-                      <h3 className="text-lg font-semibold text-slate-50">Security Credentials</h3>
-                      <p className="text-sm text-slate-400 mb-4">
-                        Don't share these credentials with anyone.
-                      </p>
+                      <h3 className="text-lg font-semibold text-white">Security Credentials</h3>
+                      <p className="text-sm text-white/60 mb-4">Don't share these credentials with anyone.</p>
 
                       <div>
                         <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">

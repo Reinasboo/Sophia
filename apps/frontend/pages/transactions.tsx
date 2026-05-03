@@ -51,14 +51,14 @@ function TransactionRow({ transaction, isExpanded, onToggle }: TransactionRowPro
   return (
     <motion.div
       layout
-      className="border border-slate-700/30 rounded-lg overflow-hidden bg-slate-900/20 backdrop-blur-sm hover:border-cyan-500/30 transition-colors"
+      className="rounded-[1.4rem] border border-white/10 bg-white/[0.05] backdrop-blur-xl p-4 transition duration-300 hover:-translate-y-1 hover:border-cyan-400/30 hover:bg-white/[0.08]"
     >
       <button
         onClick={onToggle}
-        className="w-full flex items-center justify-between p-4 hover:bg-slate-800/50 transition-colors text-left"
+        className="w-full flex items-center justify-between transition-colors text-left"
       >
         <div className="flex items-center gap-4 flex-1 min-w-0">
-          <div className="p-2 rounded-lg bg-slate-800/50">
+          <div className="p-2 rounded-xl bg-white/10">
             <Icon className="w-5 h-5 text-cyan-400" />
           </div>
 
@@ -71,11 +71,11 @@ function TransactionRow({ transaction, isExpanded, onToggle }: TransactionRowPro
                 {transaction.status}
               </span>
             </div>
-            <p className="text-xs text-slate-500 truncate">{transaction.signature || 'Pending'}</p>
+            <p className="text-xs text-white/50 truncate">{transaction.signature || 'Pending'}</p>
           </div>
 
           <div className="text-right">
-            <p className="text-sm font-semibold text-slate-50">
+            <p className="text-sm font-semibold text-white">
               {transaction.amount ? parseFloat(transaction.amount as any).toFixed(2) : '0'} SOL
             </p>
           </div>
@@ -84,7 +84,7 @@ function TransactionRow({ transaction, isExpanded, onToggle }: TransactionRowPro
         <motion.div
           animate={{ rotate: isExpanded ? 180 : 0 }}
           transition={{ duration: 0.2 }}
-          className="ml-2 text-slate-400"
+          className="ml-2 text-white/45"
         >
           <ChevronDown className="w-4 h-4" />
         </motion.div>
@@ -97,45 +97,45 @@ function TransactionRow({ transaction, isExpanded, onToggle }: TransactionRowPro
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="border-t border-slate-700/30 bg-slate-800/30 px-4 py-4"
+            className="border-t border-white/10 bg-transparent px-4 py-4"
           >
             <div className="space-y-3 grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div>
-                <p className="text-xs text-slate-400 mb-1 uppercase tracking-wider">Signature</p>
-                <code className="text-xs text-slate-300 bg-slate-700/50 rounded px-2 py-1 block font-mono break-all">
+                <p className="text-xs text-white/60 font-medium mb-1 uppercase tracking-wider">Signature</p>
+                <code className="text-xs text-white/78 bg-white/10 rounded-xl px-2 py-1 block font-mono break-all">
                   {transaction.signature || '—'}
                 </code>
               </div>
               <div>
-                <p className="text-xs text-slate-400 mb-1 uppercase tracking-wider">Status</p>
-                <p className="text-sm text-slate-300 capitalize">{transaction.status}</p>
+                <p className="text-xs text-white/60 font-medium mb-1 uppercase tracking-wider">Status</p>
+                <p className="text-sm text-white/78 capitalize">{transaction.status}</p>
               </div>
 
               {transaction.recipient && (
                 <div className="lg:col-span-2">
-                  <p className="text-xs text-slate-400 mb-1 uppercase tracking-wider">Recipient</p>
-                  <code className="text-xs text-slate-300 bg-slate-700/50 rounded px-2 py-1 block font-mono break-all">
+                  <p className="text-xs text-white/60 font-medium mb-1 uppercase tracking-wider">Recipient</p>
+                  <code className="text-xs text-white/78 bg-white/10 rounded-xl px-2 py-1 block font-mono break-all">
                     {transaction.recipient}
                   </code>
                 </div>
               )}
               {transaction.createdAt && (
                 <div>
-                  <p className="text-xs text-slate-400 mb-1 uppercase tracking-wider">Created</p>
-                  <p className="text-sm text-slate-300">
+                  <p className="text-xs text-white/60 font-medium mb-1 uppercase tracking-wider">Created</p>
+                  <p className="text-sm text-white/78">
                     {new Date(transaction.createdAt).toLocaleString()}
                   </p>
                 </div>
               )}
             </div>
 
-            <div className="pt-4 mt-4 border-t border-slate-700/30 flex items-center gap-2 flex-wrap">
-              <button className="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-300 hover:text-cyan-300 bg-slate-800/50 hover:bg-slate-700 rounded transition-colors">
+            <div className="pt-4 mt-4 border-t border-white/10 flex items-center gap-2 flex-wrap">
+              <button className="flex items-center gap-2 px-3 py-1.5 text-xs text-white/70 hover:text-cyan-300 bg-white/10 hover:bg-white/20 rounded-lg transition-colors">
                 <Copy className="w-3.5 h-3.5" />
                 Copy Signature
               </button>
               {transaction.signature && (
-                <button className="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-300 hover:text-cyan-300 bg-slate-800/50 hover:bg-slate-700 rounded transition-colors">
+                <button className="flex items-center gap-2 px-3 py-1.5 text-xs text-white/70 hover:text-cyan-300 bg-white/10 hover:bg-white/20 rounded-lg transition-colors">
                   <ExternalLink className="w-3.5 h-3.5" />
                   View on Explorer
                 </button>
@@ -248,11 +248,11 @@ export default function TransactionsPage() {
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: idx * 0.05 }}
-                      className="bg-gradient-to-br from-slate-800/50 to-transparent border border-slate-700/50 rounded-lg p-4 backdrop-blur-sm"
+                      className="rounded-[1.4rem] border border-white/10 bg-white/[0.05] p-4 backdrop-blur-xl"
                     >
                       <div className="flex items-start justify-between">
                         <div>
-                          <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">
+                          <p className="text-xs text-white/60 font-medium uppercase tracking-wider mb-1">
                             {stat.label}
                           </p>
                           <p className={cn('text-xl font-bold', stat.color)}>{stat.value}</p>
@@ -277,14 +277,14 @@ export default function TransactionsPage() {
                   placeholder="Search transactions…"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full bg-slate-800/50 border border-slate-700/50 hover:border-cyan-500/30 focus:border-cyan-500 text-slate-50 placeholder:text-slate-500 rounded-lg px-4 py-2.5 text-sm transition-all backdrop-blur-sm"
+                  className="w-full rounded-xl border border-cyan-400/30 bg-white/5 px-4 py-2.5 text-sm font-semibold text-cyan-100 placeholder:text-white/40 transition hover:border-cyan-300/60 hover:bg-cyan-400/10"
                 />
               </div>
 
               <select
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value)}
-                className="bg-slate-800/50 border border-slate-700/50 hover:border-cyan-500/30 text-slate-50 rounded-lg px-3 py-2.5 text-sm transition-all backdrop-blur-sm cursor-pointer"
+                className="rounded-xl border border-cyan-400/30 bg-white/5 px-3 py-2.5 text-sm font-semibold text-cyan-100 transition hover:border-cyan-300/60 hover:bg-cyan-400/10 cursor-pointer"
               >
                 <option value="all">All Types</option>
                 <option value="transfer">Transfer</option>
@@ -295,7 +295,7 @@ export default function TransactionsPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="bg-slate-800/50 border border-slate-700/50 hover:border-cyan-500/30 text-slate-50 rounded-lg px-3 py-2.5 text-sm transition-all backdrop-blur-sm cursor-pointer"
+                className="rounded-xl border border-cyan-400/30 bg-white/5 px-3 py-2.5 text-sm font-semibold text-cyan-100 transition hover:border-cyan-300/60 hover:bg-cyan-400/10 cursor-pointer"
               >
                 <option value="all">All Statuses</option>
                 <option value="confirmed">Confirmed</option>
@@ -313,19 +313,19 @@ export default function TransactionsPage() {
                 </div>
               </div>
             ) : error ? (
-              <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 text-red-300 backdrop-blur-sm">
+              <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-red-300 backdrop-blur-sm">
                 <p className="font-medium">Error loading transactions</p>
                 <p className="text-sm mt-1">{error}</p>
               </div>
             ) : filteredTxs.length === 0 ? (
               <div className="text-center py-16">
-                <HelpCircle className="w-12 h-12 mx-auto text-slate-500 mb-4 opacity-50" />
-                <p className="text-slate-400 mb-2">No transactions found</p>
-                <p className="text-sm text-slate-500">Try adjusting your search or filters</p>
+                <HelpCircle className="w-12 h-12 mx-auto text-white/45 mb-4 opacity-50" />
+                <p className="text-white/60 mb-2">No transactions found</p>
+                <p className="text-sm text-white/50">Try adjusting your search or filters</p>
               </div>
             ) : (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3">
-                <p className="text-xs text-slate-500 uppercase tracking-wider mb-4">
+                <p className="text-xs text-white/50 font-medium uppercase tracking-wider mb-4">
                   Showing {filteredTxs.length} of {transactions?.length || 0} transactions
                 </p>
 

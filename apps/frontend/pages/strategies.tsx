@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus,
@@ -10,8 +11,11 @@ import {
   Copy,
   Download,
   ChevronDown,
-  HelpCircle,
+  Sparkles,
+  Workflow,
+  Zap,
   Loader2,
+  HelpCircle,
 } from 'lucide-react';
 import { Sidebar, Header } from '@/components';
 import { useStrategies } from '@/lib/hooks';
@@ -25,35 +29,44 @@ interface StrategyCardProps {
   onConfigure: (strategy: StrategyDefinition) => void;
 }
 
+function SectionLabel({ children }: { children: string }) {
+  return (
+    <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-cyan-300">
+      <Sparkles className="h-3.5 w-3.5" />
+      {children}
+    </div>
+  );
+}
+
 function StrategyCard({ strategy, isExpanded, onToggleExpand, onConfigure }: StrategyCardProps) {
   return (
     <motion.div
       layout
-      className="border border-slate-700/30 rounded-lg overflow-hidden bg-slate-900/20 backdrop-blur-sm hover:border-cyan-500/30 transition-colors"
+      className="rounded-[1.4rem] border border-white/10 bg-white/[0.05] p-6 backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:border-cyan-400/30 hover:bg-white/[0.08]"
     >
-      <div className="p-4">
-        <div className="flex items-start justify-between mb-3">
+      <div className="space-y-4">
+        <div className="flex items-start justify-between">
           <div className="flex-1">
-            <h3 className="text-base font-semibold text-slate-50">{strategy.label}</h3>
-            <p className="text-sm text-slate-400 mt-1">{strategy.description}</p>
+            <h3 className="text-lg font-semibold text-white">{strategy.label}</h3>
+            <p className="text-sm text-white/65 mt-1">{strategy.description}</p>
           </div>
-          <span className="text-xs px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 font-medium border border-cyan-500/30 whitespace-nowrap ml-2">
+          <span className="text-xs px-3 py-1 rounded-full bg-cyan-400/20 text-cyan-300 font-semibold border border-cyan-400/30 whitespace-nowrap ml-2">
             {strategy.category || 'Custom'}
           </span>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-3 flex-wrap">
           <button
             onClick={() => onConfigure(strategy)}
-            className="flex-1 min-w-max bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 hover:border-cyan-500/50 text-cyan-300 rounded-lg px-3 py-2 text-sm font-medium transition-all inline-flex items-center justify-center gap-2 hover:bg-cyan-500/30"
+            className="flex-1 min-w-max bg-gradient-brand-accent hover:shadow-[0_0_30px_rgba(255,0,128,0.2)] text-white rounded-xl px-4 py-2.5 text-sm font-semibold transition-all inline-flex items-center justify-center gap-2"
           >
             <Settings className="w-4 h-4" />
             Configure
           </button>
-          <button className="bg-slate-800/50 border border-slate-700/50 hover:border-cyan-500/30 text-slate-300 hover:text-cyan-300 rounded-lg px-3 py-2 transition-all inline-flex items-center gap-2">
+          <button className="bg-white/[0.04] border border-white/10 hover:border-cyan-400/30 hover:bg-white/[0.08] text-white/78 hover:text-cyan-300 rounded-xl px-3 py-2.5 transition-all inline-flex items-center gap-2">
             <Copy className="w-4 h-4" />
           </button>
-          <button className="bg-slate-800/50 border border-slate-700/50 hover:border-cyan-500/30 text-slate-300 hover:text-cyan-300 rounded-lg px-3 py-2 transition-all inline-flex items-center gap-2">
+          <button className="bg-white/[0.04] border border-white/10 hover:border-cyan-400/30 hover:bg-white/[0.08] text-white/78 hover:text-cyan-300 rounded-xl px-3 py-2.5 transition-all inline-flex items-center gap-2">
             <Download className="w-4 h-4" />
           </button>
         </div>
@@ -63,13 +76,13 @@ function StrategyCard({ strategy, isExpanded, onToggleExpand, onConfigure }: Str
         <>
           <button
             onClick={onToggleExpand}
-            className="w-full flex items-center justify-between px-4 py-3 border-t border-slate-700/30 bg-slate-800/20 hover:bg-slate-800/40 transition-colors"
+            className="w-full flex items-center justify-between px-0 py-3 mt-4 border-t border-white/10 transition-colors"
           >
-            <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">
+            <span className="text-xs font-medium text-white/45 uppercase tracking-wider">
               {strategy.fields.length} parameter{strategy.fields.length === 1 ? '' : 's'}
             </span>
             <motion.div animate={{ rotate: isExpanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
-              <ChevronDown className="w-4 h-4 text-slate-400" />
+              <ChevronDown className="w-4 h-4 text-white/45" />
             </motion.div>
           </button>
 
@@ -80,22 +93,22 @@ function StrategyCard({ strategy, isExpanded, onToggleExpand, onConfigure }: Str
                 animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
                 transition={{ duration: 0.2 }}
-                className="border-t border-slate-700/30 bg-slate-900/20 px-4 py-3"
+                className="pt-4"
               >
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {Array.from(strategy.fields).map((field) => (
                     <div
                       key={field.key}
-                      className="border-b border-slate-700/20 pb-2 last:border-0 last:pb-0"
+                      className="border-b border-white/10 pb-3 last:border-0 last:pb-0"
                     >
-                      <p className="text-xs text-slate-400 font-medium mb-1 uppercase tracking-wider">
+                      <p className="text-xs text-white/60 font-medium mb-1 uppercase tracking-wider">
                         {field.label}
                       </p>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-white/50">
                         {field.description || `Type: ${field.type}`}
                       </p>
                       {field.default !== undefined && (
-                        <p className="text-xs text-slate-600 mt-1">
+                        <p className="text-xs text-white/40 mt-1">
                           Default: {JSON.stringify(field.default)}
                         </p>
                       )}
@@ -112,6 +125,7 @@ function StrategyCard({ strategy, isExpanded, onToggleExpand, onConfigure }: Str
 }
 
 export default function StrategiesPage() {
+  const router = useRouter();
   const { strategies, loading, error } = useStrategies();
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
