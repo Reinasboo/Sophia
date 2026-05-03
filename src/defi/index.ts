@@ -12,6 +12,7 @@
 export type { DexAdapter, StakingAdapter, AmmAdapter, LendingAdapter, FarmingAdapter, WrapperAdapter, PriceOracle, DeFiRegistry } from './adapters.js';
 export { JupiterAdapter, RaydiumAdapter, OrcaAdapter } from './dex-adapters.js';
 export { MarinadAdapter, LidoAdapter, JitoAdapter } from './staking-adapters.js';
+export { NativeStakeAdapter, NativeWrapperAdapter } from './native-adapters.js';
 export { SolendAdapter, MangoAdapter, PortFinanceAdapter } from './lending-adapters.js';
 export type {
   SwapIntent,

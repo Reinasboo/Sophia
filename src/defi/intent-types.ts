@@ -4,6 +4,8 @@
  * Intents for all DeFi operations: swaps, staking, lending, farming, etc.
  */
 
+import type { Transaction, VersionedTransaction } from '@solana/web3.js';
+
 /**
  * Swap intent - route swap through best DEX
  */
@@ -143,7 +145,7 @@ export interface WrapTokenIntent {
   sourceMint: string;
   targetMint: string;
   amount: number;
-  protocol: 'portal_bridge' | 'wormhole' | 'allbridge';
+  protocol: 'portal_bridge' | 'wormhole' | 'allbridge' | 'native_wrapper';
 }
 
 /**
@@ -154,7 +156,7 @@ export interface UnwrapTokenIntent {
   wrappedMint: string;
   targetMint: string;
   amount: number;
-  protocol: 'portal_bridge' | 'wormhole' | 'allbridge';
+  protocol: 'portal_bridge' | 'wormhole' | 'allbridge' | 'native_wrapper';
 }
 
 /**
@@ -194,7 +196,7 @@ export type DeFiIntent =
  * Extended intent result with DeFi-specific data
  */
 export interface DeFiIntentResult {
-  signature: string;
+  signature?: string;
   type: DeFiIntent['type'];
   inputAmount?: number;
   outputAmount?: number;
@@ -203,4 +205,5 @@ export interface DeFiIntentResult {
   priceImpact?: number;
   timestamp: Date;
   confirmations: number;
+  transaction?: Transaction | VersionedTransaction;
 }

@@ -12,7 +12,7 @@ config();
 const ConfigSchema = z.object({
   // Solana
   SOLANA_RPC_URL: z.string().url().default('https://api.devnet.solana.com'),
-  SOLANA_NETWORK: z.enum(['devnet', 'testnet']).default('devnet'),
+  SOLANA_NETWORK: z.enum(['devnet', 'testnet', 'mainnet-beta']).default('devnet'),
 
   // Server
   PORT: z.coerce.number().int().positive().default(3001),
@@ -39,6 +39,9 @@ const ConfigSchema = z.object({
   // Privy (Optional - for enterprise wallet infrastructure)
   PRIVY_APP_ID: z.string().optional(),
   PRIVY_SECRET_KEY: z.string().optional(),
+  PRIVY_JWKS_URL: z.string().url().optional(),
+  PRIVY_PUBLIC_KEY_PEM: z.string().optional(),
+  PRIVY_ISSUER: z.string().default('privy.io'),
 });
 
 export type Config = z.infer<typeof ConfigSchema>;
@@ -116,6 +119,7 @@ export const ESTIMATED_TOKEN_TRANSFER_FEE = 0.01;
  */
 export function getExplorerUrl(signature: string): string {
   const config = getConfig();
-  const cluster = `?cluster=${config.SOLANA_NETWORK}`;
+  const cluster =
+    config.SOLANA_NETWORK === 'mainnet-beta' ? '' : `?cluster=${config.SOLANA_NETWORK}`;
   return `https://explorer.solana.com/tx/${signature}${cluster}`;
 }

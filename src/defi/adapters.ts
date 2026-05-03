@@ -6,7 +6,7 @@
  * Kamino, Orca, Serum, Magic Eden, Civic, and others.
  */
 
-import { PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
+import { PublicKey, Transaction, TransactionInstruction, VersionedTransaction } from '@solana/web3.js';
 import type { Result } from '../types/shared.js';
 import type { DeFiIntent, DeFiIntentResult } from './intent-types.js';
 
@@ -22,6 +22,7 @@ export interface SwapQuote {
   routePath: string[]; // Token mints in swap path
   estimatedGas: number;
   protocol: 'jupiter' | 'raydium' | 'orca' | 'serum' | 'other';
+  rawQuote?: Record<string, unknown>;
 }
 
 /**
@@ -42,7 +43,11 @@ export interface DexAdapter {
     quote: SwapQuote;
     userTokenAccount?: PublicKey;
     wrapUnwrap?: boolean;
-  }): Promise<{ ok: boolean; value?: { tx: Transaction; signers: string[] }; error?: Error }>;
+  }): Promise<{
+    ok: boolean;
+    value?: { tx: Transaction | VersionedTransaction; signers: string[] };
+    error?: Error;
+  }>;
 }
 
 /**
@@ -61,7 +66,7 @@ export interface StakingReward {
  */
 export interface StakingAdapter {
   name: string;
-  protocol: 'lido' | 'marinade' | 'jito' | 'socean' | 'sanctum';
+  protocol: 'native' | 'lido' | 'marinade' | 'jito' | 'socean' | 'sanctum';
 
   // Query staking opportunities
   getValidators(): Promise<{ ok: boolean; value?: StakingReward[]; error?: Error }>;

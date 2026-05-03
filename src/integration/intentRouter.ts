@@ -562,6 +562,26 @@ export class IntentRouter {
     }
 
     const result = execResult.value;
+    let signature = result.signature;
+
+    if (result.transaction) {
+      const signResult = this.walletManager.signTransaction(agent.walletId, result.transaction);
+      if (!signResult.ok) {
+        throw signResult.error;
+      }
+
+      const sendResult = await this.solanaClient.sendTransaction(signResult.value);
+      if (!sendResult.ok) {
+        throw sendResult.error;
+      }
+
+      signature = sendResult.value.signature;
+    }
+
+    if (!signature) {
+      throw new Error('DeFi execution did not produce a transaction signature');
+    }
+
     const tracker = getDataTracker();
 
     eventBus.emit({
@@ -574,14 +594,14 @@ export class IntentRouter {
         type: result.type === 'swap' ? 'swap' : 'raw_execute',
         status: 'confirmed',
         amount: result.inputAmount,
-        signature: result.signature,
+          signature,
         createdAt: new Date(),
         confirmedAt: new Date(),
       },
     });
 
     await tracker.indexTransaction({
-      signature: result.signature,
+      signature,
       tenantId,
       walletAddress: walletKeyResult.value.toBase58(),
       type: result.type,
@@ -602,7 +622,7 @@ export class IntentRouter {
     await tracker.recordEvent({
       tenantId,
       eventType: 'intent_executed',
-      entityId: result.signature,
+      entityId: signature,
       entityType: 'transaction',
       data: {
         category: 'defi',
@@ -613,7 +633,7 @@ export class IntentRouter {
     });
 
     return {
-      signature: result.signature,
+      signature,
       type: result.type,
       protocol: result.protocol,
       inputAmount: result.inputAmount,

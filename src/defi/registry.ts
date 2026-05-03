@@ -18,6 +18,7 @@ import {
 import { JupiterAdapter, RaydiumAdapter, OrcaAdapter } from './dex-adapters.js';
 import { MarinadAdapter, LidoAdapter, JitoAdapter } from './staking-adapters.js';
 import { SolendAdapter, MangoAdapter, PortFinanceAdapter } from './lending-adapters.js';
+import { NativeStakeAdapter, NativeWrapperAdapter } from './native-adapters.js';
 import { DeFiIntent, DeFiIntentResult } from './intent-types.js';
 import { createLogger } from '../utils/logger.js';
 import { Result, success, failure } from '../types/shared.js';
@@ -93,10 +94,12 @@ export class DeFiRegistryImpl implements DeFiRegistry {
     this.dex.set('orca', orcaAdapter);
 
     // Register staking adapters
+    const nativeStakeAdapter = new NativeStakeAdapter();
     const marinadAdapter = new MarinadAdapter();
     const lidoAdapter = new LidoAdapter();
     const jitoAdapter = new JitoAdapter();
 
+    this.staking.set('native', nativeStakeAdapter);
     this.staking.set('marinade', marinadAdapter);
     this.staking.set('lido', lidoAdapter);
     this.staking.set('jito', jitoAdapter);
@@ -109,6 +112,9 @@ export class DeFiRegistryImpl implements DeFiRegistry {
     this.lending.set('solend', solendAdapter);
     this.lending.set('mango', mangoAdapter);
     this.lending.set('port_finance', portAdapter);
+
+    const nativeWrapperAdapter = new NativeWrapperAdapter();
+    this.wrapper.set('native_wrapper', nativeWrapperAdapter);
 
     logger.info('DeFi registry initialized with all protocol adapters', {
       dexCount: this.dex.size,
@@ -137,18 +143,67 @@ export class DeFiRegistryImpl implements DeFiRegistry {
           return await this.executeSwap(walletAddress, intent, tenantId);
 
         case 'stake':
+          if (intent.protocol !== 'native' && process.env['NODE_ENV'] === 'production') {
+            return failure(
+              new Error(
+                `Only native staking is production-ready. Protocol "${intent.protocol}" is not live yet.`
+              )
+            );
+          }
           return await this.executeStake(walletAddress, intent, tenantId);
 
+        case 'unstake':
+          if (intent.protocol !== 'native' && process.env['NODE_ENV'] === 'production') {
+            return failure(
+              new Error(
+                `Only native unstaking is production-ready. Protocol "${intent.protocol}" is not live yet.`
+              )
+            );
+          }
+          return await this.executeUnstake(walletAddress, intent, tenantId);
+
+        case 'wrap_token':
+          return await this.executeWrapToken(walletAddress, intent, tenantId);
+
+        case 'unwrap_token':
+          return await this.executeUnwrapToken(walletAddress, intent, tenantId);
+
         case 'liquid_stake':
-          return await this.executeLiquidStake(walletAddress, intent, tenantId);
-
+        case 'provide_liquidity':
+        case 'remove_liquidity':
         case 'deposit_lending':
-          return await this.executeDepositLending(walletAddress, intent, tenantId);
-
+        case 'withdraw_lending':
         case 'borrow_lending':
-          return await this.executeBorrowLending(walletAddress, intent, tenantId);
-
+        case 'repay_lending':
+        case 'farm_deposit':
+        case 'farm_harvest':
         case 'composite_strategy':
+          if (process.env['NODE_ENV'] === 'production') {
+            return failure(
+              new Error(
+                `DeFi intent type "${intent.type}" is not production-ready yet. Only swap, native stake, native unstake, and native wrapping are enabled in production.`
+              )
+            );
+          }
+
+          if (intent.type === 'liquid_stake') {
+            return await this.executeLiquidStake(walletAddress, intent, tenantId);
+          }
+          if (intent.type === 'provide_liquidity' || intent.type === 'remove_liquidity') {
+            return failure(new Error(`Liquidity intent type "${intent.type}" is not live yet`));
+          }
+          if (intent.type === 'deposit_lending') {
+            return await this.executeDepositLending(walletAddress, intent, tenantId);
+          }
+          if (intent.type === 'withdraw_lending' || intent.type === 'repay_lending') {
+            return failure(new Error(`Lending intent type "${intent.type}" is not live yet`));
+          }
+          if (intent.type === 'borrow_lending') {
+            return await this.executeBorrowLending(walletAddress, intent, tenantId);
+          }
+          if (intent.type === 'farm_deposit' || intent.type === 'farm_harvest') {
+            return failure(new Error(`Farming intent type "${intent.type}" is not live yet`));
+          }
           return await this.executeCompositeStrategy(walletAddress, intent, tenantId);
 
         default:
@@ -187,8 +242,9 @@ export class DeFiRegistryImpl implements DeFiRegistry {
           });
 
           if (txResult.ok) {
+            const mockSignature = 'mock-signature-' + Date.now();
             return success({
-              signature: 'mock-signature-' + Date.now(),
+              signature: mockSignature,
               type: 'swap',
               inputAmount: intent.inputAmount,
               outputAmount: quote.outputAmount,
@@ -196,12 +252,138 @@ export class DeFiRegistryImpl implements DeFiRegistry {
               priceImpact: quote.priceImpact,
               timestamp: new Date(),
               confirmations: 0,
+              transaction: txResult.value!.tx,
             });
           }
         }
       }
 
       return failure(new Error('Swap execution failed'));
+    } catch (err) {
+      return failure(err instanceof Error ? err : new Error(String(err)));
+    }
+  }
+
+  private async executeUnstake(
+    walletAddress: PublicKey,
+    intent: any,
+    tenantId: string
+  ): Promise<Result<DeFiIntentResult, Error>> {
+    try {
+      const protocol = intent.protocol ?? 'native';
+      const staking = this.staking.get(protocol);
+
+      if (!staking) {
+        return failure(new Error(`Unstake protocol not supported: ${protocol}`));
+      }
+
+      const stakeAccountAddress = intent.stakeAccountAddress ?? '';
+      if (!stakeAccountAddress) {
+        return failure(new Error('stakeAccountAddress is required for unstake'));
+      }
+
+      const txResult = await staking.unstake({
+        payer: walletAddress,
+        stakeAccountAddress,
+        amount: intent.amount,
+        immediateUnstake: intent.immediateUnstake,
+      });
+
+      if (!txResult.ok) {
+        return failure(txResult.error ?? new Error('Unknown unstake error'));
+      }
+
+      return success({
+        signature: 'mock-sig-' + Date.now(),
+        type: 'unstake',
+        inputAmount: intent.amount,
+        protocol,
+        timestamp: new Date(),
+        confirmations: 0,
+        transaction: txResult.value,
+      });
+    } catch (err) {
+      return failure(err instanceof Error ? err : new Error(String(err)));
+    }
+  }
+
+  private async executeWrapToken(
+    walletAddress: PublicKey,
+    intent: any,
+    tenantId: string
+  ): Promise<Result<DeFiIntentResult, Error>> {
+    try {
+      const protocol = intent.protocol ?? 'native_wrapper';
+      if (protocol !== 'native_wrapper') {
+        return failure(new Error(`Wrap protocol not supported yet: ${protocol}`));
+      }
+
+      const wrapper = this.wrapper.get('native_wrapper');
+      if (!wrapper) {
+        return failure(new Error('Native wrapper adapter not initialized'));
+      }
+
+      const txResult = await wrapper.wrap({
+        payer: walletAddress,
+        sourceMint: intent.sourceMint,
+        targetMint: intent.targetMint,
+        amount: intent.amount,
+      });
+
+      if (!txResult.ok) {
+        return failure(txResult.error ?? new Error('Unknown wrap error'));
+      }
+
+      return success({
+        signature: 'mock-sig-' + Date.now(),
+        type: 'wrap_token',
+        inputAmount: intent.amount,
+        protocol,
+        timestamp: new Date(),
+        confirmations: 0,
+        transaction: txResult.value,
+      });
+    } catch (err) {
+      return failure(err instanceof Error ? err : new Error(String(err)));
+    }
+  }
+
+  private async executeUnwrapToken(
+    walletAddress: PublicKey,
+    intent: any,
+    tenantId: string
+  ): Promise<Result<DeFiIntentResult, Error>> {
+    try {
+      const protocol = intent.protocol ?? 'native_wrapper';
+      if (protocol !== 'native_wrapper') {
+        return failure(new Error(`Unwrap protocol not supported yet: ${protocol}`));
+      }
+
+      const wrapper = this.wrapper.get('native_wrapper');
+      if (!wrapper) {
+        return failure(new Error('Native wrapper adapter not initialized'));
+      }
+
+      const txResult = await wrapper.unwrap({
+        payer: walletAddress,
+        wrappedMint: intent.wrappedMint,
+        targetMint: intent.targetMint,
+        amount: intent.amount,
+      });
+
+      if (!txResult.ok) {
+        return failure(txResult.error ?? new Error('Unknown unwrap error'));
+      }
+
+      return success({
+        signature: 'mock-sig-' + Date.now(),
+        type: 'unwrap_token',
+        outputAmount: intent.amount,
+        protocol,
+        timestamp: new Date(),
+        confirmations: 0,
+        transaction: txResult.value,
+      });
     } catch (err) {
       return failure(err instanceof Error ? err : new Error(String(err)));
     }
@@ -237,6 +419,7 @@ export class DeFiRegistryImpl implements DeFiRegistry {
         protocol,
         timestamp: new Date(),
         confirmations: 0,
+        transaction: txResult.value,
       });
     } catch (err) {
       return failure(err instanceof Error ? err : new Error(String(err)));

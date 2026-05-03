@@ -288,11 +288,8 @@ export async function preflightTransaction(
       signer: publicKey.toBase58(),
     });
 
-    // Sign transaction for simulation
-    transaction.sign(publicKey as any); // Type coercion for simulation only
-
     // Simulate the transaction
-    const simulationResult = await connection.simulateTransaction(transaction);
+    const simulationResult = await connection.simulateTransaction(transaction, []);
 
     if (simulationResult.value.err) {
       logger.warn('Preflight simulation failed', {

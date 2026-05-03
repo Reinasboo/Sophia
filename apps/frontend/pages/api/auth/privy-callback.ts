@@ -15,6 +15,7 @@
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { randomBytes } from 'crypto';
+import { verifyPrivyAccessToken } from '../../../../../src/utils/privy-auth.js';
 
 // H-1 FIX: Simple in-memory rate limiter for auth endpoint
 const authRateLimit = new Map<string, { count: number; resetAt: number }>();
@@ -66,37 +67,37 @@ interface PrivyUserInfo {
 async function verifyPrivyToken(accessToken: string): Promise<PrivyUserInfo | null> {
   if (!accessToken) return null;
 
-  const privyAppId = process.env.PRIVY_APP_ID;
-
-  // SECURITY: Reject all tokens if Privy is not configured in production
-  if (!privyAppId) {
-    const nodeEnv = process.env.NODE_ENV;
-    if (nodeEnv === 'production') {
-      console.error(
-        'SECURITY ERROR: Privy auth endpoint called in production without PRIVY_APP_ID configured'
-      );
+  try {
+    const verified = await verifyPrivyAccessToken(accessToken);
+    if (verified) {
+      return {
+        id: verified.userId,
+        email: verified.email,
+        walletAddress: verified.walletAddress,
+      };
+    }
+  } catch (error) {
+    console.error('SECURITY ERROR: Privy token verification failed', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    if (process.env.NODE_ENV === 'production') {
       return null;
     }
-    // Development: allow stub with warning
-    console.warn(
-      '[DEV] Privy stub enabled without PRIVY_APP_ID. DO NOT USE IN PRODUCTION. Install @privy-io/server-auth and set PRIVY_APP_ID, PRIVY_API_SECRET.'
-    );
   }
 
-  // Phase 2: Implement actual Privy verification
-  // const response = await fetch('https://api.privy.io/v1/verify_token', {
-  //   method: 'POST',
-  //   headers: {
-  //     'Authorization': `Basic ${Buffer.from(`${privyAppId}:${process.env.PRIVY_API_SECRET}`).toString('base64')}`,
-  //     'Content-Type': 'application/json',
-  //   },
-  //   body: JSON.stringify({ token: accessToken }),
-  // });
-  // const data = await response.json();
-  // if (!response.ok || !data.user) return null;
-  // return { id: data.user.id, email: data.user.email };
+  if (process.env.NODE_ENV === 'production') {
+    return null;
+  }
 
-  // For now, stub returns fixed test user (dev only)
+  const allowStub = process.env['ALLOW_INSECURE_PRIVY_STUB'] === 'true';
+  if (!allowStub) {
+    return null;
+  }
+
+  console.warn(
+    '[DEV] Privy stub enabled. Install real JWKS or public key verification for production.'
+  );
+
   return {
     id: 'user_test_' + randomBytes(4).toString('hex'),
     email: 'test@example.com',

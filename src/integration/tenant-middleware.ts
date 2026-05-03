@@ -63,9 +63,20 @@ export function tenantContextMiddleware() {
       }
 
       // For user requests: extract tenant ID from token
-      // Phase 1: Accept any Bearer token as valid (will be improved in Phase 2)
-      // Phase 2: Validate token signature with Privy
+      // In production, insecure token parsing is disabled unless explicitly enabled.
+      const allowInsecureTenantTokens =
+        process.env['NODE_ENV'] !== 'production' ||
+        process.env['ALLOW_INSECURE_TENANT_TOKENS'] === 'true';
+
       if (apiKey) {
+        if (!allowInsecureTenantTokens) {
+          logger.warn('Rejected insecure tenant token format in production', {
+            path: req.path,
+            ip: req.ip,
+          });
+          return next();
+        }
+
         // Extract tenantId from token
         // Format: key_<tenantId>_<random>
         const parts = apiKey.split('_');

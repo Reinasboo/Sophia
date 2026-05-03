@@ -10,7 +10,7 @@
  * - Graceful: a corrupted or missing file never crashes the server
  */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, renameSync, unlinkSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { createLogger } from './logger.js';
 
@@ -38,8 +38,31 @@ export function saveState<T>(key: string, data: T): void {
   try {
     ensureDataDir();
     const filePath = join(DATA_DIR, `${key}.json`);
-    writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
+    const tempFilePath = join(DATA_DIR, `${key}.json.tmp`);
+    writeFileSync(tempFilePath, JSON.stringify(data, null, 2), 'utf8');
+
+    try {
+      renameSync(tempFilePath, filePath);
+    } catch (renameErr) {
+      const code = (renameErr as NodeJS.ErrnoException).code;
+      if ((code === 'EPERM' || code === 'EEXIST') && existsSync(filePath)) {
+        // Windows can reject rename-over-existing; remove destination and retry.
+        unlinkSync(filePath);
+        renameSync(tempFilePath, filePath);
+      } else {
+        throw renameErr;
+      }
+    }
   } catch (err) {
+    // Best-effort cleanup for temp file in case rename/write failed midway.
+    try {
+      const tempFilePath = join(DATA_DIR, `${key}.json.tmp`);
+      if (existsSync(tempFilePath)) {
+        unlinkSync(tempFilePath);
+      }
+    } catch {
+      // Ignore cleanup errors.
+    }
     logger.error('Failed to save state', { key, error: String(err) });
   }
 }
