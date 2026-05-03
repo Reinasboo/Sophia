@@ -106,13 +106,6 @@ export default function TransactionExplorer() {
 
           <main className="flex-1 overflow-auto">
             <div className="p-8 space-y-6">
-              {/* Page Title */}
-              <div>
-                <h1 className="text-3xl font-bold text-white">Transaction Explorer</h1>
-                <p className="text-gray-400 mt-2">
-                  Drill down into transaction details and debugging information
-                </p>
-              </div>
 
               {/* Filter Controls */}
               <div className="flex gap-2 flex-wrap">

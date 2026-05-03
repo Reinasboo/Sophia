@@ -22,14 +22,7 @@ import {
   UserPlus,
   ScrollText,
 } from 'lucide-react';
-import {
-  Sidebar,
-  Header,
-  StatsCards,
-  AgentList,
-  ActivityFeed,
-  CreateAgentModal,
-} from '@/components';
+import { PageLayout, StatsCards, AgentList, ActivityFeed, CreateAgentModal } from '@/components';
 import { useAgents, useStats, useEvents } from '@/lib/hooks';
 
 export default function Dashboard() {
@@ -63,112 +56,8 @@ export default function Dashboard() {
         <title>Dashboard | Sophia</title>
       </Head>
 
-      <div className="flex min-h-screen bg-black">
-        {/* Premium Sidebar */}
-        <div className="fixed left-0 top-0 h-full w-60 bg-surface-elevated border-r border-surface-muted flex flex-col z-40">
-          {/* Logo */}
-          <div className="p-6 border-b border-surface-muted">
-            <div
-              className="flex items-center gap-3 group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary rounded-lg px-2 py-1"
-              onClick={() => router.push('/')}
-            >
-              <div className="w-10 h-10 rounded-lg bg-gradient-brand-accent flex items-center justify-center font-bold text-base text-black group-hover:shadow-lg group-hover:shadow-primary/50 transition-shadow duration-200">
-                Ⓢ
-              </div>
-              <span className="font-bold text-lg text-white group-hover:text-primary transition-colors duration-200">
-                Sophia
-              </span>
-            </div>
-          </div>
-
-          {/* Navigation */}
-          <nav className="flex-1 p-6 space-y-3 overflow-y-auto">
-            <NavItem
-              icon={<Home className="w-5 h-5" />}
-              label="Overview"
-              href="/dashboard"
-              router={router}
-              active={router.pathname === '/dashboard'}
-            />
-            <NavItem
-              icon={<TrendingUp className="w-5 h-5" />}
-              label="Agents"
-              href="/agents"
-              router={router}
-              active={router.pathname === '/agents'}
-            />
-            <NavItem
-              icon={<Plug className="w-5 h-5" />}
-              label="Connected Agents"
-              href="/connected-agents"
-              router={router}
-              active={router.pathname === '/connected-agents'}
-            />
-            <NavItem
-              icon={<UserPlus className="w-5 h-5" />}
-              label="Register BYOA"
-              href="/byoa-register"
-              router={router}
-              active={router.pathname === '/byoa-register'}
-            />
-            <NavItem
-              icon={<Layers className="w-5 h-5" />}
-              label="Strategies"
-              href="/strategies"
-              router={router}
-              active={router.pathname === '/strategies'}
-            />
-            <NavItem
-              icon={<ScrollText className="w-5 h-5" />}
-              label="Intent History"
-              href="/intent-history"
-              router={router}
-              active={router.pathname === '/intent-history'}
-            />
-            <NavItem
-              icon={<ArrowRightLeft className="w-5 h-5" />}
-              label="Transactions"
-              href="/transactions"
-              router={router}
-              active={router.pathname === '/transactions'}
-            />
-          </nav>
-
-          {/* Logout */}
-          <div className="p-6 border-t border-surface-muted">
-            <button
-              onClick={() => router.push('/')}
-              className="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg text-text-tertiary hover:text-text-secondary hover:bg-surface-muted transition-all text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary"
-            >
-              <LogOut className="w-4 h-4" />
-              Exit Dashboard
-            </button>
-          </div>
-        </div>
-
-        {/* Main Content */}
-        <div className="flex-1 ml-60 flex flex-col">
-          {/* Premium Header */}
-          <header className="border-b border-surface-muted bg-surface-secondary backdrop-blur-sm sticky top-0 z-30">
-            <div className="px-8 lg:px-12 py-6 flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold text-white">Overview</h1>
-                <p className="text-sm text-text-secondary mt-1">
-                  Monitor your autonomous agents in real-time
-                </p>
-              </div>
-              <button
-                onClick={() => setShowCreateModal(true)}
-                className="px-6 py-2.5 rounded-lg bg-primary hover:bg-primary-600 font-bold text-sm text-black transition-all duration-200 transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2 focus-visible:ring-offset-black active:scale-95 flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                New Agent
-              </button>
-            </div>
-          </header>
-
-          {/* Main Content */}
-          <main className="flex-1 px-8 lg:px-12 py-8 lg:py-12 overflow-y-auto space-y-8">
+      <PageLayout title="Overview" subtitle="System status, agents, and recent activity">
+        <div className="space-y-8">
             {/* Stats Cards */}
             <section>
               <div className="grid md:grid-cols-4 gap-6">
@@ -325,9 +214,8 @@ export default function Dashboard() {
                 )}
               </section>
             </div>
-          </main>
         </div>
-      </div>
+      </PageLayout>
 
       <CreateAgentModal
         isOpen={showCreateModal}

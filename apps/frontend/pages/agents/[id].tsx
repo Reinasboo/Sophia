@@ -23,7 +23,7 @@ import {
   Activity,
   RefreshCw,
 } from 'lucide-react';
-import { Sidebar, Header, TransactionList, ActivityFeed, AgentSettingsPanel } from '@/components';
+import { PageLayout, TransactionList, ActivityFeed, AgentSettingsPanel } from '@/components';
 import { useAgent } from '@/lib/hooks';
 import * as api from '@/lib/api';
 import {
@@ -71,42 +71,34 @@ export default function AgentDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
-        <Sidebar />
-        <div className="ml-60">
-          <Header title="Agent Details" />
-          <main className="px-8 lg:px-12 py-8">
-            <div className="animate-pulse space-y-6">
-              <div className="h-6 w-24 bg-slate-800/30 rounded-lg" />
-              <div className="bg-slate-800/20 border border-slate-700/50 rounded-lg p-6">
-                <div className="h-20 bg-slate-800/30 rounded-lg" />
-              </div>
+      <PageLayout title="Agent Details">
+        <main className="px-8 lg:px-12 py-8">
+          <div className="animate-pulse space-y-6">
+            <div className="h-6 w-24 bg-slate-800/30 rounded-lg" />
+            <div className="bg-slate-800/20 border border-slate-700/50 rounded-lg p-6">
+              <div className="h-20 bg-slate-800/30 rounded-lg" />
             </div>
-          </main>
-        </div>
-      </div>
+          </div>
+        </main>
+      </PageLayout>
     );
   }
 
   if (error || !data) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
-        <Sidebar />
-        <div className="ml-60">
-          <Header title="Agent Details" />
-          <main className="px-8 lg:px-12 py-8">
-            <div className="bg-slate-800/20 border border-slate-700/50 rounded-lg p-8 text-center backdrop-blur-sm">
-              <p className="text-red-300 mb-4">{error || 'Agent not found'}</p>
-              <Link
-                href="/agents"
-                className="px-4 py-2 text-sm font-medium bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 hover:border-cyan-500/50 text-cyan-300 rounded-lg transition-all inline-flex items-center gap-2 hover:bg-cyan-500/30"
-              >
-                Back to Agents
-              </Link>
-            </div>
-          </main>
-        </div>
-      </div>
+      <PageLayout title="Agent Details">
+        <main className="px-8 lg:px-12 py-8">
+          <div className="bg-slate-800/20 border border-slate-700/50 rounded-lg p-8 text-center backdrop-blur-sm">
+            <p className="text-red-300 mb-4">{error || 'Agent not found'}</p>
+            <Link
+              href="/agents"
+              className="px-4 py-2 text-sm font-medium bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 hover:border-cyan-500/50 text-cyan-300 rounded-lg transition-all inline-flex items-center gap-2 hover:bg-cyan-500/30"
+            >
+              Back to Agents
+            </Link>
+          </div>
+        </main>
+      </PageLayout>
     );
   }
 
@@ -119,21 +111,16 @@ export default function AgentDetailPage() {
         <title>{agent.name} | Agentic Wallet System</title>
       </Head>
 
-      <div className="min-h-screen bg-background">
-        <Sidebar />
-
-        <div className="ml-60">
-          <Header title={agent.name} subtitle={getStrategyDisplayName(agent.strategy)} />
-
-          <main className="px-8 lg:px-12 py-8 space-y-8">
-            {/* Back link */}
-            <Link
-              href="/agents"
-              className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-slate-50 transition-colors duration-200"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Back to Agents
-            </Link>
+      <PageLayout title={agent.name} subtitle={getStrategyDisplayName(agent.strategy)}>
+        <div className="space-y-8">
+          {/* Back link */}
+          <Link
+            href="/agents"
+            className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-slate-50 transition-colors duration-200"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Agents
+          </Link>
 
             {/* Agent Header Card */}
             <motion.div
@@ -353,9 +340,8 @@ export default function AgentDetailPage() {
                 <ActivityFeed events={events} maxItems={10} />
               </motion.div>
             </div>
-          </main>
         </div>
-      </div>
+      </PageLayout>
     </>
   );
 }

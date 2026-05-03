@@ -15,7 +15,7 @@ import {
   EyeOff,
   RefreshCw,
 } from 'lucide-react';
-import { Sidebar, Header } from '@/components';
+import { PageLayout } from '@/components';
 import * as api from '@/lib/api';
 import { cn } from '@/lib/utils';
 
@@ -177,16 +177,8 @@ export default function ByoaRegisterPage() {
         <title>BYOA Agent Registration | Sophia</title>
       </Head>
 
-      <div className="flex min-h-screen bg-black">
-        <Sidebar />
-
-        <div className="flex-1 ml-60">
-          <Header
-            title="Register Agent"
-            subtitle="Bring your own agent and integrate with Sophia"
-          />
-
-          <main className="px-8 lg:px-12 pb-12 max-w-4xl">
+      <PageLayout title="Register Agent" subtitle="Bring your own agent and integrate with Sophia">
+        <div className="max-w-4xl">
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
@@ -692,9 +684,8 @@ export default function ByoaRegisterPage() {
                 )}
               </div>
             </motion.div>
-          </main>
         </div>
-      </div>
+      </PageLayout>
     </>
   );
 }

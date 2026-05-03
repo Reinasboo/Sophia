@@ -4,6 +4,7 @@
 
 export { Sidebar } from './Sidebar';
 export { Header } from './Header';
+export { PageLayout } from './PageLayout';
 export { StatsCards } from './StatsCards';
 export { AgentCard } from './AgentCard';
 export { AgentList } from './AgentList';

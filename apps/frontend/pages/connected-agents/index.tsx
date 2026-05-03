@@ -22,7 +22,7 @@ import {
   Trash2,
   MoreVertical,
 } from 'lucide-react';
-import { Sidebar, Header } from '@/components';
+import { PageLayout } from '@/components';
 import { useConnectedAgents } from '@/lib/hooks';
 import { cn } from '@/lib/utils';
 import type { ExternalAgent } from '@/lib/types';
@@ -200,13 +200,8 @@ export default function ConnectedAgentsPage() {
         <title>Connected Agents | Sophia</title>
       </Head>
 
-      <div className="flex min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
-        <Sidebar />
-
-        <div className="flex-1 ml-60">
-          <Header title="Connected Agents" subtitle="Manage external agents and integrations" />
-
-          <main className="px-8 lg:px-12 pb-12 space-y-6">
+      <PageLayout title="Connected Agents" subtitle="Manage external agents and integrations">
+        <div className="space-y-6">
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
@@ -367,9 +362,8 @@ export default function ConnectedAgentsPage() {
                 </div>
               </motion.div>
             )}
-          </main>
         </div>
-      </div>
+      </PageLayout>
 
       {selectedAgent && (
         <motion.div

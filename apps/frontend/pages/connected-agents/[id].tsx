@@ -26,7 +26,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { useState } from 'react';
-import { Sidebar, Header, IntentHistory } from '@/components';
+import { PageLayout, IntentHistory } from '@/components';
 import { useExternalAgent } from '@/lib/hooks';
 import * as api from '@/lib/api';
 import { cn } from '@/lib/utils';
@@ -103,13 +103,8 @@ export default function ConnectedAgentDetailPage() {
         </title>
       </Head>
 
-      <div className="flex min-h-screen bg-background">
-        <Sidebar />
-
-        <div className="flex-1 ml-60">
-          <Header title={agent?.name ?? 'Loading…'} subtitle="Connected agent detail" />
-
-          <main className="px-8 lg:px-12 pb-12 space-y-8">
+      <PageLayout title={agent?.name ?? 'Loading…'} subtitle="Connected agent detail">
+        <div className="space-y-8">
             {/* Back nav */}
             <Link
               href="/connected-agents"
@@ -272,9 +267,8 @@ export default function ConnectedAgentDetailPage() {
                 </section>
               </>
             )}
-          </main>
         </div>
-      </div>
+      </PageLayout>
     </>
   );
 }

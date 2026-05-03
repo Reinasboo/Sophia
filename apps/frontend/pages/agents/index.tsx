@@ -29,7 +29,7 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/router';
 import { useAuthProtected } from '@/lib/useAuthProtected';
-import { Sidebar, Header, CreateAgentModal, AgentCard } from '@/components';
+import { PageLayout, CreateAgentModal, AgentCard } from '@/components';
 import { useAgents } from '@/lib/hooks';
 import { cn } from '@/lib/utils';
 import type { Agent } from '@/lib/types';
@@ -90,13 +90,8 @@ export default function AgentsPage() {
         <title>Agents | Agentic Wallet</title>
       </Head>
 
-      <div className="flex min-h-screen bg-black">
-        <Sidebar />
-
-        <div className="flex-1 ml-60">
-          <Header title="Agents" subtitle="Manage your autonomous agents and monitor activity" />
-
-          <main className="px-8 lg:px-12 pb-12 space-y-6">
+      <PageLayout title="Agents" subtitle="Manage your autonomous agents and monitor activity">
+        <div className="space-y-6">
             {/* Statistics Row */}
             {!agentsLoading && (
               <motion.div
@@ -257,9 +252,8 @@ export default function AgentsPage() {
                 ))}
               </motion.div>
             )}
-          </main>
         </div>
-      </div>
+      </PageLayout>
 
       <CreateAgentModal
         isOpen={showCreateModal}

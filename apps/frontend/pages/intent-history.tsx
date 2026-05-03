@@ -15,7 +15,7 @@ import {
   TrendingUp,
   HelpCircle,
 } from 'lucide-react';
-import { Sidebar, Header } from '@/components';
+import { PageLayout } from '@/components';
 import { useIntentHistory } from '@/lib/hooks';
 import { cn } from '@/lib/utils';
 import type { IntentHistoryRecord } from '@/lib/types';
@@ -187,13 +187,8 @@ export default function IntentHistoryPage() {
         <title>Intent History | Sophia Agentic Wallet</title>
       </Head>
 
-      <div className="flex min-h-screen bg-black">
-        <Sidebar />
-
-        <div className="flex-1 ml-60">
-          <Header title="Intent History" subtitle="Track all agent intent executions" />
-
-          <main className="px-8 lg:px-12 pb-12 space-y-6">
+      <PageLayout title="Intent History" subtitle="Track all agent intent executions">
+        <div className="space-y-6">
             {!loading && !error && (
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
@@ -306,9 +301,8 @@ export default function IntentHistoryPage() {
                 </AnimatePresence>
               </motion.div>
             )}
-          </main>
         </div>
-      </div>
+      </PageLayout>
     </>
   );
 }

@@ -17,7 +17,7 @@ import {
   Loader2,
   HelpCircle,
 } from 'lucide-react';
-import { Sidebar, Header } from '@/components';
+import { PageLayout } from '@/components';
 import { useStrategies } from '@/lib/hooks';
 import { cn } from '@/lib/utils';
 import type { StrategyDefinition, StrategyFieldDescriptor } from '@/lib/types';
@@ -170,13 +170,8 @@ export default function StrategiesPage() {
         <title>Strategies | Sophia Agentic Wallet</title>
       </Head>
 
-      <div className="flex min-h-screen bg-black">
-        <Sidebar />
-
-        <div className="flex-1 ml-60">
-          <Header title="Strategies" subtitle="Browse and configure agent strategies" />
-
-          <main className="px-8 lg:px-12 pb-12 space-y-6">
+      <PageLayout title="Strategies" subtitle="Browse and configure agent strategies">
+        <div className="space-y-6">
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
@@ -271,9 +266,8 @@ export default function StrategiesPage() {
                 ))}
               </motion.div>
             )}
-          </main>
         </div>
-      </div>
+      </PageLayout>
 
       {selectedConfig && (
         <motion.div

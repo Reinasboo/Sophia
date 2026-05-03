@@ -154,12 +154,6 @@ export default function PerformanceMonitoring() {
 
           <main className="flex-1 overflow-auto">
             <div className="p-8 space-y-8">
-              {/* Page Title */}
-              <div>
-                <h1 className="text-3xl font-bold text-white">Performance Monitoring</h1>
-                <p className="text-gray-400 mt-2">Real-time system metrics and agent performance</p>
-              </div>
-
               {/* Error State */}
               {error && (
                 <div className="bg-red-900/20 border border-red-500 rounded-lg p-4 flex items-start gap-4">

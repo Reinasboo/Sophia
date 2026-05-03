@@ -17,7 +17,7 @@ import {
   Search,
   Loader2,
 } from 'lucide-react';
-import { Sidebar, Header } from '@/components';
+import { PageLayout } from '@/components';
 import { useTransactions } from '@/lib/hooks';
 import { cn } from '@/lib/utils';
 import type { Transaction } from '@/lib/types';
@@ -206,13 +206,8 @@ export default function TransactionsPage() {
         <title>Transactions | Sophia Agentic Wallet</title>
       </Head>
 
-      <div className="flex min-h-screen bg-black">
-        <Sidebar />
-
-        <div className="flex-1 ml-60">
-          <Header title="Transactions" subtitle="Monitor and audit all wallet transactions" />
-
-          <main className="px-8 lg:px-12 pb-12 space-y-6">
+      <PageLayout title="Transactions" subtitle="Monitor and audit all wallet transactions">
+        <div className="space-y-6">
             {!loading && !error && (
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
@@ -343,9 +338,8 @@ export default function TransactionsPage() {
                 </AnimatePresence>
               </motion.div>
             )}
-          </main>
         </div>
-      </div>
+      </PageLayout>
     </>
   );
 }
