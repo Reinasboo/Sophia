@@ -1,7 +1,7 @@
 {
-  "buildCommand": "cd apps/frontend && npm install && npm run build",
+  "buildCommand": "npm ci && cd apps/frontend && npm ci && npm run build",
   "devCommand": "cd apps/frontend && npm run dev",
-  "installCommand": "cd apps/frontend && npm install",
+  "installCommand": "npm ci && cd apps/frontend && npm ci",
   "framework": "nextjs",
   "outputDirectory": "apps/frontend/.next"
 }
