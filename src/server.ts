@@ -42,7 +42,7 @@ import {
   validateBearerToken,
   asyncHandler,
 } from './utils/api-response.js';
-import { getDataTracker, attachDataTracker, handleHeliusWebhook } from './data/index.js';
+import { getDataTracker, attachDataTracker, handleHeliusWebhook, verifyHeliusSignature } from './data/index.js';
 import { getDeFiRegistry } from './defi/index.js';
 
 const logger = createLogger('API');
@@ -76,6 +76,8 @@ function isValidCorsOrigin(origin: string): boolean {
 
 // M-8: Configurable CORS origins via env var
 const config = getConfig();
+const isProductionMainnet =
+  process.env['NODE_ENV'] === 'production' && config.SOLANA_NETWORK === 'mainnet-beta';
 
 // Build list of allowed origins
 const corsOriginsList = config.CORS_ORIGINS
@@ -148,8 +150,15 @@ app.options(
 // Set TRUST_PROXY=0 to disable (e.g. when running without a proxy).
 app.set('trust proxy', process.env['TRUST_PROXY'] !== '0' ? TRUST_PROXY_HOP_COUNT : false);
 
-// Limit request body size to prevent DoS
-app.use(express.json({ limit: REQUEST_BODY_SIZE_LIMIT }));
+// Limit request body size to prevent DoS and preserve raw request bodies for signed webhooks.
+app.use(
+  express.json({
+    limit: REQUEST_BODY_SIZE_LIMIT,
+    verify: (req, _res, buf) => {
+      (req as Request & { rawBody?: string }).rawBody = buf.toString('utf8');
+    },
+  })
+);
 
 // ── API-level rate limiting (per IP) ────────────────────────────────
 const apiRateMap = new Map<string, number[]>();
@@ -1088,6 +1097,17 @@ app.post(
     }
 
     const data = validation.data;
+
+    if (isProductionMainnet && data.supportedIntents.includes('REQUEST_AIRDROP')) {
+      sendError(
+        res,
+        'REQUEST_AIRDROP is disabled in mainnet production.',
+        HTTP_STATUS.BAD_REQUEST,
+        ERROR_CODE.VALIDATION_FAILED
+      );
+      return;
+    }
+
     const registry = getAgentRegistry();
     const binder = getWalletBinder();
 
@@ -1405,6 +1425,16 @@ app.post(
       sendError(
         res,
         validation.error.message,
+        HTTP_STATUS.BAD_REQUEST,
+        ERROR_CODE.VALIDATION_FAILED
+      );
+      return;
+    }
+
+    if (isProductionMainnet && validation.data.type === 'REQUEST_AIRDROP') {
+      sendError(
+        res,
+        'REQUEST_AIRDROP is disabled in mainnet production.',
         HTTP_STATUS.BAD_REQUEST,
         ERROR_CODE.VALIDATION_FAILED
       );
@@ -1787,6 +1817,36 @@ app.post(
   asyncHandler(async (req: Request, res: Response) => {
     try {
       const payload = req.body;
+      const walletManager = getWalletManager();
+      const rawBody = (req as Request & { rawBody?: string }).rawBody ?? JSON.stringify(payload);
+      const webhookSignature =
+        (req.headers['x-helius-signature'] as string | undefined) ??
+        (req.headers['x-helius-webhook-signature'] as string | undefined) ??
+        (req.headers['helius-signature'] as string | undefined) ??
+        '';
+
+      if (process.env['NODE_ENV'] === 'production') {
+        const secret = config.HELIUS_WEBHOOK_SECRET;
+        if (!secret) {
+          sendError(
+            res,
+            'Helius webhook secret is not configured',
+            HTTP_STATUS.INTERNAL_SERVER_ERROR,
+            ERROR_CODE.OPERATION_FAILED
+          );
+          return;
+        }
+
+        if (!verifyHeliusSignature(rawBody, webhookSignature, secret)) {
+          sendError(
+            res,
+            'Invalid Helius webhook signature',
+            HTTP_STATUS.UNAUTHORIZED,
+            ERROR_CODE.UNAUTHORIZED
+          );
+          return;
+        }
+      }
 
       // Validate payload structure
       if (!payload.webhookID || !Array.isArray(payload.events)) {
@@ -1794,12 +1854,10 @@ app.post(
         return;
       }
 
-      // Extract tenant from managed wallets (fallback to "default")
-      // In production, you'd look up which tenant owns each wallet
-      const tenantId = 'default'; // TODO: Implement multi-tenant wallet mapping
-      const managedWallets: string[] = []; // TODO: Load from wallet manager
+      const managedWallets = walletManager.getAllWallets().map((wallet) => wallet.publicKey);
+      const resolveTenantId = (walletAddress: string) => walletManager.getTenantIdForPublicKey(walletAddress);
 
-      const result = await handleHeliusWebhook(payload, tenantId, managedWallets);
+      const result = await handleHeliusWebhook(payload, resolveTenantId, managedWallets);
 
       if (!result.ok) {
         sendError(res, result.error.message, HTTP_STATUS.INTERNAL_SERVER_ERROR, ERROR_CODE.OPERATION_FAILED);

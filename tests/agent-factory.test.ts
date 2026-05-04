@@ -36,13 +36,16 @@ import { getStrategyRegistry } from '../src/agent/strategy-registry.js';
  */
 
 describe('Strategy Registry', () => {
-  it('has 8 realistic DeFi strategies registered', () => {
+  it('has 11 realistic trading strategies registered', () => {
     const registry = getStrategyRegistry();
     const all = registry.getAllDTOs();
     const builtIn = all.filter((s) => s.builtIn);
-    expect(builtIn.length).toBe(8);
+    expect(builtIn.length).toBe(11);
     // Verify the realistic strategies are present
     const names = builtIn.map((s) => s.name).sort();
+    expect(names).toContain('scalping_trading');
+    expect(names).toContain('breakout_trading');
+    expect(names).toContain('mean_reversion_trading');
     expect(names).toContain('dca');
     expect(names).toContain('grid_trading');
     expect(names).toContain('momentum_trading');
@@ -51,6 +54,37 @@ describe('Strategy Registry', () => {
     expect(names).toContain('yield_harvesting');
     expect(names).toContain('portfolio_rebalancer');
     expect(names).toContain('airdrop_farmer');
+  });
+
+  it('validates every built-in strategy with its default params', () => {
+    const registry = getStrategyRegistry();
+    const all = registry.getAllDTOs().filter((strategy) => strategy.builtIn);
+
+    for (const strategy of all) {
+      const result = registry.validateParams(strategy.name, strategy.defaultParams);
+      expect(result.ok).toBe(true);
+    }
+  });
+
+  it('exposes profitability and risk metadata for built-in strategies', () => {
+    const registry = getStrategyRegistry();
+    const all = registry.getAllDTOs().filter((strategy) => strategy.builtIn);
+
+    for (const strategy of all) {
+      expect(strategy.profitObjective).toBeTruthy();
+      expect(strategy.riskLevel).toMatch(/^(low|medium|high)$/);
+      expect(strategy.riskTier).toMatch(/^(degen|high|medium|low)$/);
+      expect(strategy.guardrails.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('orders strategies from degen to low risk', () => {
+    const registry = getStrategyRegistry();
+    const all = registry.getAllDTOs().filter((strategy) => strategy.builtIn);
+    const tiers = all.map((strategy) => strategy.riskTier);
+
+    expect(tiers[0]).toBe('degen');
+    expect(tiers[tiers.length - 1]).toBe('low');
   });
 
   it('validates DCA params', () => {

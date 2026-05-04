@@ -1,46 +1,84 @@
-/**
- * Privy Signin Component - Phase 1 (Placeholder)
- * Brand-compliant: Uses magenta (#ff0080) and cyan (#00d9ff)
- */
 import React from 'react';
+import { usePrivy } from '@privy-io/react-auth';
+import { useRouter } from 'next/router';
+import { persistTenantSession } from '@/lib/privy-provider';
 
 interface PrivySigninProps {
   onSuccess?: () => void;
   onError?: (error: Error) => void;
 }
 
-export const PrivySignin: React.FC<PrivySigninProps> = ({ onSuccess }) => {
-  const [email, setEmail] = React.useState('');
+export const PrivySignin: React.FC<PrivySigninProps> = ({ onSuccess, onError }) => {
+  const router = useRouter();
+  const { ready, authenticated, login, getAccessToken, user } = usePrivy();
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const exchangeInFlight = React.useRef(false);
 
-  const handleEmailSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const exchangePrivyToken = React.useCallback(async () => {
+    if (!ready || !authenticated || exchangeInFlight.current) {
+      return;
+    }
+
+    exchangeInFlight.current = true;
     setLoading(true);
     setError(null);
 
     try {
+      const accessToken = await getAccessToken();
+      if (!accessToken) {
+        throw new Error('Unable to read the Privy access token. Please try again.');
+      }
+
       const response = await fetch('/api/auth/privy-callback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ accessToken: email }),
+        body: JSON.stringify({ accessToken }),
       });
 
-      if (!response.ok) throw new Error('Sign up failed');
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(body?.error || 'Privy sign-in failed');
+      }
 
       const result = await response.json();
-      if (!result.success) throw new Error(result.error || 'Sign up failed');
+      if (!result.success) throw new Error(result.error || 'Privy sign-in failed');
 
       const { tenantId, apiKey } = result;
-      localStorage.setItem('sophia_tenant_id', tenantId);
-      localStorage.setItem('sophia_api_key', apiKey);
+      persistTenantSession({ tenantId, apiKey });
 
       // Let parent handle navigation
       onSuccess?.();
+      router.push('/dashboard');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Sign up failed');
+      const message = err instanceof Error ? err.message : 'Privy sign-in failed';
+      setError(message);
+      onError?.(err instanceof Error ? err : new Error(message));
     } finally {
       setLoading(false);
+      exchangeInFlight.current = false;
+    }
+
+  }, [authenticated, getAccessToken, onError, onSuccess, ready, router]);
+
+  React.useEffect(() => {
+    void exchangePrivyToken();
+  }, [exchangePrivyToken]);
+
+  const handleLogin = async () => {
+    setError(null);
+    setLoading(true);
+
+    try {
+      await login();
+      if (!authenticated) {
+        setLoading(false);
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unable to open Privy login';
+      setError(message);
+      setLoading(false);
+      onError?.(err instanceof Error ? err : new Error(message));
     }
   };
 
@@ -52,27 +90,21 @@ export const PrivySignin: React.FC<PrivySigninProps> = ({ onSuccess }) => {
       </div>
 
       <div className="bg-surface-elevated border border-surface-muted rounded-lg p-6 space-y-6">
-        <form onSubmit={handleEmailSignup} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-text-secondary mb-2">Email Address</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="your@email.com"
-              disabled={loading}
-              className="w-full px-4 py-2 bg-surface-muted border border-surface-muted rounded-lg text-white placeholder-text-tertiary focus:outline-none focus:border-secondary disabled:opacity-50 transition-colors"
-            />
-          </div>
-          {error && <div className="text-sm text-status-error">{error}</div>}
+        <div className="space-y-4">
           <button
-            type="submit"
-            disabled={loading || !email}
+            type="button"
+            onClick={handleLogin}
+            disabled={loading || !ready}
             className="w-full px-4 py-2 bg-primary hover:bg-primary-600 text-black font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
           >
-            {loading ? 'Processing...' : 'Login / Register with Email'}
+            {loading ? 'Opening Privy...' : 'Continue with Privy'}
           </button>
-        </form>
+
+          <p className="text-xs text-text-tertiary text-center">
+            Use Privy to sign in with email, wallet, or social login. Your returned tenant session is stored locally after verification.
+          </p>
+          {error && <div className="text-sm text-status-error">{error}</div>}
+        </div>
 
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
@@ -83,21 +115,14 @@ export const PrivySignin: React.FC<PrivySigninProps> = ({ onSuccess }) => {
           </div>
         </div>
 
-        <div className="space-y-2 opacity-50 pointer-events-none">
-          <button disabled className="w-full px-4 py-2 bg-surface-muted border border-surface-muted text-text-tertiary font-medium rounded-lg cursor-not-allowed">
-            SMS (Phase 2)
-          </button>
-          <button disabled className="w-full px-4 py-2 bg-surface-muted border border-surface-muted text-text-tertiary font-medium rounded-lg cursor-not-allowed">
-            Wallet Connection (Phase 2)
-          </button>
-          <button disabled className="w-full px-4 py-2 bg-surface-muted border border-surface-muted text-text-tertiary font-medium rounded-lg cursor-not-allowed">
-            Social Login (Phase 2)
-          </button>
+        <div className="space-y-2 text-center text-sm text-text-tertiary">
+          <p>Privy handles the login UI, and the access token is exchanged for your tenant session.</p>
+          <p>Connected user: {user?.email?.address ?? 'not signed in'}</p>
         </div>
 
         <div className="text-center text-xs text-text-tertiary">
-          <p>🔒 SOC 2 Type II Compliant • Enterprise Security</p>
-          <p>Your data is encrypted and isolated per tenant</p>
+          <p>Encrypted tenant session • Privy-backed authentication</p>
+          <p>Your data is isolated per tenant after the callback verifies your access token</p>
         </div>
       </div>
     </div>

@@ -160,6 +160,21 @@ export class WalletManager {
   }
 
   /**
+   * Resolve the tenant that owns a wallet public key.
+   */
+  getTenantIdForPublicKey(publicKey: string): string | null {
+    for (const [tenantId, tenantBucket] of this.walletsByTenant.entries()) {
+      for (const wallet of tenantBucket.values()) {
+        if (wallet.publicKey === publicKey) {
+          return tenantId;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  /**
    * Get wallet info by ID
    */
   getWallet(walletId: string): Result<WalletInfo, Error> {

@@ -1,6 +1,7 @@
 import type { AppProps } from 'next/app';
 import { Syne, Space_Mono } from 'next/font/google';
 import { ErrorBoundary } from '@/components';
+import { PrivyProvider } from '@/lib/privy-provider';
 import '@/styles/globals.css';
 
 const syne = Syne({
@@ -20,9 +21,11 @@ const spaceMono = Space_Mono({
 export default function App({ Component, pageProps }: AppProps) {
   return (
     <main className={`${syne.variable} ${spaceMono.variable} font-sans`}>
-      <ErrorBoundary>
-        <Component {...pageProps} />
-      </ErrorBoundary>
+      <PrivyProvider>
+        <ErrorBoundary>
+          <Component {...pageProps} />
+        </ErrorBoundary>
+      </PrivyProvider>
     </main>
   );
 }

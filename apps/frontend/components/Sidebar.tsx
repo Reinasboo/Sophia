@@ -10,6 +10,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { motion } from 'framer-motion';
+import { usePrivy } from '@privy-io/react-auth';
 import {
   LayoutDashboard,
   Bot,
@@ -62,6 +63,15 @@ const navItems = [
 export function Sidebar() {
   const router = useRouter();
   const pathname = router.pathname;
+  const { authenticated } = usePrivy();
+
+  const handleRegisterClick = (e: React.MouseEvent) => {
+    if (!authenticated) {
+      e.preventDefault();
+      router.push('/landing#auth');
+      return;
+    }
+  };
 
   return (
     <aside className="fixed left-0 top-0 bottom-0 w-60 bg-black border-r border-primary/20 flex flex-col backdrop-blur-xl">
@@ -87,12 +97,19 @@ export function Sidebar() {
             const isActive =
               pathname === item.href || (item.href !== '/' && pathname?.startsWith(item.href));
             const Icon = item.icon;
+            const isRegisterLink = item.href === '/byoa-register';
+            const isDisabled = isRegisterLink && !authenticated;
 
             return (
               <li key={item.href}>
                 <Link
-                  href={item.href}
-                  className={cn('nav-link relative', isActive && 'nav-link-active')}
+                  href={isRegisterLink && !authenticated ? '#' : item.href}
+                  onClick={isRegisterLink ? handleRegisterClick : undefined}
+                  className={cn(
+                    'nav-link relative',
+                    isActive && 'nav-link-active',
+                    isDisabled && 'opacity-50 cursor-not-allowed'
+                  )}
                 >
                   {isActive && (
                     <motion.div

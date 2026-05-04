@@ -93,6 +93,20 @@ describe('WalletManager', () => {
     });
   });
 
+  describe('tenant lookup', () => {
+    it('resolves the tenant for a wallet public key', () => {
+      const result = wm.createWallet('tenant-wallet', 'tenant-a');
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+
+      expect(wm.getTenantIdForPublicKey(result.value.publicKey)).toBe('tenant-a');
+    });
+
+    it('returns null for an unknown public key', () => {
+      expect(wm.getTenantIdForPublicKey('11111111111111111111111111111111')).toBeNull();
+    });
+  });
+
   describe('signTransaction', () => {
     it('signs a transaction successfully', async () => {
       const cr = wm.createWallet('sign-test');

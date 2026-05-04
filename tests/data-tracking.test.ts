@@ -5,8 +5,9 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import crypto from 'crypto';
 import { getDataTracker, resetDataTracker } from '../src/data/index.js';
-import { handleHeliusWebhook } from '../src/data/helius-webhook.js';
+import { handleHeliusWebhook, verifyHeliusSignature } from '../src/data/helius-webhook.js';
 import { HeliusWebhookPayload } from '../src/data/helius-webhook.js';
 
 describe('Data Tracking', () => {
@@ -376,6 +377,15 @@ describe('Data Tracking', () => {
   });
 
   describe('Helius Webhook Integration', () => {
+    it('should verify Helius webhook signatures', () => {
+      const payload = '{"webhookID":"webhook-1","timestamp":"2026-05-03T18:00:00.000Z"}';
+      const secret = 'test-webhook-secret-123';
+      const signature = crypto.createHmac('sha256', secret).update(payload).digest('hex');
+
+      expect(verifyHeliusSignature(payload, signature, secret)).toBe(true);
+      expect(verifyHeliusSignature(payload, `${signature}tampered`, secret)).toBe(false);
+    });
+
     it('should parse and index Helius webhook events', async () => {
       const payload: HeliusWebhookPayload = {
         webhookID: 'webhook-1',
@@ -403,7 +413,7 @@ describe('Data Tracking', () => {
         ],
       };
 
-      const result = await handleHeliusWebhook(payload, 'tenant-1', ['fee-payer-addr']);
+      const result = await handleHeliusWebhook(payload, () => 'tenant-1', ['fee-payer-addr']);
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -432,7 +442,7 @@ describe('Data Tracking', () => {
         ],
       };
 
-      const result = await handleHeliusWebhook(payload, 'tenant-1', ['fee-payer']);
+      const result = await handleHeliusWebhook(payload, () => 'tenant-1', ['fee-payer']);
 
       expect(result.ok).toBe(true);
       if (result.ok) {

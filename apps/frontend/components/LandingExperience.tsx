@@ -16,6 +16,7 @@ import {
   Workflow,
 } from 'lucide-react';
 import { PrivySignin } from './PrivySignin';
+import { usePrivy } from '@privy-io/react-auth';
 
 const stats = [
   { label: 'Built-in strategies', value: '4' },
@@ -97,6 +98,15 @@ function SectionLabel({ children }: { children: string }) {
 
 export function LandingExperience() {
   const router = useRouter();
+  const { authenticated } = usePrivy();
+
+  const handleRegisterAgentClick = () => {
+    if (!authenticated) {
+      router.push('/landing#auth');
+      return;
+    }
+    router.push('/byoa-register');
+  };
 
   return (
     <>
@@ -139,7 +149,7 @@ export function LandingExperience() {
                 Login / Register
               </button>
               <button
-                onClick={() => router.push('/byoa-register')}
+                onClick={handleRegisterAgentClick}
                 className="rounded-xl border border-cyan-400/30 bg-white/5 px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:border-cyan-300/60 hover:bg-cyan-400/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
               >
                 Register Agent
@@ -184,7 +194,7 @@ export function LandingExperience() {
                   <ArrowRight className="h-5 w-5" />
                 </button>
                 <button
-                  onClick={() => router.push('/byoa-register')}
+                  onClick={handleRegisterAgentClick}
                   className="inline-flex items-center justify-center gap-3 rounded-2xl border border-cyan-400/30 bg-white/5 px-6 py-4 text-base font-semibold text-cyan-100 transition hover:border-cyan-300/60 hover:bg-cyan-400/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
                 >
                   Register New Agent

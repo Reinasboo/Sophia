@@ -39,6 +39,16 @@ function SectionLabel({ children }: { children: string }) {
   );
 }
 
+const riskTierMeta: Record<
+  StrategyDefinition['riskTier'],
+  { label: string; className: string }
+> = {
+  degen: { label: 'Degen', className: 'bg-rose-500/15 text-rose-300 border-rose-500/30' },
+  high: { label: 'High Risk', className: 'bg-orange-500/15 text-orange-300 border-orange-500/30' },
+  medium: { label: 'Medium Risk', className: 'bg-amber-500/15 text-amber-300 border-amber-500/30' },
+  low: { label: 'Low Risk', className: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' },
+};
+
 function StrategyCard({ strategy, isExpanded, onToggleExpand, onConfigure }: StrategyCardProps) {
   return (
     <motion.div
@@ -57,6 +67,18 @@ function StrategyCard({ strategy, isExpanded, onToggleExpand, onConfigure }: Str
         </div>
 
         <div className="flex items-center gap-3 flex-wrap">
+          <span
+            className={cn(
+              'rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wide',
+              riskTierMeta[strategy.riskTier]?.className ??
+                'bg-slate-500/15 text-slate-300 border-slate-500/30'
+            )}
+          >
+            {riskTierMeta[strategy.riskTier]?.label ?? strategy.riskTier}
+          </span>
+          <span className="rounded-full border border-slate-600/40 bg-slate-700/20 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-300">
+            {strategy.riskLevel}
+          </span>
           <button
             onClick={() => onConfigure(strategy)}
             className="flex-1 min-w-max bg-gradient-brand-accent hover:shadow-[0_0_30px_rgba(255,0,128,0.2)] text-white rounded-xl px-4 py-2.5 text-sm font-semibold transition-all inline-flex items-center justify-center gap-2"
@@ -97,6 +119,9 @@ function StrategyCard({ strategy, isExpanded, onToggleExpand, onConfigure }: Str
                 className="pt-4"
               >
                 <div className="space-y-3">
+                  <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 px-4 py-3 text-sm text-white/75">
+                    Browse the full catalog and choose the strategy you want. Nothing is auto-selected.
+                  </div>
                   {Array.from(strategy.fields).map((field) => (
                     <div
                       key={field.key}
@@ -133,6 +158,11 @@ export default function StrategiesPage() {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [expandedStrategy, setExpandedStrategy] = useState<string | null>(null);
   const [selectedConfig, setSelectedConfig] = useState<StrategyDefinition | null>(null);
+
+  const recommendedStarter = useMemo(
+    () => strategies?.find((s) => s.riskTier === 'low') ?? strategies?.[0],
+    [strategies]
+  );
 
   // Show loading while checking authentication
   if (authLoading) {
@@ -190,6 +220,17 @@ export default function StrategiesPage() {
 
       <PageLayout title="Strategies" subtitle="Browse and configure agent strategies">
         <div className="space-y-6">
+            {recommendedStarter && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 px-5 py-4 text-sm text-slate-300"
+              >
+                Suggested starter: <span className="font-semibold text-emerald-300">{recommendedStarter.label}</span>{' '}
+                if you want a lower-risk entry point. It is surfaced for convenience only and does
+                not auto-select anything.
+              </motion.div>
+            )}
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}

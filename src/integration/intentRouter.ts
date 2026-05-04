@@ -50,6 +50,7 @@ import { eventBus } from '../orchestrator/event-emitter.js';
 import { getDeFiRegistry } from '../defi/index.js';
 import type { DeFiIntent } from '../defi/intent-types.js';
 import { getDataTracker } from '../data/index.js';
+import { getConfig } from '../utils/config.js';
 
 const logger = createLogger('BYOA_INTENT');
 
@@ -651,6 +652,11 @@ export class IntentRouter {
     params: Record<string, unknown>,
     _intentId: string
   ): Promise<Record<string, unknown>> {
+    const config = getConfig();
+    if (process.env['NODE_ENV'] === 'production' || config.SOLANA_NETWORK !== 'devnet') {
+      throw new Error('REQUEST_AIRDROP is disabled outside devnet environments');
+    }
+
     const amount = typeof params['amount'] === 'number' ? params['amount'] : 1;
     if (amount <= 0 || amount > 2) {
       throw new Error('Airdrop amount must be between 0 and 2 SOL');

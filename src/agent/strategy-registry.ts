@@ -53,6 +53,21 @@ export interface StrategyDefinition<TParams extends ZodRawShape = ZodRawShape> {
   readonly paramSchema: ZodObject<TParams>;
   /** Default parameter values */
   readonly defaultParams: Record<string, unknown>;
+  /** Profit orientation for the strategy */
+  readonly profitObjective:
+    | 'capital_preservation'
+    | 'yield_compounding'
+    | 'trend_capture'
+    | 'spread_capture'
+    | 'drawdown_control'
+    | 'portfolio_efficiency'
+    | 'opportunistic_claims';
+  /** Relative risk level used to sort and warn on strategies */
+  readonly riskLevel: 'low' | 'medium' | 'high';
+  /** Trading risk tier used to order strategies from degen to conservative */
+  readonly riskTier: 'degen' | 'high' | 'medium' | 'low';
+  /** Built-in guardrails that keep the strategy aligned with the objective */
+  readonly guardrails: readonly string[];
   /** Whether this is a built-in or user/custom strategy */
   readonly builtIn: boolean;
   /** Icon hint for the frontend (lucide icon name) */
@@ -71,6 +86,17 @@ export interface StrategyDefinitionDTO {
   description: string;
   supportedIntents: string[];
   defaultParams: Record<string, unknown>;
+  profitObjective:
+    | 'capital_preservation'
+    | 'yield_compounding'
+    | 'trend_capture'
+    | 'spread_capture'
+    | 'drawdown_control'
+    | 'portfolio_efficiency'
+    | 'opportunistic_claims';
+  riskLevel: 'low' | 'medium' | 'high';
+  riskTier: 'degen' | 'high' | 'medium' | 'low';
+  guardrails: string[];
   builtIn: boolean;
   icon: string;
   category: string;
@@ -106,6 +132,10 @@ export const DCAStrategyDef: StrategyDefinition = {
     frequencyHours: 24,
     maxBuysPerDay: 2,
   },
+  profitObjective: 'capital_preservation',
+  riskLevel: 'low',
+  riskTier: 'low',
+  guardrails: ['Fixed-size entries', 'Slippage cap', 'Daily buy limit'],
   builtIn: true,
   icon: 'TrendingUp',
   category: 'trading',
@@ -138,6 +168,10 @@ export const GridTradingStrategyDef: StrategyDefinition = {
     maxSlippage: 0.5,
     priceCheckIntervalMins: 30,
   },
+  profitObjective: 'spread_capture',
+  riskLevel: 'medium',
+  riskTier: 'medium',
+  guardrails: ['Trade only in sideways markets', 'Slippage cap', 'Price-check cadence'],
   builtIn: true,
   icon: 'BarChart3',
   category: 'trading',
@@ -172,6 +206,10 @@ export const MomentumTradingStrategyDef: StrategyDefinition = {
     takeProfit: 10,
     stopLoss: 5,
   },
+  profitObjective: 'trend_capture',
+  riskLevel: 'high',
+  riskTier: 'high',
+  guardrails: ['Momentum threshold', 'Stop loss', 'Take profit', 'Concentration cap'],
   builtIn: true,
   icon: 'Zap',
   category: 'trading',
@@ -204,6 +242,10 @@ export const ArbitrageStrategyDef: StrategyDefinition = {
     priceCheckIntervalSecs: 60,
     maxTradesPerHour: 10,
   },
+  profitObjective: 'spread_capture',
+  riskLevel: 'high',
+  riskTier: 'degen',
+  guardrails: ['Minimum spread', 'Slippage cap', 'Hourly trade limit'],
   builtIn: true,
   icon: 'ArrowRightLeft',
   category: 'trading',
@@ -231,6 +273,10 @@ export const StopLossGuardStrategyDef: StrategyDefinition = {
     swapDex: 'jupiter',
     maxSlippage: 0.7,
   },
+  profitObjective: 'drawdown_control',
+  riskLevel: 'low',
+  riskTier: 'low',
+  guardrails: ['Immediate exit trigger', 'Conservative slippage', 'Periodic checks'],
   builtIn: true,
   icon: 'AlertTriangle',
   category: 'utility',
@@ -260,6 +306,10 @@ export const YieldHarvestingStrategyDef: StrategyDefinition = {
     maxSlippage: 0.3,
     harvestFrequencyHours: 12,
   },
+  profitObjective: 'yield_compounding',
+  riskLevel: 'low',
+  riskTier: 'low',
+  guardrails: ['Compound threshold', 'Auto-compound toggle', 'Slippage cap'],
   builtIn: true,
   icon: 'Harvest',
   category: 'income',
@@ -300,6 +350,10 @@ export const PortfolioRebalancerStrategyDef: StrategyDefinition = {
     maxSlippage: 0.5,
     rebalanceFrequencyHours: 168,
   },
+  profitObjective: 'portfolio_efficiency',
+  riskLevel: 'low',
+  riskTier: 'low',
+  guardrails: ['Drift threshold', 'Scheduled rebalancing', 'Slippage cap'],
   builtIn: true,
   icon: 'PieChart',
   category: 'trading',
@@ -330,9 +384,116 @@ export const AirdropFarmerStrategyDef: StrategyDefinition = {
     maxSlippage: 1,
     checkFrequencyHours: 6,
   },
+  profitObjective: 'opportunistic_claims',
+  riskLevel: 'high',
+  riskTier: 'degen',
+  guardrails: ['Minimum claim value', 'Optional immediate sale', 'Slippage cap'],
   builtIn: true,
   icon: 'Gift',
   category: 'income',
+};
+
+/** Scalping Strategy - Fast micro-move capture with tight exits */
+export const ScalpingStrategyDef: StrategyDefinition = {
+  name: 'scalping_trading',
+  label: 'Scalping Trading',
+  description: 'Trade tiny intraday moves with strict slippage and fast exits. Highest execution risk.',
+  supportedIntents: ['swap'],
+  paramSchema: z.object({
+    baseToken: z.string().default('USDC'),
+    targetToken: z.string().default('SOL'),
+    entrySpreadBps: z.number().int().min(1).max(500).default(25),
+    exitSpreadBps: z.number().int().min(1).max(500).default(20),
+    orderSize: z.number().min(10).max(5000).default(100),
+    maxSlippage: z.number().min(0.05).max(2).default(0.2),
+    maxTradesPerHour: z.number().int().min(1).max(100).default(20),
+  }),
+  defaultParams: {
+    baseToken: 'USDC',
+    targetToken: 'SOL',
+    entrySpreadBps: 25,
+    exitSpreadBps: 20,
+    orderSize: 100,
+    maxSlippage: 0.2,
+    maxTradesPerHour: 20,
+  },
+  profitObjective: 'spread_capture',
+  riskLevel: 'high',
+  riskTier: 'degen',
+  guardrails: ['Tiny order size', 'Very tight slippage', 'Hourly trade cap'],
+  builtIn: true,
+  icon: 'TimerReset',
+  category: 'trading',
+};
+
+/** Breakout Strategy - Trade confirmed breakouts with predefined exits */
+export const BreakoutStrategyDef: StrategyDefinition = {
+  name: 'breakout_trading',
+  label: 'Breakout Trading',
+  description: 'Buy strength after a confirmed breakout and use hard stop-losses to cap downside.',
+  supportedIntents: ['swap'],
+  paramSchema: z.object({
+    baseToken: z.string().default('USDC'),
+    watchTokens: z.array(z.string()).default(['SOL', 'JUP', 'ORCA']),
+    breakoutThreshold: z.number().min(0.5).max(20).default(4),
+    confirmationWindowMins: z.number().int().min(1).max(240).default(15),
+    positionSize: z.number().min(10).max(5000).default(100),
+    takeProfit: z.number().min(1).max(100).default(15),
+    stopLoss: z.number().min(1).max(50).default(7),
+    swapDex: z.enum(['jupiter', 'raydium', 'orca']).default('jupiter'),
+  }),
+  defaultParams: {
+    baseToken: 'USDC',
+    watchTokens: ['SOL', 'JUP', 'ORCA'],
+    breakoutThreshold: 4,
+    confirmationWindowMins: 15,
+    positionSize: 100,
+    takeProfit: 15,
+    stopLoss: 7,
+    swapDex: 'jupiter',
+  },
+  profitObjective: 'trend_capture',
+  riskLevel: 'high',
+  riskTier: 'high',
+  guardrails: ['Breakout confirmation', 'Hard stop-loss', 'Take-profit target'],
+  builtIn: true,
+  icon: 'Rocket',
+  category: 'trading',
+};
+
+/** Mean Reversion Strategy - Buy oversold dips and sell into recovery */
+export const MeanReversionStrategyDef: StrategyDefinition = {
+  name: 'mean_reversion_trading',
+  label: 'Mean Reversion Trading',
+  description: 'Buy when a token deviates from its recent average and exit on recovery.',
+  supportedIntents: ['swap'],
+  paramSchema: z.object({
+    baseToken: z.string().default('USDC'),
+    targetToken: z.string().default('SOL'),
+    lookbackPeriodHours: z.number().int().min(1).max(168).default(24),
+    deviationThreshold: z.number().min(0.5).max(20).default(5),
+    positionSize: z.number().min(10).max(5000).default(100),
+    takeProfit: z.number().min(1).max(50).default(8),
+    stopLoss: z.number().min(1).max(20).default(4),
+    swapDex: z.enum(['jupiter', 'raydium', 'orca']).default('jupiter'),
+  }),
+  defaultParams: {
+    baseToken: 'USDC',
+    targetToken: 'SOL',
+    lookbackPeriodHours: 24,
+    deviationThreshold: 5,
+    positionSize: 100,
+    takeProfit: 8,
+    stopLoss: 4,
+    swapDex: 'jupiter',
+  },
+  profitObjective: 'spread_capture',
+  riskLevel: 'medium',
+  riskTier: 'medium',
+  guardrails: ['Deviation threshold', 'Moderate position size', 'Stop-loss and take-profit'],
+  builtIn: true,
+  icon: 'Waypoints',
+  category: 'trading',
 };
 
 // ============================================
@@ -780,6 +941,180 @@ const strategyFieldDescriptors: Record<string, SharedStrategyFieldDescriptor[]> 
       default: 6,
     },
   ],
+  scalping_trading: [
+    {
+      key: 'baseToken',
+      label: 'Base Token',
+      type: 'string',
+      description: 'Token to spend (USDC)',
+      required: false,
+      default: 'USDC',
+    },
+    {
+      key: 'targetToken',
+      label: 'Target Token',
+      type: 'string',
+      description: 'Token to scalp',
+      required: false,
+      default: 'SOL',
+    },
+    {
+      key: 'entrySpreadBps',
+      label: 'Entry Spread (bps)',
+      type: 'number',
+      description: 'How far price must move before entry',
+      required: false,
+      default: 25,
+    },
+    {
+      key: 'exitSpreadBps',
+      label: 'Exit Spread (bps)',
+      type: 'number',
+      description: 'Fast exit target',
+      required: false,
+      default: 20,
+    },
+    {
+      key: 'orderSize',
+      label: 'Order Size',
+      type: 'number',
+      description: 'Per-trade size',
+      required: false,
+      default: 100,
+    },
+    {
+      key: 'maxSlippage',
+      label: 'Max Slippage (%)',
+      type: 'number',
+      description: 'Very tight slippage control',
+      required: false,
+      default: 0.2,
+    },
+    {
+      key: 'maxTradesPerHour',
+      label: 'Max Trades / Hour',
+      type: 'number',
+      description: 'Throttle execution frequency',
+      required: false,
+      default: 20,
+    },
+  ],
+  breakout_trading: [
+    {
+      key: 'baseToken',
+      label: 'Base Token',
+      type: 'string',
+      description: 'Token to spend (USDC)',
+      required: false,
+      default: 'USDC',
+    },
+    {
+      key: 'watchTokens',
+      label: 'Watch Tokens',
+      type: 'string[]',
+      description: 'Tokens to monitor for breakouts',
+      required: false,
+      default: ['SOL', 'JUP', 'ORCA'],
+    },
+    {
+      key: 'breakoutThreshold',
+      label: 'Breakout Threshold (%)',
+      type: 'number',
+      description: 'Required move before entry',
+      required: false,
+      default: 4,
+    },
+    {
+      key: 'confirmationWindowMins',
+      label: 'Confirmation Window (Mins)',
+      type: 'number',
+      description: 'Time window to confirm breakout',
+      required: false,
+      default: 15,
+    },
+    {
+      key: 'positionSize',
+      label: 'Position Size',
+      type: 'number',
+      description: 'Per-trade size',
+      required: false,
+      default: 100,
+    },
+    {
+      key: 'takeProfit',
+      label: 'Take Profit (%)',
+      type: 'number',
+      description: 'Profit target',
+      required: false,
+      default: 15,
+    },
+    {
+      key: 'stopLoss',
+      label: 'Stop Loss (%)',
+      type: 'number',
+      description: 'Hard downside cap',
+      required: false,
+      default: 7,
+    },
+  ],
+  mean_reversion_trading: [
+    {
+      key: 'baseToken',
+      label: 'Base Token',
+      type: 'string',
+      description: 'Token to spend (USDC)',
+      required: false,
+      default: 'USDC',
+    },
+    {
+      key: 'targetToken',
+      label: 'Target Token',
+      type: 'string',
+      description: 'Token to trade',
+      required: false,
+      default: 'SOL',
+    },
+    {
+      key: 'lookbackPeriodHours',
+      label: 'Lookback Period (Hours)',
+      type: 'number',
+      description: 'Recent average window',
+      required: false,
+      default: 24,
+    },
+    {
+      key: 'deviationThreshold',
+      label: 'Deviation Threshold (%)',
+      type: 'number',
+      description: 'How far from average before entry',
+      required: false,
+      default: 5,
+    },
+    {
+      key: 'positionSize',
+      label: 'Position Size',
+      type: 'number',
+      description: 'Per-trade size',
+      required: false,
+      default: 100,
+    },
+    {
+      key: 'takeProfit',
+      label: 'Take Profit (%)',
+      type: 'number',
+      description: 'Recovery target',
+      required: false,
+      default: 8,
+    },
+    {
+      key: 'stopLoss',
+      label: 'Stop Loss (%)',
+      type: 'number',
+      description: 'Hard downside cap',
+      required: false,
+      default: 4,
+    },
+  ],
 };
 
 // ============================================
@@ -789,8 +1124,18 @@ const strategyFieldDescriptors: Record<string, SharedStrategyFieldDescriptor[]> 
 class StrategyRegistry {
   private strategies: Map<string, StrategyDefinition> = new Map();
 
+  private static readonly riskTierOrder: Record<StrategyDefinition['riskTier'], number> = {
+    degen: 0,
+    high: 1,
+    medium: 2,
+    low: 3,
+  };
+
   constructor() {
     // Register built-in trading & DeFi strategies (production-ready)
+    this.register(ScalpingStrategyDef);
+    this.register(BreakoutStrategyDef);
+    this.register(MeanReversionStrategyDef);
     this.register(DCAStrategyDef);
     this.register(GridTradingStrategyDef);
     this.register(MomentumTradingStrategyDef);
@@ -855,17 +1200,26 @@ class StrategyRegistry {
    * Get all strategies as serializable DTOs for API responses.
    */
   getAllDTOs(): StrategyDefinitionDTO[] {
-    return Array.from(this.strategies.values()).map((def) => ({
-      name: def.name,
-      label: def.label,
-      description: def.description,
-      supportedIntents: [...def.supportedIntents],
-      defaultParams: { ...def.defaultParams },
-      builtIn: def.builtIn,
-      icon: def.icon,
-      category: def.category,
-      fields: strategyFieldDescriptors[def.name] ?? [],
-    }));
+    return Array.from(this.strategies.values())
+      .sort(
+        (left, right) =>
+          StrategyRegistry.riskTierOrder[left.riskTier] - StrategyRegistry.riskTierOrder[right.riskTier]
+      )
+      .map((def) => ({
+        name: def.name,
+        label: def.label,
+        description: def.description,
+        supportedIntents: [...def.supportedIntents],
+        defaultParams: { ...def.defaultParams },
+        profitObjective: def.profitObjective,
+        riskLevel: def.riskLevel,
+        riskTier: def.riskTier,
+        guardrails: [...def.guardrails],
+        builtIn: def.builtIn,
+        icon: def.icon,
+        category: def.category,
+        fields: strategyFieldDescriptors[def.name] ?? [],
+      }));
   }
 
   /**
@@ -880,6 +1234,10 @@ class StrategyRegistry {
       description: def.description,
       supportedIntents: [...def.supportedIntents],
       defaultParams: { ...def.defaultParams },
+      profitObjective: def.profitObjective,
+      riskLevel: def.riskLevel,
+      riskTier: def.riskTier,
+      guardrails: [...def.guardrails],
       builtIn: def.builtIn,
       icon: def.icon,
       category: def.category,

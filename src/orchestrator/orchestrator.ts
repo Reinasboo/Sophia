@@ -644,6 +644,25 @@ export class Orchestrator {
    * Execute an airdrop
    */
   private async executeAirdrop(agent: BaseAgent, amount: number): Promise<void> {
+    const config = getConfig();
+    if (process.env['NODE_ENV'] === 'production' || config.SOLANA_NETWORK !== 'devnet') {
+      logger.warn('Airdrop execution blocked outside devnet', {
+        agentId: agent.id,
+        network: config.SOLANA_NETWORK,
+      });
+      this.transactions.push({
+        id: uuidv4(),
+        walletId: agent.getWalletId(),
+        type: 'airdrop',
+        status: 'failed',
+        amount,
+        error: 'Airdrop execution is disabled outside devnet',
+        createdAt: new Date(),
+      });
+      this.trimTransactions();
+      return;
+    }
+
     const walletId = agent.getWalletId();
     const publicKeyResult = this.walletManager.getPublicKey(walletId);
 

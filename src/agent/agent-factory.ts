@@ -14,6 +14,7 @@ import { AgentStrategy, Result, success, failure } from '../types/shared.js';
 import { AgentConfig } from '../types/internal.js';
 import { getStrategyRegistry } from './strategy-registry.js';
 import { createLogger } from '../utils/logger.js';
+import { getConfig } from '../utils/config.js';
 
 const logger = createLogger('AGENT_FACTORY');
 
@@ -33,6 +34,7 @@ export interface CreateAgentOptions {
 export function createAgent(options: CreateAgentOptions): Result<BaseAgent, Error> {
   const { config, walletId, walletPublicKey } = options;
   const registry = getStrategyRegistry();
+  const runtimeConfig = getConfig();
 
   logger.info('Creating agent', {
     name: config.name,
@@ -43,6 +45,17 @@ export function createAgent(options: CreateAgentOptions): Result<BaseAgent, Erro
   // Validate strategy is registered
   if (!registry.has(config.strategy)) {
     return failure(new Error(`Unknown strategy: ${config.strategy}`));
+  }
+
+  const strategyDef = registry.get(config.strategy);
+  if (
+    process.env['NODE_ENV'] === 'production' &&
+    runtimeConfig.SOLANA_NETWORK === 'mainnet-beta' &&
+    strategyDef?.supportedIntents.includes('REQUEST_AIRDROP')
+  ) {
+    return failure(
+      new Error(`Strategy "${config.strategy}" is not allowed in mainnet production (REQUEST_AIRDROP).`)
+    );
   }
 
   // Validate params against schema

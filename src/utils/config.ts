@@ -13,6 +13,7 @@ const ConfigSchema = z.object({
   // Solana
   SOLANA_RPC_URL: z.string().url().default('https://api.devnet.solana.com'),
   SOLANA_NETWORK: z.enum(['devnet', 'testnet', 'mainnet-beta']).default('devnet'),
+  DATABASE_URL: z.string().url().optional(),
 
   // Server
   PORT: z.coerce.number().int().positive().default(3001),
@@ -21,6 +22,7 @@ const ConfigSchema = z.object({
   // Security
   KEY_ENCRYPTION_SECRET: z.string().min(16).default('dev-secret-change-in-production'),
   ADMIN_API_KEY: z.string().min(8).default('dev-admin-key-change-in-production'),
+  HELIUS_WEBHOOK_SECRET: z.string().min(16).optional(),
 
   // CORS
   CORS_ORIGINS: z.string().default(''),
@@ -42,6 +44,14 @@ const ConfigSchema = z.object({
   PRIVY_JWKS_URL: z.string().url().optional(),
   PRIVY_PUBLIC_KEY_PEM: z.string().optional(),
   PRIVY_ISSUER: z.string().default('privy.io'),
+  // GMGN integration (optional)
+  GMGN_ENABLED: z.enum(['true', 'false']).default('false'),
+  GMGN_CLI_PATH: z.string().optional(),
+  GMGN_POLL_INTERVAL_MS: z.coerce.number().int().positive().default(60000),
+  GMGN_DEFAULT_TENANT: z.string().default('__global__'),
+  // If true, create pending `swap` intents from GMGN signals (does NOT auto-execute)
+  GMGN_CREATE_INTENTS: z.enum(['true', 'false']).default('false'),
+  GMGN_INTENT_AGENT_ID: z.string().default('gmgn-signal-agent'),
 });
 
 export type Config = z.infer<typeof ConfigSchema>;
@@ -90,6 +100,35 @@ export function getConfig(): Config {
       '⚠ WARNING: Using default ADMIN_API_KEY. ' +
         'Set a strong, unique value for any non-local deployment.'
     );
+  }
+
+  if (process.env['NODE_ENV'] === 'production' && !result.data.HELIUS_WEBHOOK_SECRET) {
+    throw new Error('CRITICAL: HELIUS_WEBHOOK_SECRET must be set in production to verify Helius webhook signatures.');
+  }
+
+  if (process.env['NODE_ENV'] === 'production' && !result.data.DATABASE_URL) {
+    throw new Error('CRITICAL: DATABASE_URL must be set in production for persistent indexing and audit trails.');
+  }
+
+  // Enforce mainnet readiness in production
+  if (process.env['NODE_ENV'] === 'production') {
+    // Network must be mainnet-beta
+    if (result.data.SOLANA_NETWORK !== 'mainnet-beta') {
+      throw new Error(
+        'CRITICAL: SOLANA_NETWORK must be set to "mainnet-beta" in production. Set SOLANA_NETWORK=mainnet-beta'
+      );
+    }
+
+    // Disallow known devnet RPC defaults in production
+    const rpc = result.data.SOLANA_RPC_URL || '';
+    const devnetIndicators = ['devnet', 'api.devnet.solana.com', 'devnet.solana.com'];
+    for (const marker of devnetIndicators) {
+      if (rpc.includes(marker)) {
+        throw new Error(
+          `CRITICAL: SOLANA_RPC_URL contains devnet (${marker}). Use a mainnet RPC provider URL in production.`
+        );
+      }
+    }
   }
 
   cachedConfig = result.data;

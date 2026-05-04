@@ -1,5 +1,8 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/router';
+import { usePrivy } from '@privy-io/react-auth';
 import Head from 'next/head';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useMemo } from 'react';
@@ -70,6 +73,33 @@ const AVAILABLE_INTENTS: { value: SupportedIntentType; label: string; descriptio
 ];
 
 export default function ByoaRegisterPage() {
+  const router = useRouter();
+  const { authenticated, ready } = usePrivy();
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (ready && !authenticated) {
+      router.push('/landing#auth');
+    }
+  }, [authenticated, ready, router]);
+
+  // Don't render anything while checking auth
+  if (!ready || !authenticated) {
+    return (
+      <>
+        <Head>
+          <title>BYOA Agent Registration | Sophia</title>
+        </Head>
+        <div className="min-h-screen bg-black flex items-center justify-center">
+          <div className="text-white text-center">
+            <div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <p>Loading...</p>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   const [currentStep, setCurrentStep] = useState<Step>('type');
   const [isRegistering, setIsRegistering] = useState(false);
   const [formData, setFormData] = useState<FormData>({

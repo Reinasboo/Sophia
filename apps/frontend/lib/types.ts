@@ -98,6 +98,17 @@ export interface StrategyDefinition {
   readonly description: string;
   readonly supportedIntents: readonly string[];
   readonly defaultParams: Record<string, unknown>;
+  readonly profitObjective:
+    | 'capital_preservation'
+    | 'yield_compounding'
+    | 'trend_capture'
+    | 'spread_capture'
+    | 'drawdown_control'
+    | 'portfolio_efficiency'
+    | 'opportunistic_claims';
+  readonly riskLevel: 'low' | 'medium' | 'high';
+  readonly riskTier: 'degen' | 'high' | 'medium' | 'low';
+  readonly guardrails: readonly string[];
   readonly builtIn: boolean;
   readonly icon: string;
   readonly category: 'income' | 'distribution' | 'trading' | 'utility' | 'custom';

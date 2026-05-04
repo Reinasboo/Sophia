@@ -47,6 +47,16 @@ const iconMap: Record<string, React.ElementType> = {
   Layers,
 };
 
+const riskTierMeta: Record<
+  StrategyDefinition['riskTier'],
+  { label: string; className: string }
+> = {
+  degen: { label: 'Degen', className: 'bg-rose-500/15 text-rose-300 border-rose-500/30' },
+  high: { label: 'High Risk', className: 'bg-orange-500/15 text-orange-300 border-orange-500/30' },
+  medium: { label: 'Medium Risk', className: 'bg-amber-500/15 text-amber-300 border-amber-500/30' },
+  low: { label: 'Low Risk', className: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' },
+};
+
 /* ---------- Step indicator ---------- */
 function StepIndicator({ current, total }: { current: number; total: number }) {
   return (
@@ -200,6 +210,11 @@ export function CreateAgentModal({ isOpen, onClose, onCreated }: CreateAgentModa
   const currentStrategyDef = useMemo(
     () => strategies.find((s) => s.name === selectedStrategy),
     [strategies, selectedStrategy]
+  );
+
+  const recommendedStarter = useMemo(
+    () => strategies.find((s) => s.riskTier === 'low') ?? strategies[0],
+    [strategies]
   );
 
   // Reset form when modal opens
@@ -382,7 +397,18 @@ export function CreateAgentModal({ isOpen, onClose, onCreated }: CreateAgentModa
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -20 }}
                       transition={{ duration: 0.15 }}
+                      className="space-y-4"
                     >
+                      {recommendedStarter && (
+                        <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-3 text-sm text-slate-300">
+                          Suggested starter: <span className="font-semibold text-emerald-300">{recommendedStarter.label}</span>{' '}
+                          if you want a lower-risk default. This is only a hint, not a selection.
+                        </div>
+                      )}
+                      <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 px-4 py-3 text-sm text-slate-300">
+                        Pick the strategy you want. Auto-pick can be added later as a helper, but it
+                        will not override your choice.
+                      </div>
                       {strategiesLoading ? (
                         <p className="text-slate-400 text-center py-8">Loading strategies…</p>
                       ) : (
@@ -429,6 +455,20 @@ export function CreateAgentModal({ isOpen, onClose, onCreated }: CreateAgentModa
                                 <p className="text-xs text-slate-400 line-clamp-2">
                                   {s.description}
                                 </p>
+                                <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
+                                  <span
+                                    className={cn(
+                                      'rounded-full border px-2 py-0.5 font-semibold uppercase tracking-wide',
+                                      riskTierMeta[s.riskTier]?.className ??
+                                        'bg-slate-500/15 text-slate-300 border-slate-500/30'
+                                    )}
+                                  >
+                                    {riskTierMeta[s.riskTier]?.label ?? s.riskTier}
+                                  </span>
+                                  <span className="rounded-full border border-slate-600/40 bg-slate-700/20 px-2 py-0.5 font-semibold uppercase tracking-wide text-slate-300">
+                                    {s.riskLevel}
+                                  </span>
+                                </div>
                               </button>
                             );
                           })}

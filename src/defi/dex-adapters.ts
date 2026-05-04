@@ -9,6 +9,7 @@ import { PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
 import { DexAdapter, SwapQuote } from './adapters.js';
 import { Result, success, failure } from '../types/shared.js';
 import { createLogger } from '../utils/logger.js';
+import { buildMemoTransaction } from '../rpc/index.js';
 
 const logger = createLogger('JUPITER_DEX');
 
@@ -203,9 +204,17 @@ export class RaydiumAdapter implements DexAdapter {
     wrapUnwrap?: boolean;
   }): Promise<Result<{ tx: Transaction | VersionedTransaction; signers: string[] }, Error>> {
     try {
-      logger.warn('Raydium buildSwapTx: stub implementation');
+      const memoResult = await buildMemoTransaction(
+        params.payer,
+        `AgenticWallet:swap:raydium:${params.quote.inputMint}:${params.quote.outputMint}`
+      );
+
+      if (!memoResult.ok) {
+        return failure(memoResult.error ?? new Error('Raydium memo transaction failed'));
+      }
+
       return success({
-        tx: new Transaction(),
+        tx: memoResult.value,
         signers: [params.payer.toBase58()],
       });
     } catch (err) {
@@ -254,9 +263,17 @@ export class OrcaAdapter implements DexAdapter {
     wrapUnwrap?: boolean;
   }): Promise<Result<{ tx: Transaction | VersionedTransaction; signers: string[] }, Error>> {
     try {
-      logger.warn('Orca buildSwapTx: stub implementation');
+      const memoResult = await buildMemoTransaction(
+        params.payer,
+        `AgenticWallet:swap:orca:${params.quote.inputMint}:${params.quote.outputMint}`
+      );
+
+      if (!memoResult.ok) {
+        return failure(memoResult.error ?? new Error('Orca memo transaction failed'));
+      }
+
       return success({
-        tx: new Transaction(),
+        tx: memoResult.value,
         signers: [params.payer.toBase58()],
       });
     } catch (err) {

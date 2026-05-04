@@ -17,6 +17,7 @@
 import { createLogger } from '../utils/logger.js';
 import { Result, success, failure } from '../types/shared.js';
 import { getDataTracker } from './tracker.js';
+import crypto from 'crypto';
 
 const logger = createLogger('HELIUS_WEBHOOK');
 
@@ -74,18 +75,38 @@ export interface HeliusWebhookPayload {
  */
 export async function handleHeliusWebhook(
   payload: HeliusWebhookPayload,
-  tenantId: string,
+  resolveTenantId: (walletAddress: string) => string | null,
   managedWallets: string[]
 ): Promise<Result<{ indexed: number; errors: number }, Error>> {
   try {
     const tracker = getDataTracker();
     let indexed = 0;
     let errors = 0;
+    const managedWalletSet = new Set(managedWallets);
 
     // Update webhook health
     tracker.updateWebhookTime();
 
     for (const tx of payload.events) {
+      const tenantId = resolveTenantId(tx.feePayer);
+      if (!tenantId) {
+        errors++;
+        logger.warn('Skipping webhook event for unmanaged wallet', {
+          signature: tx.signature.slice(0, 20),
+          feePayer: tx.feePayer,
+        });
+        continue;
+      }
+
+      if (managedWalletSet.size > 0 && !managedWalletSet.has(tx.feePayer)) {
+        errors++;
+        logger.warn('Skipping webhook event outside managed wallet set', {
+          signature: tx.signature.slice(0, 20),
+          feePayer: tx.feePayer,
+        });
+        continue;
+      }
+
       // Determine transaction type
       const txType = classifyTransaction(tx) as 'transfer_sol' | 'transfer_token' | 'swap' | 'stake' | 'unstake' | 'unknown';
 
@@ -227,7 +248,26 @@ export function verifyHeliusSignature(
   signature: string,
   secret: string
 ): boolean {
-  // Implementation: use HMAC-SHA256 with secret
-  // For now, return true — implement in production
-  return true;
+  if (!payload || !signature || !secret) {
+    return false;
+  }
+
+  const normalizedSignature = signature.trim().replace(/^sha256=/i, '');
+  const expectedHex = crypto.createHmac('sha256', secret).update(payload).digest('hex');
+  const expectedBase64 = crypto.createHmac('sha256', secret).update(payload).digest('base64');
+
+  for (const expected of [expectedHex, expectedBase64]) {
+    const expectedBuffer = Buffer.from(expected, 'utf8');
+    const signatureBuffer = Buffer.from(normalizedSignature, 'utf8');
+
+    if (expectedBuffer.length !== signatureBuffer.length) {
+      continue;
+    }
+
+    if (crypto.timingSafeEqual(expectedBuffer, signatureBuffer)) {
+      return true;
+    }
+  }
+
+  return false;
 }

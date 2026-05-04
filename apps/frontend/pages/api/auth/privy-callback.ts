@@ -190,10 +190,17 @@ export default async function handler(
     const privyUserInfo = await verifyPrivyToken(accessToken);
 
     if (!privyUserInfo) {
-      logger.warn('Privy token verification failed');
+      logger.warn('Privy token verification failed', {
+        hasVerifier:
+          Boolean(process.env['PRIVY_JWKS_URL']) || Boolean(process.env['PRIVY_PUBLIC_KEY_PEM']),
+        env: process.env.NODE_ENV,
+      });
       return res.status(401).json({
         success: false,
-        error: 'Invalid Privy token',
+        error:
+          process.env.NODE_ENV === 'production'
+            ? 'Invalid Privy token'
+            : 'Privy sign-in is not configured. In development, enter an email address to use the local fallback or set PRIVY_JWKS_URL / PRIVY_PUBLIC_KEY_PEM.',
       });
     }
 
