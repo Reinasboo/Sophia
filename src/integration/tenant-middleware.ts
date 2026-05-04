@@ -13,19 +13,16 @@ import { Request, Response, NextFunction } from 'express';
 import { createLogger } from '../utils/logger.js';
 import { TenantContext } from '../types/index.js';
 import { getConfig } from '../utils/config.js';
-import { HTTP_STATUS, ERROR_CODE, sendError } from '../utils/api-response.js';
 
 const logger = createLogger('TENANT_MIDDLEWARE');
 
 /**
  * Extend Express Request to include tenant context
  */
-declare global {
-  namespace Express {
-    interface Request {
-      tenantContext?: TenantContext;
-      isAdmin?: boolean;
-    }
+declare module 'express-serve-static-core' {
+  interface Request {
+    tenantContext?: TenantContext;
+    isAdmin?: boolean;
   }
 }
 
