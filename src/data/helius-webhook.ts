@@ -108,7 +108,13 @@ export async function handleHeliusWebhook(
       }
 
       // Determine transaction type
-      const txType = classifyTransaction(tx) as 'transfer_sol' | 'transfer_token' | 'swap' | 'stake' | 'unstake' | 'unknown';
+      const txType = classifyTransaction(tx) as
+        | 'transfer_sol'
+        | 'transfer_token'
+        | 'swap'
+        | 'stake'
+        | 'unstake'
+        | 'unknown';
 
       // Extract transfers
       const { recipients, amounts, mints } = extractTransfers(tx);
@@ -213,9 +219,11 @@ function classifyTransaction(tx: HeliusTransaction): string {
 /**
  * Extract transfer recipients, amounts, and mints
  */
-function extractTransfers(
-  tx: HeliusTransaction
-): { recipients: string[]; amounts: number[]; mints: string[] } {
+function extractTransfers(tx: HeliusTransaction): {
+  recipients: string[];
+  amounts: number[];
+  mints: string[];
+} {
   const recipients: string[] = [];
   const amounts: number[] = [];
   const mints: string[] = [];
@@ -243,11 +251,7 @@ function extractTransfers(
  * Verify Helius webhook signature (optional security)
  * Helius can sign webhooks; verify with shared secret
  */
-export function verifyHeliusSignature(
-  payload: string,
-  signature: string,
-  secret: string
-): boolean {
+export function verifyHeliusSignature(payload: string, signature: string, secret: string): boolean {
   if (!payload || !signature || !secret) {
     return false;
   }

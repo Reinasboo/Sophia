@@ -55,7 +55,10 @@ class MockPriceOracle implements PriceOracle {
     };
   }
 
-  async getPriceHistory(mint: string, timeframe: '1h' | '1d' | '7d'): Promise<{
+  async getPriceHistory(
+    mint: string,
+    timeframe: '1h' | '1d' | '7d'
+  ): Promise<{
     ok: boolean;
     value?: Array<{ timestamp: Date; price: number }>;
     error?: Error;
@@ -159,10 +162,20 @@ export class DeFiRegistryImpl implements DeFiRegistry {
           return await this.executeLiquidStake(walletAddress, intent, tenantId);
 
         case 'provide_liquidity':
-          return await this.executeLiquidityIntent(walletAddress, intent, tenantId, 'provide_liquidity');
+          return await this.executeLiquidityIntent(
+            walletAddress,
+            intent,
+            tenantId,
+            'provide_liquidity'
+          );
 
         case 'remove_liquidity':
-          return await this.executeLiquidityIntent(walletAddress, intent, tenantId, 'remove_liquidity');
+          return await this.executeLiquidityIntent(
+            walletAddress,
+            intent,
+            tenantId,
+            'remove_liquidity'
+          );
 
         case 'deposit_lending':
           return await this.executeDepositLending(walletAddress, intent, tenantId);
@@ -202,7 +215,10 @@ export class DeFiRegistryImpl implements DeFiRegistry {
     tenantId: string
   ): Promise<Result<DeFiIntentResult, Error>> {
     try {
-      const preferredDexes = Array.isArray(intent.dexes) && intent.dexes.length > 0 ? intent.dexes : ['jupiter', 'raydium', 'orca'];
+      const preferredDexes =
+        Array.isArray(intent.dexes) && intent.dexes.length > 0
+          ? intent.dexes
+          : ['jupiter', 'raydium', 'orca'];
 
       for (const dexName of preferredDexes) {
         const dex = this.dex.get(dexName);
@@ -611,7 +627,8 @@ export class DeFiRegistryImpl implements DeFiRegistry {
     return success({
       signature: 'mock-sig-' + Date.now(),
       type,
-      inputAmount: type === 'provide_liquidity' ? intent.amountA + intent.amountB : intent.lpTokenAmount,
+      inputAmount:
+        type === 'provide_liquidity' ? intent.amountA + intent.amountB : intent.lpTokenAmount,
       protocol: intent.protocol,
       timestamp: new Date(),
       confirmations: 0,

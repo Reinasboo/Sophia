@@ -258,7 +258,11 @@ export class ServicePolicyManager {
   /**
    * Get usage record for a wallet + service
    */
-  getUsageRecord(walletId: string, serviceId: string, tenantId?: string): Result<ServiceUsageRecord, Error> {
+  getUsageRecord(
+    walletId: string,
+    serviceId: string,
+    tenantId?: string
+  ): Result<ServiceUsageRecord, Error> {
     const usage = this.usage.get(this.usageKey(walletId, serviceId, tenantId));
     if (!usage) {
       return failure(new Error(`No usage record found for ${walletId}:${serviceId}`));
@@ -284,7 +288,11 @@ export class ServicePolicyManager {
   /**
    * Internal: get or create usage record
    */
-  private getOrCreateUsage(walletId: string, serviceId: string, tenantId?: string): ServiceUsageRecord {
+  private getOrCreateUsage(
+    walletId: string,
+    serviceId: string,
+    tenantId?: string
+  ): ServiceUsageRecord {
     const key = this.usageKey(walletId, serviceId, tenantId);
     let usage = this.usage.get(key);
 

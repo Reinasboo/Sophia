@@ -87,13 +87,17 @@ function IntentRow({ intent, isExpanded, onToggle }: IntentRowProps) {
             <div className="space-y-3">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div>
-                  <p className="text-xs text-white/60 font-medium mb-1 uppercase tracking-wider">Intent ID</p>
+                  <p className="text-xs text-white/60 font-medium mb-1 uppercase tracking-wider">
+                    Intent ID
+                  </p>
                   <code className="text-xs text-white/78 bg-white/10 rounded-xl px-2 py-1 block font-mono break-all">
                     {intent.intentId}
                   </code>
                 </div>
                 <div>
-                  <p className="text-xs text-white/60 font-medium mb-1 uppercase tracking-wider">Created</p>
+                  <p className="text-xs text-white/60 font-medium mb-1 uppercase tracking-wider">
+                    Created
+                  </p>
                   <p className="text-sm text-white/78">
                     {new Date(intent.createdAt).toLocaleString()}
                   </p>
@@ -102,7 +106,9 @@ function IntentRow({ intent, isExpanded, onToggle }: IntentRowProps) {
 
               {intent.params && Object.keys(intent.params).length > 0 && (
                 <div>
-                  <p className="text-xs text-white/60 font-medium mb-2 uppercase tracking-wider">Parameters</p>
+                  <p className="text-xs text-white/60 font-medium mb-2 uppercase tracking-wider">
+                    Parameters
+                  </p>
                   <div className="bg-white/10 rounded-xl p-3 text-xs">
                     <pre className="text-white/78 font-mono overflow-x-auto whitespace-pre-wrap break-words">
                       {JSON.stringify(intent.params, null, 2)}
@@ -113,7 +119,9 @@ function IntentRow({ intent, isExpanded, onToggle }: IntentRowProps) {
 
               {intent.result && Object.keys(intent.result).length > 0 && (
                 <div>
-                  <p className="text-xs text-white/60 font-medium mb-2 uppercase tracking-wider">Result</p>
+                  <p className="text-xs text-white/60 font-medium mb-2 uppercase tracking-wider">
+                    Result
+                  </p>
                   <div className="bg-white/10 rounded-xl p-3 text-xs">
                     <pre className="text-white/78 font-mono overflow-x-auto whitespace-pre-wrap break-words">
                       {JSON.stringify(intent.result, null, 2)}
@@ -124,7 +132,9 @@ function IntentRow({ intent, isExpanded, onToggle }: IntentRowProps) {
 
               {intent.error && (
                 <div>
-                  <p className="text-xs text-white/60 font-medium mb-2 uppercase tracking-wider">Error</p>
+                  <p className="text-xs text-white/60 font-medium mb-2 uppercase tracking-wider">
+                    Error
+                  </p>
                   <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 text-xs">
                     <p className="text-red-300">{intent.error}</p>
                   </div>
@@ -207,118 +217,116 @@ export default function IntentHistoryPage() {
 
       <PageLayout title="Intent History" subtitle="Track all agent intent executions">
         <div className="space-y-6">
-            {!loading && !error && (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="grid grid-cols-1 md:grid-cols-3 gap-3"
-              >
-                {[
-                  { label: 'Total', value: stats.total, icon: TrendingUp, color: 'text-cyan-400' },
-                  {
-                    label: 'Executed',
-                    value: stats.executed,
-                    icon: CheckCircle2,
-                    color: 'text-emerald-400',
-                  },
-                  {
-                    label: 'Rejected',
-                    value: stats.rejected,
-                    icon: XCircle,
-                    color: 'text-red-400',
-                  },
-                ].map((stat, idx) => {
-                  const Icon = stat.icon;
-                  return (
-                    <motion.div
-                      key={stat.label}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.05 }}
-                      className="rounded-[1.4rem] border border-white/10 bg-white/[0.05] p-4 backdrop-blur-xl"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <p className="text-xs text-white/60 font-medium uppercase tracking-wider mb-1">
-                            {stat.label}
-                          </p>
-                          <p className={cn('text-2xl font-bold', stat.color)}>{stat.value}</p>
-                        </div>
-                        <Icon className={cn('w-5 h-5', stat.color, 'opacity-50')} />
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </motion.div>
-            )}
-
+          {!loading && !error && (
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-3 flex-wrap"
+              className="grid grid-cols-1 md:grid-cols-3 gap-3"
             >
-              <div className="relative flex-1 min-w-[240px]">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/45" />
-                <input
-                  type="text"
-                  placeholder="Search intents…"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full rounded-xl border border-cyan-400/30 bg-white/5 px-4 py-2.5 text-sm font-semibold text-cyan-100 placeholder:text-white/40 transition hover:border-cyan-300/60 hover:bg-cyan-400/10"
-                />
-              </div>
-
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="rounded-xl border border-cyan-400/30 bg-white/5 px-3 py-2.5 text-sm font-semibold text-cyan-100 transition hover:border-cyan-300/60 hover:bg-cyan-400/10 cursor-pointer"
-              >
-                <option value="all">All Statuses</option>
-                <option value="executed">Executed</option>
-                <option value="rejected">Rejected</option>
-              </select>
+              {[
+                { label: 'Total', value: stats.total, icon: TrendingUp, color: 'text-cyan-400' },
+                {
+                  label: 'Executed',
+                  value: stats.executed,
+                  icon: CheckCircle2,
+                  color: 'text-emerald-400',
+                },
+                {
+                  label: 'Rejected',
+                  value: stats.rejected,
+                  icon: XCircle,
+                  color: 'text-red-400',
+                },
+              ].map((stat, idx) => {
+                const Icon = stat.icon;
+                return (
+                  <motion.div
+                    key={stat.label}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.05 }}
+                    className="rounded-[1.4rem] border border-white/10 bg-white/[0.05] p-4 backdrop-blur-xl"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="text-xs text-white/60 font-medium uppercase tracking-wider mb-1">
+                          {stat.label}
+                        </p>
+                        <p className={cn('text-2xl font-bold', stat.color)}>{stat.value}</p>
+                      </div>
+                      <Icon className={cn('w-5 h-5', stat.color, 'opacity-50')} />
+                    </div>
+                  </motion.div>
+                );
+              })}
             </motion.div>
+          )}
 
-            {loading ? (
-              <div className="flex items-center justify-center py-16">
-                <div className="text-center">
-                  <Loader2 className="w-12 h-12 mx-auto text-cyan-400 animate-spin mb-4" />
-                  <p className="text-slate-400">Loading intent history…</p>
-                </div>
-              </div>
-            ) : error ? (
-              <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 text-red-300 backdrop-blur-sm">
-                <p className="font-medium">Error loading intent history</p>
-                <p className="text-sm mt-1">{error}</p>
-              </div>
-            ) : filteredIntents.length === 0 ? (
-              <div className="text-center py-16">
-                <HelpCircle className="w-12 h-12 mx-auto text-slate-500 mb-4 opacity-50" />
-                <p className="text-slate-400 mb-2">No intents found</p>
-                <p className="text-sm text-slate-500">Try adjusting your search or filters</p>
-              </div>
-            ) : (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3">
-                <p className="text-xs text-slate-500 uppercase tracking-wider mb-4">
-                  Showing {filteredIntents.length} of {intents?.length || 0} intents
-                </p>
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-3 flex-wrap"
+          >
+            <div className="relative flex-1 min-w-[240px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/45" />
+              <input
+                type="text"
+                placeholder="Search intents…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full rounded-xl border border-cyan-400/30 bg-white/5 px-4 py-2.5 text-sm font-semibold text-cyan-100 placeholder:text-white/40 transition hover:border-cyan-300/60 hover:bg-cyan-400/10"
+              />
+            </div>
 
-                <AnimatePresence mode="popLayout">
-                  {filteredIntents.map((intent) => (
-                    <IntentRow
-                      key={intent.intentId}
-                      intent={intent}
-                      isExpanded={expandedIntent === intent.intentId}
-                      onToggle={() =>
-                        setExpandedIntent(
-                          expandedIntent === intent.intentId ? null : intent.intentId
-                        )
-                      }
-                    />
-                  ))}
-                </AnimatePresence>
-              </motion.div>
-            )}
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="rounded-xl border border-cyan-400/30 bg-white/5 px-3 py-2.5 text-sm font-semibold text-cyan-100 transition hover:border-cyan-300/60 hover:bg-cyan-400/10 cursor-pointer"
+            >
+              <option value="all">All Statuses</option>
+              <option value="executed">Executed</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </motion.div>
+
+          {loading ? (
+            <div className="flex items-center justify-center py-16">
+              <div className="text-center">
+                <Loader2 className="w-12 h-12 mx-auto text-cyan-400 animate-spin mb-4" />
+                <p className="text-slate-400">Loading intent history…</p>
+              </div>
+            </div>
+          ) : error ? (
+            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 text-red-300 backdrop-blur-sm">
+              <p className="font-medium">Error loading intent history</p>
+              <p className="text-sm mt-1">{error}</p>
+            </div>
+          ) : filteredIntents.length === 0 ? (
+            <div className="text-center py-16">
+              <HelpCircle className="w-12 h-12 mx-auto text-slate-500 mb-4 opacity-50" />
+              <p className="text-slate-400 mb-2">No intents found</p>
+              <p className="text-sm text-slate-500">Try adjusting your search or filters</p>
+            </div>
+          ) : (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3">
+              <p className="text-xs text-slate-500 uppercase tracking-wider mb-4">
+                Showing {filteredIntents.length} of {intents?.length || 0} intents
+              </p>
+
+              <AnimatePresence mode="popLayout">
+                {filteredIntents.map((intent) => (
+                  <IntentRow
+                    key={intent.intentId}
+                    intent={intent}
+                    isExpanded={expandedIntent === intent.intentId}
+                    onToggle={() =>
+                      setExpandedIntent(expandedIntent === intent.intentId ? null : intent.intentId)
+                    }
+                  />
+                ))}
+              </AnimatePresence>
+            </motion.div>
+          )}
         </div>
       </PageLayout>
     </>

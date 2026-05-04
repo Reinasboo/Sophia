@@ -397,7 +397,8 @@ export const AirdropFarmerStrategyDef: StrategyDefinition = {
 export const ScalpingStrategyDef: StrategyDefinition = {
   name: 'scalping_trading',
   label: 'Scalping Trading',
-  description: 'Trade tiny intraday moves with strict slippage and fast exits. Highest execution risk.',
+  description:
+    'Trade tiny intraday moves with strict slippage and fast exits. Highest execution risk.',
   supportedIntents: ['swap'],
   paramSchema: z.object({
     baseToken: z.string().default('USDC'),
@@ -1203,7 +1204,8 @@ class StrategyRegistry {
     return Array.from(this.strategies.values())
       .sort(
         (left, right) =>
-          StrategyRegistry.riskTierOrder[left.riskTier] - StrategyRegistry.riskTierOrder[right.riskTier]
+          StrategyRegistry.riskTierOrder[left.riskTier] -
+          StrategyRegistry.riskTierOrder[right.riskTier]
       )
       .map((def) => ({
         name: def.name,

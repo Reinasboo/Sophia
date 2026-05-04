@@ -3,7 +3,7 @@
  *
  * Handles all API communication with the backend.
  * The frontend is READ-ONLY for observing system state.
- * 
+ *
  * MULTI-TENANT FIX: All requests now include tenant auth via Bearer token
  */
 
@@ -41,12 +41,12 @@ function getTenantApiKey(): string | null {
 function authHeaders(): Record<string, string> {
   const headers: Record<string, string> = {};
   const apiKey = getTenantApiKey();
-  
+
   // MULTI-TENANT FIX: Include API key as Bearer token for all requests
   if (apiKey) {
     headers['Authorization'] = `Bearer ${apiKey}`;
   }
-  
+
   return headers;
 }
 
@@ -59,7 +59,10 @@ function adminHeaders(): Record<string, string> {
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {
   try {
     const method = options?.method?.toUpperCase() ?? 'GET';
-    const requestUrl = method === 'GET' ? `${API_BASE}${endpoint}` : `/api/proxy-admin?path=${encodeURIComponent(endpoint)}`;
+    const requestUrl =
+      method === 'GET'
+        ? `${API_BASE}${endpoint}`
+        : `/api/proxy-admin?path=${encodeURIComponent(endpoint)}`;
 
     const response = await fetch(requestUrl, {
       ...options,
@@ -371,7 +374,9 @@ export async function getServicePolicy(serviceId: string): Promise<ApiResponse<S
   return fetchApi(`/api/byoa/service-policies/${serviceId}`);
 }
 
-export async function createServicePolicy(data: ServicePolicy): Promise<ApiResponse<ServicePolicy>> {
+export async function createServicePolicy(
+  data: ServicePolicy
+): Promise<ApiResponse<ServicePolicy>> {
   return fetchApi('/api/byoa/service-policies', {
     method: 'POST',
     headers: adminHeaders(),

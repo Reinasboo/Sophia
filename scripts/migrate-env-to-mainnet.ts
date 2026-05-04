@@ -21,7 +21,10 @@ function normalizeForMainnet(env: Record<string, string>): Record<string, string
     out['HELIUS_WEBHOOK_SECRET'] = 'replace-with-strong-webhook-secret';
   }
 
-  if (!out['KEY_ENCRYPTION_SECRET'] || out['KEY_ENCRYPTION_SECRET'] === 'dev-secret-change-in-production') {
+  if (
+    !out['KEY_ENCRYPTION_SECRET'] ||
+    out['KEY_ENCRYPTION_SECRET'] === 'dev-secret-change-in-production'
+  ) {
     out['KEY_ENCRYPTION_SECRET'] = 'replace-with-strong-32-byte-secret';
   }
 

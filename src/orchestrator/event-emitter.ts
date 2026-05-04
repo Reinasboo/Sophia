@@ -21,8 +21,9 @@ class EventBus {
   private handlers: Set<EventHandler> = new Set();
   private eventHistory: SystemEvent[] = [];
   private maxHistorySize: number = 1000;
-  private maxSubscribers: number =
-    (process.env['MAX_EVENT_SUBSCRIBERS'] ? parseInt(process.env['MAX_EVENT_SUBSCRIBERS'], 10) : 10000);
+  private maxSubscribers: number = process.env['MAX_EVENT_SUBSCRIBERS']
+    ? parseInt(process.env['MAX_EVENT_SUBSCRIBERS'], 10)
+    : 10000;
 
   /**
    * Subscribe to all events

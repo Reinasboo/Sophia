@@ -103,7 +103,10 @@ export class MarinadAdapter implements StakingAdapter {
     }
   }
 
-  async withdraw(params: { payer: PublicKey; amount: number }): Promise<Result<Transaction, Error>> {
+  async withdraw(params: {
+    payer: PublicKey;
+    amount: number;
+  }): Promise<Result<Transaction, Error>> {
     try {
       // Withdraw mSOL → receive SOL (might use delayed unstaking)
       const tx = new Transaction();
@@ -188,7 +191,10 @@ export class LidoAdapter implements StakingAdapter {
     }
   }
 
-  async withdraw(params: { payer: PublicKey; amount: number }): Promise<Result<Transaction, Error>> {
+  async withdraw(params: {
+    payer: PublicKey;
+    amount: number;
+  }): Promise<Result<Transaction, Error>> {
     try {
       const tx = new Transaction();
       return success(tx);
@@ -268,7 +274,10 @@ export class JitoAdapter implements StakingAdapter {
     }
   }
 
-  async withdraw(params: { payer: PublicKey; amount: number }): Promise<Result<Transaction, Error>> {
+  async withdraw(params: {
+    payer: PublicKey;
+    amount: number;
+  }): Promise<Result<Transaction, Error>> {
     try {
       const tx = new Transaction();
       return success(tx);

@@ -14,7 +14,9 @@ const logger = createLogger('DATA_BRIDGE');
  * Attach data tracking to the event bus
  * Call this once during system startup
  */
-export function attachDataTracker(eventBus: { subscribe: (handler: (event: any) => void) => () => void }): void {
+export function attachDataTracker(eventBus: {
+  subscribe: (handler: (event: any) => void) => () => void;
+}): void {
   eventBus.subscribe(async (event: any) => {
     try {
       const tracker = getDataTracker();

@@ -6,7 +6,12 @@
  * Kamino, Orca, Serum, Magic Eden, Civic, and others.
  */
 
-import { PublicKey, Transaction, TransactionInstruction, VersionedTransaction } from '@solana/web3.js';
+import {
+  PublicKey,
+  Transaction,
+  TransactionInstruction,
+  VersionedTransaction,
+} from '@solana/web3.js';
 import type { Result } from '../types/shared.js';
 import type { DeFiIntent, DeFiIntentResult } from './intent-types.js';
 
@@ -145,7 +150,9 @@ export interface AmmAdapter {
   }): Promise<{ ok: boolean; value?: Transaction; error?: Error }>;
 
   // Query user's LP positions
-  getUserPositions(walletAddress: string): Promise<{ ok: boolean; value?: LpPosition[]; error?: Error }>;
+  getUserPositions(
+    walletAddress: string
+  ): Promise<{ ok: boolean; value?: LpPosition[]; error?: Error }>;
 
   // Get pool APY
   getPoolApy(poolId: string): Promise<{ ok: boolean; value?: number; error?: Error }>;
@@ -252,7 +259,10 @@ export interface FarmingAdapter {
   }): Promise<{ ok: boolean; value?: Transaction; error?: Error }>;
 
   // Harvest rewards
-  harvest(params: { payer: PublicKey; farmId: string }): Promise<{ ok: boolean; value?: Transaction; error?: Error }>;
+  harvest(params: {
+    payer: PublicKey;
+    farmId: string;
+  }): Promise<{ ok: boolean; value?: Transaction; error?: Error }>;
 
   // Get user's farm positions
   getUserFarms(walletAddress: string): Promise<{
@@ -286,7 +296,10 @@ export interface WrapperAdapter {
   }): Promise<{ ok: boolean; value?: Transaction; error?: Error }>;
 
   // Get exchange rate
-  getExchangeRate(sourceMint: string, targetMint: string): Promise<{ ok: boolean; value?: number; error?: Error }>;
+  getExchangeRate(
+    sourceMint: string,
+    targetMint: string
+  ): Promise<{ ok: boolean; value?: number; error?: Error }>;
 }
 
 /**
@@ -299,7 +312,10 @@ export interface PriceOracle {
     error?: Error;
   }>;
 
-  getPriceHistory(mint: string, timeframe: '1h' | '1d' | '7d'): Promise<{
+  getPriceHistory(
+    mint: string,
+    timeframe: '1h' | '1d' | '7d'
+  ): Promise<{
     ok: boolean;
     value?: Array<{ timestamp: Date; price: number }>;
     error?: Error;

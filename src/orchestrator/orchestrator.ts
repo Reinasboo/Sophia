@@ -375,7 +375,7 @@ export class Orchestrator {
         decision = await withTimeout(agent.think(context.value), 5000, 'Agent think()');
       } catch (thinkError) {
         const errMsg = thinkError instanceof Error ? thinkError.message : String(thinkError);
-        
+
         // Special handling for timeout errors
         if (errMsg.includes('timeout')) {
           logger.error('Agent think() timed out - pausing agent', {
@@ -389,7 +389,7 @@ export class Orchestrator {
           logger.error('Agent think() threw error', { agentId, error: errMsg });
           agent.setStatus('error', `Think failed: ${errMsg}`);
         }
-        
+
         agent.recordAction(false);
         return;
       }

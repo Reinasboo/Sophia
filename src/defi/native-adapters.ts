@@ -91,7 +91,9 @@ export class NativeStakeAdapter implements StakingAdapter {
       }
 
       const stakeAccount = Keypair.generate();
-      const rentExemptReserve = await connection.getMinimumBalanceForRentExemption(StakeProgram.space);
+      const rentExemptReserve = await connection.getMinimumBalanceForRentExemption(
+        StakeProgram.space
+      );
       const tx = StakeProgram.createAccount({
         fromPubkey: params.payer,
         stakePubkey: stakeAccount.publicKey,
@@ -133,7 +135,10 @@ export class NativeStakeAdapter implements StakingAdapter {
         return failure(new Error('Failed to fetch recent blockhash'));
       }
 
-      const tx = new Transaction({ recentBlockhash: blockhashResult.value, feePayer: params.payer });
+      const tx = new Transaction({
+        recentBlockhash: blockhashResult.value,
+        feePayer: params.payer,
+      });
       tx.add(
         StakeProgram.deactivate({
           stakePubkey: new PublicKey(params.stakeAccountAddress),
@@ -148,10 +153,17 @@ export class NativeStakeAdapter implements StakingAdapter {
   }
 
   async deposit(params: { payer: PublicKey; amount: number }): Promise<Result<Transaction, Error>> {
-    return this.stake({ payer: params.payer, amount: params.amount, validatorVoteAddress: undefined });
+    return this.stake({
+      payer: params.payer,
+      amount: params.amount,
+      validatorVoteAddress: undefined,
+    });
   }
 
-  async withdraw(params: { payer: PublicKey; amount: number }): Promise<Result<Transaction, Error>> {
+  async withdraw(params: {
+    payer: PublicKey;
+    amount: number;
+  }): Promise<Result<Transaction, Error>> {
     try {
       if (!isProduction()) {
         logger.warn('NativeStakeAdapter.withdraw using development fallback transaction');
@@ -163,7 +175,10 @@ export class NativeStakeAdapter implements StakingAdapter {
         return failure(new Error('Failed to fetch recent blockhash'));
       }
 
-      const tx = new Transaction({ recentBlockhash: blockhashResult.value, feePayer: params.payer });
+      const tx = new Transaction({
+        recentBlockhash: blockhashResult.value,
+        feePayer: params.payer,
+      });
       tx.add(
         StakeProgram.withdraw({
           stakePubkey: params.payer,
@@ -222,7 +237,10 @@ export class NativeWrapperAdapter implements WrapperAdapter {
         ASSOCIATED_TOKEN_PROGRAM_ID
       );
 
-      const tx = new Transaction({ recentBlockhash: blockhashResult.value, feePayer: params.payer });
+      const tx = new Transaction({
+        recentBlockhash: blockhashResult.value,
+        feePayer: params.payer,
+      });
       const accountInfo = await connection.getAccountInfo(ata);
       if (!accountInfo) {
         tx.add(
@@ -281,7 +299,10 @@ export class NativeWrapperAdapter implements WrapperAdapter {
         ASSOCIATED_TOKEN_PROGRAM_ID
       );
 
-      const tx = new Transaction({ recentBlockhash: blockhashResult.value, feePayer: params.payer });
+      const tx = new Transaction({
+        recentBlockhash: blockhashResult.value,
+        feePayer: params.payer,
+      });
       tx.add(createCloseAccountInstruction(ata, params.payer, params.payer, [], TOKEN_PROGRAM_ID));
 
       return success(tx);

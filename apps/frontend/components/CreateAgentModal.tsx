@@ -47,10 +47,7 @@ const iconMap: Record<string, React.ElementType> = {
   Layers,
 };
 
-const riskTierMeta: Record<
-  StrategyDefinition['riskTier'],
-  { label: string; className: string }
-> = {
+const riskTierMeta: Record<StrategyDefinition['riskTier'], { label: string; className: string }> = {
   degen: { label: 'Degen', className: 'bg-rose-500/15 text-rose-300 border-rose-500/30' },
   high: { label: 'High Risk', className: 'bg-orange-500/15 text-orange-300 border-orange-500/30' },
   medium: { label: 'Medium Risk', className: 'bg-amber-500/15 text-amber-300 border-amber-500/30' },
@@ -401,7 +398,10 @@ export function CreateAgentModal({ isOpen, onClose, onCreated }: CreateAgentModa
                     >
                       {recommendedStarter && (
                         <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-3 text-sm text-slate-300">
-                          Suggested starter: <span className="font-semibold text-emerald-300">{recommendedStarter.label}</span>{' '}
+                          Suggested starter:{' '}
+                          <span className="font-semibold text-emerald-300">
+                            {recommendedStarter.label}
+                          </span>{' '}
                           if you want a lower-risk default. This is only a hint, not a selection.
                         </div>
                       )}

@@ -103,11 +103,15 @@ export function getConfig(): Config {
   }
 
   if (process.env['NODE_ENV'] === 'production' && !result.data.HELIUS_WEBHOOK_SECRET) {
-    throw new Error('CRITICAL: HELIUS_WEBHOOK_SECRET must be set in production to verify Helius webhook signatures.');
+    throw new Error(
+      'CRITICAL: HELIUS_WEBHOOK_SECRET must be set in production to verify Helius webhook signatures.'
+    );
   }
 
   if (process.env['NODE_ENV'] === 'production' && !result.data.DATABASE_URL) {
-    throw new Error('CRITICAL: DATABASE_URL must be set in production for persistent indexing and audit trails.');
+    throw new Error(
+      'CRITICAL: DATABASE_URL must be set in production for persistent indexing and audit trails.'
+    );
   }
 
   // Enforce mainnet readiness in production

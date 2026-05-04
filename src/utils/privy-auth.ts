@@ -44,7 +44,9 @@ async function getVerificationKey(): Promise<any | null> {
   return null;
 }
 
-export async function verifyPrivyAccessToken(accessToken: string): Promise<VerifiedPrivyToken | null> {
+export async function verifyPrivyAccessToken(
+  accessToken: string
+): Promise<VerifiedPrivyToken | null> {
   if (!accessToken) {
     return null;
   }

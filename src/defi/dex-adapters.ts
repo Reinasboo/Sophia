@@ -47,21 +47,28 @@ export class JupiterAdapter implements DexAdapter {
         });
 
         if (!response.ok) {
-          return failure(new Error(`Jupiter quote failed: ${response.status} ${response.statusText}`));
+          return failure(
+            new Error(`Jupiter quote failed: ${response.status} ${response.statusText}`)
+          );
         }
 
         const rawQuote = (await response.json()) as Record<string, any>;
         const outputAmount = Number(rawQuote['outAmount'] ?? rawQuote['outputAmount'] ?? 0);
-        const priceImpact = Number.parseFloat(String(rawQuote['priceImpactPct'] ?? rawQuote['priceImpact'] ?? 0));
+        const priceImpact = Number.parseFloat(
+          String(rawQuote['priceImpactPct'] ?? rawQuote['priceImpact'] ?? 0)
+        );
         const routePath = Array.isArray(rawQuote['routePlan'])
-          ? rawQuote['routePlan'].map((step: any) => String(step?.swapInfo?.label ?? step?.label ?? 'jupiter'))
+          ? rawQuote['routePlan'].map((step: any) =>
+              String(step?.swapInfo?.label ?? step?.label ?? 'jupiter')
+            )
           : [params.inputMint, params.outputMint];
 
         const quote: SwapQuote = {
           inputMint: params.inputMint,
           outputMint: params.outputMint,
           inputAmount: params.amount,
-          outputAmount: Number.isFinite(outputAmount) && outputAmount > 0 ? outputAmount : params.amount,
+          outputAmount:
+            Number.isFinite(outputAmount) && outputAmount > 0 ? outputAmount : params.amount,
           priceImpact: Number.isFinite(priceImpact) ? priceImpact : 0,
           routePath,
           estimatedGas: Number(rawQuote['computeUnitLimit'] ?? 50000),
@@ -142,7 +149,9 @@ export class JupiterAdapter implements DexAdapter {
 
       if (!response.ok) {
         const body = await response.text();
-        return failure(new Error(`Jupiter swap build failed: ${response.status} ${response.statusText} ${body}`));
+        return failure(
+          new Error(`Jupiter swap build failed: ${response.status} ${response.statusText} ${body}`)
+        );
       }
 
       const swapResponse = (await response.json()) as { swapTransaction?: string };

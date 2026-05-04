@@ -363,7 +363,9 @@ export class DataTracker {
     const client = await this.dbPool.connect();
     try {
       await client.query('BEGIN');
-      await client.query('TRUNCATE indexed_transactions, indexed_intents, indexed_events, indexing_state');
+      await client.query(
+        'TRUNCATE indexed_transactions, indexed_intents, indexed_events, indexing_state'
+      );
 
       for (const tx of this.transactions.values()) {
         await client.query(
@@ -478,7 +480,9 @@ export class DataTracker {
   /**
    * Index a transaction from Helius webhook
    */
-  async indexTransaction(tx: Partial<IndexedTransaction>): Promise<Result<IndexedTransaction, Error>> {
+  async indexTransaction(
+    tx: Partial<IndexedTransaction>
+  ): Promise<Result<IndexedTransaction, Error>> {
     try {
       await this.ensureReady();
       if (!tx.signature || !tx.tenantId) {
@@ -698,7 +702,9 @@ export class DataTracker {
   /**
    * Record a system event
    */
-  async recordEvent(event: Omit<IndexedEvent, 'id' | 'indexedAt'>): Promise<Result<IndexedEvent, Error>> {
+  async recordEvent(
+    event: Omit<IndexedEvent, 'id' | 'indexedAt'>
+  ): Promise<Result<IndexedEvent, Error>> {
     try {
       await this.ensureReady();
       const indexed: IndexedEvent = {
@@ -726,10 +732,7 @@ export class DataTracker {
   /**
    * Query events for a tenant
    */
-  async queryEvents(
-    tenantId: string,
-    limit: number = 100
-  ): Promise<Result<IndexedEvent[], Error>> {
+  async queryEvents(tenantId: string, limit: number = 100): Promise<Result<IndexedEvent[], Error>> {
     try {
       await this.ensureReady();
       const results = Array.from(this.events.values())

@@ -60,7 +60,11 @@ export class SolendAdapter implements LendingAdapter {
     }
   }
 
-  async deposit(params: { payer: PublicKey; mint: string; amount: number }): Promise<Result<Transaction, Error>> {
+  async deposit(params: {
+    payer: PublicKey;
+    mint: string;
+    amount: number;
+  }): Promise<Result<Transaction, Error>> {
     try {
       logger.info('Solend deposit', { mint: params.mint, amount: params.amount });
       const tx = new Transaction();
@@ -70,7 +74,11 @@ export class SolendAdapter implements LendingAdapter {
     }
   }
 
-  async withdraw(params: { payer: PublicKey; mint: string; amount: number }): Promise<Result<Transaction, Error>> {
+  async withdraw(params: {
+    payer: PublicKey;
+    mint: string;
+    amount: number;
+  }): Promise<Result<Transaction, Error>> {
     try {
       logger.info('Solend withdraw', { mint: params.mint, amount: params.amount });
       const tx = new Transaction();
@@ -80,7 +88,11 @@ export class SolendAdapter implements LendingAdapter {
     }
   }
 
-  async borrow(params: { payer: PublicKey; mint: string; amount: number }): Promise<Result<Transaction, Error>> {
+  async borrow(params: {
+    payer: PublicKey;
+    mint: string;
+    amount: number;
+  }): Promise<Result<Transaction, Error>> {
     try {
       logger.info('Solend borrow', { mint: params.mint, amount: params.amount });
       const tx = new Transaction();
@@ -90,7 +102,11 @@ export class SolendAdapter implements LendingAdapter {
     }
   }
 
-  async repay(params: { payer: PublicKey; mint: string; amount: number }): Promise<Result<Transaction, Error>> {
+  async repay(params: {
+    payer: PublicKey;
+    mint: string;
+    amount: number;
+  }): Promise<Result<Transaction, Error>> {
     try {
       logger.info('Solend repay', { mint: params.mint, amount: params.amount });
       const tx = new Transaction();
@@ -100,9 +116,9 @@ export class SolendAdapter implements LendingAdapter {
     }
   }
 
-  async getUserBalance(walletAddress: string): Promise<
-    Result<{ deposits: Record<string, number>; borrows: Record<string, number> }, Error>
-  > {
+  async getUserBalance(
+    walletAddress: string
+  ): Promise<Result<{ deposits: Record<string, number>; borrows: Record<string, number> }, Error>> {
     try {
       return success({
         deposits: {
@@ -165,7 +181,11 @@ export class MangoAdapter implements LendingAdapter {
     }
   }
 
-  async deposit(params: { payer: PublicKey; mint: string; amount: number }): Promise<Result<Transaction, Error>> {
+  async deposit(params: {
+    payer: PublicKey;
+    mint: string;
+    amount: number;
+  }): Promise<Result<Transaction, Error>> {
     try {
       const tx = new Transaction();
       return success(tx);
@@ -174,7 +194,11 @@ export class MangoAdapter implements LendingAdapter {
     }
   }
 
-  async withdraw(params: { payer: PublicKey; mint: string; amount: number }): Promise<Result<Transaction, Error>> {
+  async withdraw(params: {
+    payer: PublicKey;
+    mint: string;
+    amount: number;
+  }): Promise<Result<Transaction, Error>> {
     try {
       const tx = new Transaction();
       return success(tx);
@@ -183,7 +207,11 @@ export class MangoAdapter implements LendingAdapter {
     }
   }
 
-  async borrow(params: { payer: PublicKey; mint: string; amount: number }): Promise<Result<Transaction, Error>> {
+  async borrow(params: {
+    payer: PublicKey;
+    mint: string;
+    amount: number;
+  }): Promise<Result<Transaction, Error>> {
     try {
       const tx = new Transaction();
       return success(tx);
@@ -192,7 +220,11 @@ export class MangoAdapter implements LendingAdapter {
     }
   }
 
-  async repay(params: { payer: PublicKey; mint: string; amount: number }): Promise<Result<Transaction, Error>> {
+  async repay(params: {
+    payer: PublicKey;
+    mint: string;
+    amount: number;
+  }): Promise<Result<Transaction, Error>> {
     try {
       const tx = new Transaction();
       return success(tx);
@@ -201,9 +233,9 @@ export class MangoAdapter implements LendingAdapter {
     }
   }
 
-  async getUserBalance(walletAddress: string): Promise<
-    Result<{ deposits: Record<string, number>; borrows: Record<string, number> }, Error>
-  > {
+  async getUserBalance(
+    walletAddress: string
+  ): Promise<Result<{ deposits: Record<string, number>; borrows: Record<string, number> }, Error>> {
     try {
       return success({
         deposits: {
@@ -254,7 +286,11 @@ export class PortFinanceAdapter implements LendingAdapter {
     }
   }
 
-  async deposit(params: { payer: PublicKey; mint: string; amount: number }): Promise<Result<Transaction, Error>> {
+  async deposit(params: {
+    payer: PublicKey;
+    mint: string;
+    amount: number;
+  }): Promise<Result<Transaction, Error>> {
     try {
       const tx = new Transaction();
       return success(tx);
@@ -263,7 +299,11 @@ export class PortFinanceAdapter implements LendingAdapter {
     }
   }
 
-  async withdraw(params: { payer: PublicKey; mint: string; amount: number }): Promise<Result<Transaction, Error>> {
+  async withdraw(params: {
+    payer: PublicKey;
+    mint: string;
+    amount: number;
+  }): Promise<Result<Transaction, Error>> {
     try {
       const tx = new Transaction();
       return success(tx);
@@ -272,7 +312,11 @@ export class PortFinanceAdapter implements LendingAdapter {
     }
   }
 
-  async borrow(params: { payer: PublicKey; mint: string; amount: number }): Promise<Result<Transaction, Error>> {
+  async borrow(params: {
+    payer: PublicKey;
+    mint: string;
+    amount: number;
+  }): Promise<Result<Transaction, Error>> {
     try {
       const tx = new Transaction();
       return success(tx);
@@ -281,7 +325,11 @@ export class PortFinanceAdapter implements LendingAdapter {
     }
   }
 
-  async repay(params: { payer: PublicKey; mint: string; amount: number }): Promise<Result<Transaction, Error>> {
+  async repay(params: {
+    payer: PublicKey;
+    mint: string;
+    amount: number;
+  }): Promise<Result<Transaction, Error>> {
     try {
       const tx = new Transaction();
       return success(tx);
@@ -290,9 +338,9 @@ export class PortFinanceAdapter implements LendingAdapter {
     }
   }
 
-  async getUserBalance(walletAddress: string): Promise<
-    Result<{ deposits: Record<string, number>; borrows: Record<string, number> }, Error>
-  > {
+  async getUserBalance(
+    walletAddress: string
+  ): Promise<Result<{ deposits: Record<string, number>; borrows: Record<string, number> }, Error>> {
     try {
       return success({
         deposits: {},

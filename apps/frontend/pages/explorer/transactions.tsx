@@ -106,7 +106,6 @@ export default function TransactionExplorer() {
 
           <main className="flex-1 overflow-auto">
             <div className="p-8 space-y-6">
-
               {/* Filter Controls */}
               <div className="flex gap-2 flex-wrap">
                 {['all', 'confirmed', 'failed', 'pending'].map((status) => (

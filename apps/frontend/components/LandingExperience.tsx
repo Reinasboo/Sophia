@@ -179,9 +179,9 @@ export function LandingExperience() {
                 </h1>
 
                 <p className="max-w-2xl text-lg leading-8 text-white/72 sm:text-xl">
-                  Operate AI agents that execute transactions, manage portfolios, and trade on Solana
-                  with institutional-grade security. Bring external agents, set guardrails, and watch
-                  your capital move 24/7 with full visibility.
+                  Operate AI agents that execute transactions, manage portfolios, and trade on
+                  Solana with institutional-grade security. Bring external agents, set guardrails,
+                  and watch your capital move 24/7 with full visibility.
                 </p>
               </div>
 
@@ -337,8 +337,8 @@ export function LandingExperience() {
               </h2>
               <p className="mt-4 max-w-xl text-base leading-8 text-white/68">
                 Register your agent, set policies, and watch it execute transactions autonomously.
-                Every decision is audited, every transaction is confirmed, and you have full visibility
-                and override control.
+                Every decision is audited, every transaction is confirmed, and you have full
+                visibility and override control.
               </p>
 
               <div className="mt-8 space-y-4">
@@ -356,7 +356,10 @@ export function LandingExperience() {
               </div>
             </div>
 
-            <div id="auth" className="rounded-[1.8rem] border border-white/10 bg-black/30 p-8 backdrop-blur-2xl scroll-mt-24">
+            <div
+              id="auth"
+              className="rounded-[1.8rem] border border-white/10 bg-black/30 p-8 backdrop-blur-2xl scroll-mt-24"
+            >
               <SectionLabel>Login / Register</SectionLabel>
               <div className="mt-5">
                 <PrivySignin onSuccess={() => router.push('/dashboard')} />
@@ -395,8 +398,9 @@ export function LandingExperience() {
                   Deploy autonomous agents. Control everything.
                 </h2>
                 <p className="mt-4 max-w-2xl text-base leading-8 text-white/78">
-                  Register your first agent in minutes. Set guardrails. Watch it execute transactions
-                  on Solana 24/7. Full visibility, instant override, complete audit trail.
+                  Register your first agent in minutes. Set guardrails. Watch it execute
+                  transactions on Solana 24/7. Full visibility, instant override, complete audit
+                  trail.
                 </p>
               </div>
 

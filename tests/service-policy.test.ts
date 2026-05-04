@@ -80,7 +80,12 @@ describe('ServicePolicyManager', () => {
         recipient: 'recipient-pk',
       };
 
-      const validation = manager.validateServicePayment('wallet-tenant-a', intent, undefined, 'tenant-a');
+      const validation = manager.validateServicePayment(
+        'wallet-tenant-a',
+        intent,
+        undefined,
+        'tenant-a'
+      );
       expect(validation.ok).toBe(true);
 
       const record = manager.recordServicePayment(
@@ -92,7 +97,9 @@ describe('ServicePolicyManager', () => {
       );
       expect(record.ok).toBe(true);
       expect(manager.getUsageRecord('wallet-tenant-a', 'tenant-service', 'tenant-a').ok).toBe(true);
-      expect(manager.getUsageRecord('wallet-tenant-a', 'tenant-service', 'tenant-b').ok).toBe(false);
+      expect(manager.getUsageRecord('wallet-tenant-a', 'tenant-service', 'tenant-b').ok).toBe(
+        false
+      );
     });
 
     it('should reject policy with negative caps', () => {

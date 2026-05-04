@@ -102,19 +102,25 @@ function TransactionRow({ transaction, isExpanded, onToggle }: TransactionRowPro
           >
             <div className="space-y-3 grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div>
-                <p className="text-xs text-white/60 font-medium mb-1 uppercase tracking-wider">Signature</p>
+                <p className="text-xs text-white/60 font-medium mb-1 uppercase tracking-wider">
+                  Signature
+                </p>
                 <code className="text-xs text-white/78 bg-white/10 rounded-xl px-2 py-1 block font-mono break-all">
                   {transaction.signature || '—'}
                 </code>
               </div>
               <div>
-                <p className="text-xs text-white/60 font-medium mb-1 uppercase tracking-wider">Status</p>
+                <p className="text-xs text-white/60 font-medium mb-1 uppercase tracking-wider">
+                  Status
+                </p>
                 <p className="text-sm text-white/78 capitalize">{transaction.status}</p>
               </div>
 
               {transaction.recipient && (
                 <div className="lg:col-span-2">
-                  <p className="text-xs text-white/60 font-medium mb-1 uppercase tracking-wider">Recipient</p>
+                  <p className="text-xs text-white/60 font-medium mb-1 uppercase tracking-wider">
+                    Recipient
+                  </p>
                   <code className="text-xs text-white/78 bg-white/10 rounded-xl px-2 py-1 block font-mono break-all">
                     {transaction.recipient}
                   </code>
@@ -122,7 +128,9 @@ function TransactionRow({ transaction, isExpanded, onToggle }: TransactionRowPro
               )}
               {transaction.createdAt && (
                 <div>
-                  <p className="text-xs text-white/60 font-medium mb-1 uppercase tracking-wider">Created</p>
+                  <p className="text-xs text-white/60 font-medium mb-1 uppercase tracking-wider">
+                    Created
+                  </p>
                   <p className="text-sm text-white/78">
                     {new Date(transaction.createdAt).toLocaleString()}
                   </p>
@@ -226,136 +234,136 @@ export default function TransactionsPage() {
 
       <PageLayout title="Transactions" subtitle="Monitor and audit all wallet transactions">
         <div className="space-y-6">
-            {!loading && !error && (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3"
-              >
-                {[
-                  { label: 'Total', value: stats.total, icon: TrendingUp, color: 'text-cyan-400' },
-                  {
-                    label: 'Finalized',
-                    value: stats.finalized,
-                    icon: CheckCircle2,
-                    color: 'text-emerald-400',
-                  },
-                  { label: 'Pending', value: stats.pending, icon: Clock, color: 'text-amber-400' },
-                  {
-                    label: 'Failed',
-                    value: stats.failed,
-                    icon: AlertCircle,
-                    color: 'text-red-400',
-                  },
-                  {
-                    label: 'Volume (SOL)',
-                    value: stats.volume.toFixed(2),
-                    icon: TrendingUp,
-                    color: 'text-blue-400',
-                  },
-                ].map((stat, idx) => {
-                  const Icon = stat.icon;
-                  return (
-                    <motion.div
-                      key={stat.label}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.05 }}
-                      className="rounded-[1.4rem] border border-white/10 bg-white/[0.05] p-4 backdrop-blur-xl"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <p className="text-xs text-white/60 font-medium uppercase tracking-wider mb-1">
-                            {stat.label}
-                          </p>
-                          <p className={cn('text-xl font-bold', stat.color)}>{stat.value}</p>
-                        </div>
-                        <Icon className={cn('w-5 h-5', stat.color, 'opacity-50')} />
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </motion.div>
-            )}
-
+          {!loading && !error && (
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-3 flex-wrap"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3"
             >
-              <div className="relative flex-1 min-w-[240px]">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                <input
-                  type="text"
-                  placeholder="Search transactions…"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full rounded-xl border border-cyan-400/30 bg-white/5 px-4 py-2.5 text-sm font-semibold text-cyan-100 placeholder:text-white/40 transition hover:border-cyan-300/60 hover:bg-cyan-400/10"
-                />
-              </div>
-
-              <select
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
-                className="rounded-xl border border-cyan-400/30 bg-white/5 px-3 py-2.5 text-sm font-semibold text-cyan-100 transition hover:border-cyan-300/60 hover:bg-cyan-400/10 cursor-pointer"
-              >
-                <option value="all">All Types</option>
-                <option value="transfer">Transfer</option>
-                <option value="airdrop">Airdrop</option>
-                <option value="swap">Swap</option>
-              </select>
-
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="rounded-xl border border-cyan-400/30 bg-white/5 px-3 py-2.5 text-sm font-semibold text-cyan-100 transition hover:border-cyan-300/60 hover:bg-cyan-400/10 cursor-pointer"
-              >
-                <option value="all">All Statuses</option>
-                <option value="confirmed">Confirmed</option>
-                <option value="finalized">Finalized</option>
-                <option value="pending">Pending</option>
-                <option value="failed">Failed</option>
-              </select>
+              {[
+                { label: 'Total', value: stats.total, icon: TrendingUp, color: 'text-cyan-400' },
+                {
+                  label: 'Finalized',
+                  value: stats.finalized,
+                  icon: CheckCircle2,
+                  color: 'text-emerald-400',
+                },
+                { label: 'Pending', value: stats.pending, icon: Clock, color: 'text-amber-400' },
+                {
+                  label: 'Failed',
+                  value: stats.failed,
+                  icon: AlertCircle,
+                  color: 'text-red-400',
+                },
+                {
+                  label: 'Volume (SOL)',
+                  value: stats.volume.toFixed(2),
+                  icon: TrendingUp,
+                  color: 'text-blue-400',
+                },
+              ].map((stat, idx) => {
+                const Icon = stat.icon;
+                return (
+                  <motion.div
+                    key={stat.label}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.05 }}
+                    className="rounded-[1.4rem] border border-white/10 bg-white/[0.05] p-4 backdrop-blur-xl"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="text-xs text-white/60 font-medium uppercase tracking-wider mb-1">
+                          {stat.label}
+                        </p>
+                        <p className={cn('text-xl font-bold', stat.color)}>{stat.value}</p>
+                      </div>
+                      <Icon className={cn('w-5 h-5', stat.color, 'opacity-50')} />
+                    </div>
+                  </motion.div>
+                );
+              })}
             </motion.div>
+          )}
 
-            {loading ? (
-              <div className="flex items-center justify-center py-16">
-                <div className="text-center">
-                  <Loader2 className="w-12 h-12 mx-auto text-cyan-400 animate-spin mb-4" />
-                  <p className="text-slate-400">Loading transactions…</p>
-                </div>
-              </div>
-            ) : error ? (
-              <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-red-300 backdrop-blur-sm">
-                <p className="font-medium">Error loading transactions</p>
-                <p className="text-sm mt-1">{error}</p>
-              </div>
-            ) : filteredTxs.length === 0 ? (
-              <div className="text-center py-16">
-                <HelpCircle className="w-12 h-12 mx-auto text-white/45 mb-4 opacity-50" />
-                <p className="text-white/60 mb-2">No transactions found</p>
-                <p className="text-sm text-white/50">Try adjusting your search or filters</p>
-              </div>
-            ) : (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3">
-                <p className="text-xs text-white/50 font-medium uppercase tracking-wider mb-4">
-                  Showing {filteredTxs.length} of {transactions?.length || 0} transactions
-                </p>
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-3 flex-wrap"
+          >
+            <div className="relative flex-1 min-w-[240px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+              <input
+                type="text"
+                placeholder="Search transactions…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full rounded-xl border border-cyan-400/30 bg-white/5 px-4 py-2.5 text-sm font-semibold text-cyan-100 placeholder:text-white/40 transition hover:border-cyan-300/60 hover:bg-cyan-400/10"
+              />
+            </div>
 
-                <AnimatePresence mode="popLayout">
-                  {filteredTxs.map((tx, idx) => (
-                    <TransactionRow
-                      key={`${tx.signature || 'pending'}-${idx}`}
-                      transaction={tx}
-                      isExpanded={expandedTx === tx.signature}
-                      onToggle={() =>
-                        setExpandedTx(expandedTx === tx.signature ? null : tx.signature || null)
-                      }
-                    />
-                  ))}
-                </AnimatePresence>
-              </motion.div>
-            )}
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="rounded-xl border border-cyan-400/30 bg-white/5 px-3 py-2.5 text-sm font-semibold text-cyan-100 transition hover:border-cyan-300/60 hover:bg-cyan-400/10 cursor-pointer"
+            >
+              <option value="all">All Types</option>
+              <option value="transfer">Transfer</option>
+              <option value="airdrop">Airdrop</option>
+              <option value="swap">Swap</option>
+            </select>
+
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="rounded-xl border border-cyan-400/30 bg-white/5 px-3 py-2.5 text-sm font-semibold text-cyan-100 transition hover:border-cyan-300/60 hover:bg-cyan-400/10 cursor-pointer"
+            >
+              <option value="all">All Statuses</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="finalized">Finalized</option>
+              <option value="pending">Pending</option>
+              <option value="failed">Failed</option>
+            </select>
+          </motion.div>
+
+          {loading ? (
+            <div className="flex items-center justify-center py-16">
+              <div className="text-center">
+                <Loader2 className="w-12 h-12 mx-auto text-cyan-400 animate-spin mb-4" />
+                <p className="text-slate-400">Loading transactions…</p>
+              </div>
+            </div>
+          ) : error ? (
+            <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-red-300 backdrop-blur-sm">
+              <p className="font-medium">Error loading transactions</p>
+              <p className="text-sm mt-1">{error}</p>
+            </div>
+          ) : filteredTxs.length === 0 ? (
+            <div className="text-center py-16">
+              <HelpCircle className="w-12 h-12 mx-auto text-white/45 mb-4 opacity-50" />
+              <p className="text-white/60 mb-2">No transactions found</p>
+              <p className="text-sm text-white/50">Try adjusting your search or filters</p>
+            </div>
+          ) : (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3">
+              <p className="text-xs text-white/50 font-medium uppercase tracking-wider mb-4">
+                Showing {filteredTxs.length} of {transactions?.length || 0} transactions
+              </p>
+
+              <AnimatePresence mode="popLayout">
+                {filteredTxs.map((tx, idx) => (
+                  <TransactionRow
+                    key={`${tx.signature || 'pending'}-${idx}`}
+                    transaction={tx}
+                    isExpanded={expandedTx === tx.signature}
+                    onToggle={() =>
+                      setExpandedTx(expandedTx === tx.signature ? null : tx.signature || null)
+                    }
+                  />
+                ))}
+              </AnimatePresence>
+            </motion.div>
+          )}
         </div>
       </PageLayout>
     </>

@@ -335,7 +335,10 @@ describe('DeFi Protocol Integrations', () => {
     it('should get price history', async () => {
       const registry = getDeFiRegistry();
 
-      const result = await registry.oracle.getPriceHistory('So11111111111111111111111111111111111111112', '1h');
+      const result = await registry.oracle.getPriceHistory(
+        'So11111111111111111111111111111111111111112',
+        '1h'
+      );
 
       expect(result.ok).toBe(true);
       if (result.ok) {

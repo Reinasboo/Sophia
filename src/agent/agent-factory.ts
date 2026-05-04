@@ -54,7 +54,9 @@ export function createAgent(options: CreateAgentOptions): Result<BaseAgent, Erro
     strategyDef?.supportedIntents.includes('REQUEST_AIRDROP')
   ) {
     return failure(
-      new Error(`Strategy "${config.strategy}" is not allowed in mainnet production (REQUEST_AIRDROP).`)
+      new Error(
+        `Strategy "${config.strategy}" is not allowed in mainnet production (REQUEST_AIRDROP).`
+      )
     );
   }
 

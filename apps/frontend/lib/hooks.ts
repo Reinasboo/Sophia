@@ -97,7 +97,7 @@ export function useAgents(pollInterval: number = 5000) {
       const normalizedAgents = Array.isArray(payload)
         ? payload
         : Array.isArray((payload as { data?: unknown }).data)
-          ? ((payload as { data: Agent[] }).data)
+          ? (payload as { data: Agent[] }).data
           : [];
 
       setAgents(normalizedAgents);

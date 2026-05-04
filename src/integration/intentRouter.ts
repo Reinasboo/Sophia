@@ -595,7 +595,7 @@ export class IntentRouter {
         type: result.type === 'swap' ? 'swap' : 'raw_execute',
         status: 'confirmed',
         amount: result.inputAmount,
-          signature,
+        signature,
         createdAt: new Date(),
         confirmedAt: new Date(),
       },

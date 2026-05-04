@@ -42,7 +42,12 @@ import {
   validateBearerToken,
   asyncHandler,
 } from './utils/api-response.js';
-import { getDataTracker, attachDataTracker, handleHeliusWebhook, verifyHeliusSignature } from './data/index.js';
+import {
+  getDataTracker,
+  attachDataTracker,
+  handleHeliusWebhook,
+  verifyHeliusSignature,
+} from './data/index.js';
 import { getDeFiRegistry } from './defi/index.js';
 
 const logger = createLogger('API');
@@ -100,7 +105,10 @@ const corsOriginsList = config.CORS_ORIGINS
     ];
 
 // CORS origin validator with regex support for production
-const corsOriginValidator = (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+const corsOriginValidator = (
+  origin: string | undefined,
+  callback: (err: Error | null, allow?: boolean) => void
+) => {
   if (!origin) {
     callback(null, true); // Allow requests with no origin (like mobile apps)
     return;
@@ -828,12 +836,7 @@ app.get(
     if (protocol) {
       const adapter = registry.lending.get(protocol);
       if (!adapter) {
-        sendError(
-          res,
-          'Lending protocol not found',
-          HTTP_STATUS.NOT_FOUND,
-          ERROR_CODE.NOT_FOUND
-        );
+        sendError(res, 'Lending protocol not found', HTTP_STATUS.NOT_FOUND, ERROR_CODE.NOT_FOUND);
         return;
       }
 
@@ -1333,7 +1336,7 @@ app.post(
     }
 
     const registry = getAgentRegistry();
-    
+
     // MULTI-TENANT: Validate agent belongs to tenant
     if (!registry.agentBelongsToTenant(agentId, tenantId)) {
       sendError(res, 'Agent not found', HTTP_STATUS.NOT_FOUND, ERROR_CODE.AGENT_NOT_FOUND);
@@ -1763,15 +1766,15 @@ app.get(
     if (!tenantId) return;
 
     const limit = Math.min(parseInt(req.query['limit'] as string) || 100, 500);
-    
+
     // Get all agents for this tenant
     const tenantAgents = orchestrator.getAgentsByTenant(tenantId);
-    const tenantAgentIds = tenantAgents.map(a => a.id);
-    
+    const tenantAgentIds = tenantAgents.map((a) => a.id);
+
     // Get all intents and filter to tenant's agents
     const allIntents = router.getIntentHistory(undefined, limit * 2); // fetch more to account for filtering
-    const filteredIntents = allIntents.filter(intent => tenantAgentIds.includes(intent.agentId));
-    
+    const filteredIntents = allIntents.filter((intent) => tenantAgentIds.includes(intent.agentId));
+
     sendSuccess(res, filteredIntents.slice(0, limit));
   })
 );
@@ -1790,15 +1793,15 @@ app.get(
     if (!tenantId) return;
 
     const limit = Math.min(parseInt(req.query['limit'] as string) || 200, 1000);
-    
+
     // Get all agents for this tenant
     const tenantAgents = orchestrator.getAgentsByTenant(tenantId);
-    const tenantAgentIds = tenantAgents.map(a => a.id);
-    
+    const tenantAgentIds = tenantAgents.map((a) => a.id);
+
     // Get all intents and filter to tenant's agents
     const allIntents = router.getIntentHistory(undefined, limit * 2); // fetch more to account for filtering
-    const filteredIntents = allIntents.filter(intent => tenantAgentIds.includes(intent.agentId));
-    
+    const filteredIntents = allIntents.filter((intent) => tenantAgentIds.includes(intent.agentId));
+
     sendSuccess(res, filteredIntents.slice(0, limit));
   })
 );
@@ -1850,24 +1853,40 @@ app.post(
 
       // Validate payload structure
       if (!payload.webhookID || !Array.isArray(payload.events)) {
-        sendError(res, 'Invalid Helius webhook payload', HTTP_STATUS.BAD_REQUEST, ERROR_CODE.VALIDATION_FAILED);
+        sendError(
+          res,
+          'Invalid Helius webhook payload',
+          HTTP_STATUS.BAD_REQUEST,
+          ERROR_CODE.VALIDATION_FAILED
+        );
         return;
       }
 
       const managedWallets = walletManager.getAllWallets().map((wallet) => wallet.publicKey);
-      const resolveTenantId = (walletAddress: string) => walletManager.getTenantIdForPublicKey(walletAddress);
+      const resolveTenantId = (walletAddress: string) =>
+        walletManager.getTenantIdForPublicKey(walletAddress);
 
       const result = await handleHeliusWebhook(payload, resolveTenantId, managedWallets);
 
       if (!result.ok) {
-        sendError(res, result.error.message, HTTP_STATUS.INTERNAL_SERVER_ERROR, ERROR_CODE.OPERATION_FAILED);
+        sendError(
+          res,
+          result.error.message,
+          HTTP_STATUS.INTERNAL_SERVER_ERROR,
+          ERROR_CODE.OPERATION_FAILED
+        );
         return;
       }
 
       sendSuccess(res, { indexed: result.value.indexed, errors: result.value.errors });
     } catch (err) {
       logger.error('Helius webhook error', { error: String(err) });
-      sendError(res, 'Webhook processing failed', HTTP_STATUS.INTERNAL_SERVER_ERROR, ERROR_CODE.OPERATION_FAILED);
+      sendError(
+        res,
+        'Webhook processing failed',
+        HTTP_STATUS.INTERNAL_SERVER_ERROR,
+        ERROR_CODE.OPERATION_FAILED
+      );
     }
   })
 );
@@ -1917,7 +1936,12 @@ app.get(
     const tracker = getDataTracker();
     const signature = req.params['signature'];
     if (!signature) {
-      sendError(res, 'Signature is required', HTTP_STATUS.BAD_REQUEST, ERROR_CODE.VALIDATION_FAILED);
+      sendError(
+        res,
+        'Signature is required',
+        HTTP_STATUS.BAD_REQUEST,
+        ERROR_CODE.VALIDATION_FAILED
+      );
       return;
     }
     const result = await tracker.getTransaction(signature);
@@ -2103,7 +2127,12 @@ app.get(
     const result = tracker.getHealth();
 
     if (!result.ok) {
-      sendError(res, result.error.message, HTTP_STATUS.INTERNAL_SERVER_ERROR, ERROR_CODE.OPERATION_FAILED);
+      sendError(
+        res,
+        result.error.message,
+        HTTP_STATUS.INTERNAL_SERVER_ERROR,
+        ERROR_CODE.OPERATION_FAILED
+      );
       return;
     }
 
@@ -2131,7 +2160,12 @@ function setupWebSocket(server: import('http').Server): void {
       origin?: string;
       req: { headers: Record<string, string | string[] | undefined> };
     }) => {
-      const origin = info.origin ?? (Array.isArray(info.req.headers['origin']) ? info.req.headers['origin'][0] : info.req.headers['origin']) ?? '';
+      const origin =
+        info.origin ??
+        (Array.isArray(info.req.headers['origin'])
+          ? info.req.headers['origin'][0]
+          : info.req.headers['origin']) ??
+        '';
       // Allow connections with no origin (e.g. CLI tools, server-to-server)
       if (!origin || typeof origin !== 'string') return true;
       // Allow configured CORS origins
@@ -2217,7 +2251,12 @@ function setupWebSocket(server: import('http').Server): void {
         }
 
         // Handle ping messages
-        if (message && typeof message === 'object' && 'type' in message && message.type === 'ping') {
+        if (
+          message &&
+          typeof message === 'object' &&
+          'type' in message &&
+          message.type === 'ping'
+        ) {
           safeSend({ type: 'pong', timestamp: new Date().toISOString() });
         }
       } catch (error) {
@@ -2291,7 +2330,10 @@ function setupWebSocket(server: import('http').Server): void {
     }
   }, 30_000); // 30 second heartbeat interval
 
-  logger.info('WebSocket server started', { attachedToHttpServer: true, heartbeatIntervalMs: 30_000 });
+  logger.info('WebSocket server started', {
+    attachedToHttpServer: true,
+    heartbeatIntervalMs: 30_000,
+  });
 }
 
 // ============================================

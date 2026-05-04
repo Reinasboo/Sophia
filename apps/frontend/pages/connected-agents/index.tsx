@@ -148,7 +148,10 @@ export default function ConnectedAgentsPage() {
   // Show loading while checking authentication
   if (authLoading) {
     return (
-      <PageLayout title="Connected Agents" subtitle="Manage external agent connections and permissions">
+      <PageLayout
+        title="Connected Agents"
+        subtitle="Manage external agent connections and permissions"
+      >
         <div className="flex items-center justify-center h-64">
           <Loader2 className="w-8 h-8 animate-spin text-cyan-400" />
         </div>
@@ -221,166 +224,164 @@ export default function ConnectedAgentsPage() {
 
       <PageLayout title="Connected Agents" subtitle="Manage external agents and integrations">
         <div className="space-y-6">
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ staggerChildren: 0.1 }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+          >
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ staggerChildren: 0.1 }}
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+              className="bg-gradient-to-br from-cyan-500/10 to-transparent border border-slate-700/50 hover:border-cyan-500/40 rounded-lg px-6 py-5 backdrop-blur-sm hover:bg-slate-800/40 transition-all"
             >
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-gradient-to-br from-cyan-500/10 to-transparent border border-slate-700/50 hover:border-cyan-500/40 rounded-lg px-6 py-5 backdrop-blur-sm hover:bg-slate-800/40 transition-all"
-              >
-                <p className="text-xs text-slate-400 uppercase tracking-wider mb-2">Total Agents</p>
-                <p className="text-2xl font-bold text-cyan-300">{stats.total}</p>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="bg-gradient-to-br from-blue-500/10 to-transparent border border-slate-700/50 hover:border-blue-500/40 rounded-lg px-6 py-5 backdrop-blur-sm hover:bg-slate-800/40 transition-all"
-              >
-                <p className="text-xs text-slate-400 uppercase tracking-wider mb-2">Active</p>
-                <p className="text-2xl font-bold text-blue-300">{stats.active}</p>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="bg-gradient-to-br from-blue-500/10 to-transparent border border-slate-700/50 hover:border-blue-500/40 rounded-lg px-6 py-5 backdrop-blur-sm hover:bg-slate-800/40 transition-all"
-              >
-                <p className="text-xs text-slate-400 uppercase tracking-wider mb-2">Registered</p>
-                <p className="text-2xl font-bold text-blue-300">{stats.registered}</p>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="bg-gradient-to-br from-red-500/10 to-transparent border border-slate-700/50 hover:border-red-500/40 rounded-lg px-6 py-5 backdrop-blur-sm hover:bg-slate-800/40 transition-all"
-              >
-                <p className="text-xs text-slate-400 uppercase tracking-wider mb-2">Suspended</p>
-                <p className="text-2xl font-bold text-red-300">{stats.suspended}</p>
-              </motion.div>
+              <p className="text-xs text-slate-400 uppercase tracking-wider mb-2">Total Agents</p>
+              <p className="text-2xl font-bold text-cyan-300">{stats.total}</p>
             </motion.div>
 
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-3 flex-wrap"
+              transition={{ delay: 0.1 }}
+              className="bg-gradient-to-br from-blue-500/10 to-transparent border border-slate-700/50 hover:border-blue-500/40 rounded-lg px-6 py-5 backdrop-blur-sm hover:bg-slate-800/40 transition-all"
             >
-              <div className="relative flex-1 min-w-[240px]">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                <input
-                  type="text"
-                  placeholder="Search agentsâ€¦"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full bg-slate-800/50 border border-slate-700/50 hover:border-cyan-500/30 focus:border-cyan-500 text-slate-50 placeholder:text-slate-500 rounded-lg px-4 py-2.5 text-sm transition-all backdrop-blur-sm"
-                />
+              <p className="text-xs text-slate-400 uppercase tracking-wider mb-2">Active</p>
+              <p className="text-2xl font-bold text-blue-300">{stats.active}</p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-gradient-to-br from-blue-500/10 to-transparent border border-slate-700/50 hover:border-blue-500/40 rounded-lg px-6 py-5 backdrop-blur-sm hover:bg-slate-800/40 transition-all"
+            >
+              <p className="text-xs text-slate-400 uppercase tracking-wider mb-2">Registered</p>
+              <p className="text-2xl font-bold text-blue-300">{stats.registered}</p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="bg-gradient-to-br from-red-500/10 to-transparent border border-slate-700/50 hover:border-red-500/40 rounded-lg px-6 py-5 backdrop-blur-sm hover:bg-slate-800/40 transition-all"
+            >
+              <p className="text-xs text-slate-400 uppercase tracking-wider mb-2">Suspended</p>
+              <p className="text-2xl font-bold text-red-300">{stats.suspended}</p>
+            </motion.div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-3 flex-wrap"
+          >
+            <div className="relative flex-1 min-w-[240px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+              <input
+                type="text"
+                placeholder="Search agentsâ€¦"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full bg-slate-800/50 border border-slate-700/50 hover:border-cyan-500/30 focus:border-cyan-500 text-slate-50 placeholder:text-slate-500 rounded-lg px-4 py-2.5 text-sm transition-all backdrop-blur-sm"
+              />
+            </div>
+
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="bg-slate-800/50 border border-slate-700/50 hover:border-cyan-500/30 text-slate-50 rounded-lg px-3 py-2.5 text-sm transition-all backdrop-blur-sm cursor-pointer"
+            >
+              <option value="all">All Statuses</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+              <option value="error">Error</option>
+            </select>
+
+            <button
+              onClick={() => refresh()}
+              disabled={loading}
+              className="bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 hover:border-cyan-500/50 text-cyan-300 rounded-lg px-4 py-2.5 text-sm font-medium transition-all inline-flex items-center gap-2 hover:bg-cyan-500/30 disabled:opacity-50"
+            >
+              <RefreshCw className={cn('w-4 h-4', loading && 'animate-spin')} />
+              Refresh
+            </button>
+
+            <Link
+              href="/byoa-register"
+              className="bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 hover:border-cyan-500/50 text-cyan-300 rounded-lg px-4 py-2.5 text-sm font-medium transition-all inline-flex items-center gap-2 hover:bg-cyan-500/30"
+            >
+              <Plus className="w-4 h-4" />
+              Connect Agent
+            </Link>
+          </motion.div>
+
+          {loading ? (
+            <div className="flex items-center justify-center py-16">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-700 border-t-cyan-500 mx-auto mb-4" />
+                <p className="text-slate-400">Loading agentsâ€¦</p>
               </div>
-
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="bg-slate-800/50 border border-slate-700/50 hover:border-cyan-500/30 text-slate-50 rounded-lg px-3 py-2.5 text-sm transition-all backdrop-blur-sm cursor-pointer"
-              >
-                <option value="all">All Statuses</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-                <option value="error">Error</option>
-              </select>
-
-              <button
-                onClick={() => refresh()}
-                disabled={loading}
-                className="bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 hover:border-cyan-500/50 text-cyan-300 rounded-lg px-4 py-2.5 text-sm font-medium transition-all inline-flex items-center gap-2 hover:bg-cyan-500/30 disabled:opacity-50"
-              >
-                <RefreshCw className={cn('w-4 h-4', loading && 'animate-spin')} />
-                Refresh
-              </button>
-
+            </div>
+          ) : error ? (
+            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 text-red-300 backdrop-blur-sm">
+              {error}
+            </div>
+          ) : filteredAgents.length === 0 ? (
+            <div className="text-center py-16 bg-gradient-brand-subtle border border-surface-muted rounded-lg">
+              <Plug className="w-12 h-12 mx-auto text-slate-500 mb-4 opacity-50" />
+              <p className="text-slate-400 mb-2">No agents connected</p>
+              <p className="text-sm text-slate-500 mb-4">Get started by registering a new agent</p>
               <Link
                 href="/byoa-register"
                 className="bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 hover:border-cyan-500/50 text-cyan-300 rounded-lg px-4 py-2.5 text-sm font-medium transition-all inline-flex items-center gap-2 hover:bg-cyan-500/30"
               >
                 <Plus className="w-4 h-4" />
-                Connect Agent
+                Connect Your First Agent
               </Link>
+            </div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="bg-gradient-brand-subtle rounded-lg border border-surface-muted hover:border-secondary/50 overflow-hidden transition-colors duration-200"
+            >
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-slate-800/50 border-b border-slate-700/50">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                        Agent
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                        Type
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                        Last Seen
+                      </th>
+                      <th className="px-6 py-4 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-700/50">
+                    <AnimatePresence mode="popLayout">
+                      {filteredAgents.map((agent: any) => (
+                        <AgentRow
+                          key={agent.id}
+                          agent={agent}
+                          onSelect={(a) => setSelectedAgent(a)}
+                          onRevoke={(a) => setShowRevokeModal(a)}
+                        />
+                      ))}
+                    </AnimatePresence>
+                  </tbody>
+                </table>
+              </div>
             </motion.div>
-
-            {loading ? (
-              <div className="flex items-center justify-center py-16">
-                <div className="text-center">
-                  <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-700 border-t-cyan-500 mx-auto mb-4" />
-                  <p className="text-slate-400">Loading agentsâ€¦</p>
-                </div>
-              </div>
-            ) : error ? (
-              <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 text-red-300 backdrop-blur-sm">
-                {error}
-              </div>
-            ) : filteredAgents.length === 0 ? (
-              <div className="text-center py-16 bg-gradient-brand-subtle border border-surface-muted rounded-lg">
-                <Plug className="w-12 h-12 mx-auto text-slate-500 mb-4 opacity-50" />
-                <p className="text-slate-400 mb-2">No agents connected</p>
-                <p className="text-sm text-slate-500 mb-4">
-                  Get started by registering a new agent
-                </p>
-                <Link
-                  href="/byoa-register"
-                  className="bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 hover:border-cyan-500/50 text-cyan-300 rounded-lg px-4 py-2.5 text-sm font-medium transition-all inline-flex items-center gap-2 hover:bg-cyan-500/30"
-                >
-                  <Plus className="w-4 h-4" />
-                  Connect Your First Agent
-                </Link>
-              </div>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="bg-gradient-brand-subtle rounded-lg border border-surface-muted hover:border-secondary/50 overflow-hidden transition-colors duration-200"
-              >
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-slate-800/50 border-b border-slate-700/50">
-                      <tr>
-                        <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
-                          Agent
-                        </th>
-                        <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
-                          Status
-                        </th>
-                        <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
-                          Type
-                        </th>
-                        <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
-                          Last Seen
-                        </th>
-                        <th className="px-6 py-4 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-700/50">
-                      <AnimatePresence mode="popLayout">
-                        {filteredAgents.map((agent: any) => (
-                          <AgentRow
-                            key={agent.id}
-                            agent={agent}
-                            onSelect={(a) => setSelectedAgent(a)}
-                            onRevoke={(a) => setShowRevokeModal(a)}
-                          />
-                        ))}
-                      </AnimatePresence>
-                    </tbody>
-                  </table>
-                </div>
-              </motion.div>
-            )}
+          )}
         </div>
       </PageLayout>
 

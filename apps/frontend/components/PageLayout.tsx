@@ -19,9 +19,7 @@ export function PageLayout({ children, title, subtitle, actions }: PageLayoutPro
       <main className="flex-1 ml-60 flex flex-col">
         {title && <PageHeader title={title} subtitle={subtitle} />}
 
-        <div className="flex-1 overflow-auto p-8 lg:p-12">
-          {children}
-        </div>
+        <div className="flex-1 overflow-auto p-8 lg:p-12">{children}</div>
       </main>
     </div>
   );

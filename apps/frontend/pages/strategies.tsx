@@ -39,10 +39,7 @@ function SectionLabel({ children }: { children: string }) {
   );
 }
 
-const riskTierMeta: Record<
-  StrategyDefinition['riskTier'],
-  { label: string; className: string }
-> = {
+const riskTierMeta: Record<StrategyDefinition['riskTier'], { label: string; className: string }> = {
   degen: { label: 'Degen', className: 'bg-rose-500/15 text-rose-300 border-rose-500/30' },
   high: { label: 'High Risk', className: 'bg-orange-500/15 text-orange-300 border-orange-500/30' },
   medium: { label: 'Medium Risk', className: 'bg-amber-500/15 text-amber-300 border-amber-500/30' },
@@ -120,7 +117,8 @@ function StrategyCard({ strategy, isExpanded, onToggleExpand, onConfigure }: Str
               >
                 <div className="space-y-3">
                   <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 px-4 py-3 text-sm text-white/75">
-                    Browse the full catalog and choose the strategy you want. Nothing is auto-selected.
+                    Browse the full catalog and choose the strategy you want. Nothing is
+                    auto-selected.
                   </div>
                   {Array.from(strategy.fields).map((field) => (
                     <div
@@ -220,111 +218,112 @@ export default function StrategiesPage() {
 
       <PageLayout title="Strategies" subtitle="Browse and configure agent strategies">
         <div className="space-y-6">
-            {recommendedStarter && (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 px-5 py-4 text-sm text-slate-300"
-              >
-                Suggested starter: <span className="font-semibold text-emerald-300">{recommendedStarter.label}</span>{' '}
-                if you want a lower-risk entry point. It is surfaced for convenience only and does
-                not auto-select anything.
-              </motion.div>
-            )}
+          {recommendedStarter && (
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="space-y-4"
+              className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 px-5 py-4 text-sm text-slate-300"
             >
-              <div className="flex items-center gap-3 flex-wrap">
-                <div className="relative flex-1 min-w-[240px]">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                  <input
-                    type="text"
-                    placeholder="Search strategies…"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="w-full bg-slate-800/50 border border-slate-700/50 hover:border-cyan-500/30 focus:border-cyan-500 text-slate-50 placeholder:text-slate-500 rounded-lg px-4 py-2.5 text-sm transition-all backdrop-blur-sm"
-                  />
-                </div>
-
-                <select
-                  value={categoryFilter}
-                  onChange={(e) => setCategoryFilter(e.target.value)}
-                  className="bg-slate-800/50 border border-slate-700/50 hover:border-cyan-500/30 text-slate-50 rounded-lg px-3 py-2.5 text-sm transition-all backdrop-blur-sm cursor-pointer"
-                >
-                  <option value="all">All Categories</option>
-                  {categories.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                    </option>
-                  ))}
-                </select>
-
-                <button className="bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 hover:border-cyan-500/50 text-cyan-300 rounded-lg px-4 py-2.5 text-sm font-medium transition-all inline-flex items-center gap-2 hover:bg-cyan-500/30">
-                  <Plus className="w-4 h-4" />
-                  New Strategy
-                </button>
-              </div>
-
-              {!loading && !error && (
-                <p className="text-xs text-slate-500 uppercase tracking-wider">
-                  Showing {filteredStrategies.length} of {strategies?.length || 0} strategies
-                </p>
-              )}
+              Suggested starter:{' '}
+              <span className="font-semibold text-emerald-300">{recommendedStarter.label}</span> if
+              you want a lower-risk entry point. It is surfaced for convenience only and does not
+              auto-select anything.
             </motion.div>
+          )}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-4"
+          >
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="relative flex-1 min-w-[240px]">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <input
+                  type="text"
+                  placeholder="Search strategies…"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full bg-slate-800/50 border border-slate-700/50 hover:border-cyan-500/30 focus:border-cyan-500 text-slate-50 placeholder:text-slate-500 rounded-lg px-4 py-2.5 text-sm transition-all backdrop-blur-sm"
+                />
+              </div>
 
-            {loading ? (
-              <div className="flex items-center justify-center py-16">
-                <div className="text-center">
-                  <Loader2 className="w-12 h-12 mx-auto text-cyan-400 animate-spin mb-4" />
-                  <p className="text-slate-400">Loading strategies…</p>
-                </div>
-              </div>
-            ) : error ? (
-              <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 text-red-300 backdrop-blur-sm">
-                {error}
-              </div>
-            ) : Object.keys(grouped).length === 0 ? (
-              <div className="text-center py-16">
-                <HelpCircle className="w-12 h-12 mx-auto text-slate-500 mb-4 opacity-50" />
-                <p className="text-slate-400 mb-2">No strategies found</p>
-                <p className="text-sm text-slate-500">Try adjusting your search or filters</p>
-              </div>
-            ) : (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
-                {Object.entries(grouped).map(([category, items]) => (
-                  <section key={category}>
-                    <div className="flex items-center gap-2 mb-4">
-                      <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                        {category.charAt(0).toUpperCase() + category.slice(1)}
-                      </h2>
-                      <span className="text-xs text-slate-500 bg-slate-800/50 rounded-full px-2 py-1">
-                        {items.length}
-                      </span>
-                    </div>
-
-                    <AnimatePresence mode="popLayout">
-                      <motion.div layout className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        {items.map((strategy) => (
-                          <StrategyCard
-                            key={strategy.name}
-                            strategy={strategy as any}
-                            isExpanded={expandedStrategy === strategy.name}
-                            onToggleExpand={() =>
-                              setExpandedStrategy(
-                                expandedStrategy === strategy.name ? null : strategy.name
-                              )
-                            }
-                            onConfigure={(s) => setSelectedConfig(s as any)}
-                          />
-                        ))}
-                      </motion.div>
-                    </AnimatePresence>
-                  </section>
+              <select
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                className="bg-slate-800/50 border border-slate-700/50 hover:border-cyan-500/30 text-slate-50 rounded-lg px-3 py-2.5 text-sm transition-all backdrop-blur-sm cursor-pointer"
+              >
+                <option value="all">All Categories</option>
+                {categories.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                  </option>
                 ))}
-              </motion.div>
+              </select>
+
+              <button className="bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 hover:border-cyan-500/50 text-cyan-300 rounded-lg px-4 py-2.5 text-sm font-medium transition-all inline-flex items-center gap-2 hover:bg-cyan-500/30">
+                <Plus className="w-4 h-4" />
+                New Strategy
+              </button>
+            </div>
+
+            {!loading && !error && (
+              <p className="text-xs text-slate-500 uppercase tracking-wider">
+                Showing {filteredStrategies.length} of {strategies?.length || 0} strategies
+              </p>
             )}
+          </motion.div>
+
+          {loading ? (
+            <div className="flex items-center justify-center py-16">
+              <div className="text-center">
+                <Loader2 className="w-12 h-12 mx-auto text-cyan-400 animate-spin mb-4" />
+                <p className="text-slate-400">Loading strategies…</p>
+              </div>
+            </div>
+          ) : error ? (
+            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 text-red-300 backdrop-blur-sm">
+              {error}
+            </div>
+          ) : Object.keys(grouped).length === 0 ? (
+            <div className="text-center py-16">
+              <HelpCircle className="w-12 h-12 mx-auto text-slate-500 mb-4 opacity-50" />
+              <p className="text-slate-400 mb-2">No strategies found</p>
+              <p className="text-sm text-slate-500">Try adjusting your search or filters</p>
+            </div>
+          ) : (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
+              {Object.entries(grouped).map(([category, items]) => (
+                <section key={category}>
+                  <div className="flex items-center gap-2 mb-4">
+                    <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                      {category.charAt(0).toUpperCase() + category.slice(1)}
+                    </h2>
+                    <span className="text-xs text-slate-500 bg-slate-800/50 rounded-full px-2 py-1">
+                      {items.length}
+                    </span>
+                  </div>
+
+                  <AnimatePresence mode="popLayout">
+                    <motion.div layout className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      {items.map((strategy) => (
+                        <StrategyCard
+                          key={strategy.name}
+                          strategy={strategy as any}
+                          isExpanded={expandedStrategy === strategy.name}
+                          onToggleExpand={() =>
+                            setExpandedStrategy(
+                              expandedStrategy === strategy.name ? null : strategy.name
+                            )
+                          }
+                          onConfigure={(s) => setSelectedConfig(s as any)}
+                        />
+                      ))}
+                    </motion.div>
+                  </AnimatePresence>
+                </section>
+              ))}
+            </motion.div>
+          )}
         </div>
       </PageLayout>
 

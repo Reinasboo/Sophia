@@ -58,7 +58,6 @@ export const PrivySignin: React.FC<PrivySigninProps> = ({ onSuccess, onError }) 
       setLoading(false);
       exchangeInFlight.current = false;
     }
-
   }, [authenticated, getAccessToken, onError, onSuccess, ready, router]);
 
   React.useEffect(() => {
@@ -101,7 +100,8 @@ export const PrivySignin: React.FC<PrivySigninProps> = ({ onSuccess, onError }) 
           </button>
 
           <p className="text-xs text-text-tertiary text-center">
-            Use Privy to sign in with email, wallet, or social login. Your returned tenant session is stored locally after verification.
+            Use Privy to sign in with email, wallet, or social login. Your returned tenant session
+            is stored locally after verification.
           </p>
           {error && <div className="text-sm text-status-error">{error}</div>}
         </div>
@@ -116,7 +116,9 @@ export const PrivySignin: React.FC<PrivySigninProps> = ({ onSuccess, onError }) 
         </div>
 
         <div className="space-y-2 text-center text-sm text-text-tertiary">
-          <p>Privy handles the login UI, and the access token is exchanged for your tenant session.</p>
+          <p>
+            Privy handles the login UI, and the access token is exchanged for your tenant session.
+          </p>
           <p>Connected user: {user?.email?.address ?? 'not signed in'}</p>
         </div>
 

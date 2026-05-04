@@ -31,12 +31,17 @@ export class GmgnAdapter {
   static mapSignalToSwapParams(signal: Record<string, unknown>): Record<string, unknown> {
     const s = signal || {};
     // token/symbol/mint
-    const token = (s['symbol'] as string) || (s['token'] as string) || (s['mint'] as string) || undefined;
+    const token =
+      (s['symbol'] as string) || (s['token'] as string) || (s['mint'] as string) || undefined;
 
     // side: try common fields
     let side: 'buy' | 'sell' | undefined;
-    const rawSide = ((s['side'] as string) || (s['action'] as string) || (s['type'] as string) || '')
-      .toLowerCase();
+    const rawSide = (
+      (s['side'] as string) ||
+      (s['action'] as string) ||
+      (s['type'] as string) ||
+      ''
+    ).toLowerCase();
     if (rawSide.includes('buy') || rawSide.includes('long')) side = 'buy';
     else if (rawSide.includes('sell') || rawSide.includes('short')) side = 'sell';
 
