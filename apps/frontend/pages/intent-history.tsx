@@ -168,7 +168,7 @@ export default function IntentHistoryPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [expandedIntent, setExpandedIntent] = useState<string | null>(null);
 
-  // All hooks must be called BEFORE conditional returns
+  // All hooks must be called BEFORE conditional returns (React Hooks Rules)
   const filteredIntents = useMemo(() => {
     let result = [...(intents || [])];
 
@@ -186,6 +186,14 @@ export default function IntentHistoryPage() {
     return result;
   }, [intents, search, statusFilter]);
 
+  const stats = useMemo(() => {
+    const total = intents?.length || 0;
+    const executed = (intents || []).filter((i) => i.status === 'executed').length;
+    const rejected = (intents || []).filter((i) => i.status === 'rejected').length;
+
+    return { total, executed, rejected };
+  }, [intents]);
+
   // Show loading while checking authentication
   if (authLoading) {
     return (
@@ -201,14 +209,6 @@ export default function IntentHistoryPage() {
   if (!isAuthenticated) {
     return null;
   }
-
-  const stats = useMemo(() => {
-    const total = intents?.length || 0;
-    const executed = (intents || []).filter((i) => i.status === 'executed').length;
-    const rejected = (intents || []).filter((i) => i.status === 'rejected').length;
-
-    return { total, executed, rejected };
-  }, [intents]);
 
   return (
     <>

@@ -165,7 +165,7 @@ export default function TransactionsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [expandedTx, setExpandedTx] = useState<string | null>(null);
 
-  // All hooks must be called BEFORE conditional returns
+  // All hooks must be called BEFORE conditional returns (React Hooks Rules)
   const filteredTxs = useMemo(() => {
     let result = [...(transactions || [])];
 
@@ -196,6 +196,21 @@ export default function TransactionsPage() {
     return result;
   }, [transactions, search, typeFilter, statusFilter]);
 
+  const stats = useMemo(() => {
+    const total = transactions?.length || 0;
+    const finalized = (transactions || []).filter((tx) => tx.status === 'finalized').length;
+    const pending = (transactions || []).filter((tx) =>
+      ['pending', 'submitted', 'confirmed'].includes(tx.status)
+    ).length;
+    const failed = (transactions || []).filter((tx) => tx.status === 'failed').length;
+    const volume = (transactions || []).reduce(
+      (sum, tx) => sum + parseFloat((tx.amount as any) || '0'),
+      0
+    );
+
+    return { total, finalized, pending, failed, volume };
+  }, [transactions]);
+
   // Show loading while checking authentication
   if (authLoading) {
     return (
@@ -211,21 +226,6 @@ export default function TransactionsPage() {
   if (!isAuthenticated) {
     return null;
   }
-
-  const stats = useMemo(() => {
-    const total = transactions?.length || 0;
-    const finalized = (transactions || []).filter((tx) => tx.status === 'finalized').length;
-    const pending = (transactions || []).filter((tx) =>
-      ['pending', 'submitted', 'confirmed'].includes(tx.status)
-    ).length;
-    const failed = (transactions || []).filter((tx) => tx.status === 'failed').length;
-    const volume = (transactions || []).reduce(
-      (sum, tx) => sum + parseFloat((tx.amount as any) || '0'),
-      0
-    );
-
-    return { total, finalized, pending, failed, volume };
-  }, [transactions]);
 
   return (
     <>
