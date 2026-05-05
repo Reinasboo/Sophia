@@ -89,7 +89,7 @@ export default function PerformanceMonitoring() {
           label: 'Active Agents',
           value: statsData.activeAgents || 0,
           icon: <Zap className="w-5 h-5" />,
-          color: 'text-magenta-500',
+          color: 'text-primary',
         },
         {
           label: 'Avg Cycle Time',
@@ -252,7 +252,7 @@ export default function PerformanceMonitoring() {
                             <td className="text-right py-3 px-6 text-gray-300">
                               {agent.transactionCount}
                             </td>
-                            <td className="text-right py-3 px-6 text-magenta-500">
+                            <td className="text-right py-3 px-6 text-primary">
                               {agent.gasSpent.toFixed(6)}
                             </td>
                             <td className="text-right py-3 px-6 text-gray-300">
@@ -308,7 +308,7 @@ export default function PerformanceMonitoring() {
 
                 {/* Rate Limit Stats */}
                 <div className="bg-gradient-to-br from-gray-900 to-black border border-gray-700 rounded-lg p-6">
-                  <h2 className="text-lg font-bold text-magenta-500 mb-4 flex items-center gap-2">
+                  <h2 className="text-lg font-bold text-primary mb-4 flex items-center gap-2">
                     <Gauge className="w-5 h-5" />
                     Rate Limiting Status
                   </h2>
@@ -316,13 +316,13 @@ export default function PerformanceMonitoring() {
                     <div className="space-y-3">
                       <div className="flex justify-between items-center pb-2 border-b border-gray-700">
                         <span className="text-gray-400">RPC Utilization</span>
-                        <span className="text-magenta-500 font-bold">
+                        <span className="text-primary font-bold">
                           {rateLimitStats.rpc?.utilization || 'N/A'}
                         </span>
                       </div>
                       <div className="flex justify-between items-center pb-2 border-b border-gray-700">
                         <span className="text-gray-400">RPC Budget Used</span>
-                        <span className="text-magenta-500 font-bold">
+                        <span className="text-primary font-bold">
                           {rateLimitStats.rpc?.used || 0} / {rateLimitStats.rpc?.limit || 'Unknown'}
                         </span>
                       </div>

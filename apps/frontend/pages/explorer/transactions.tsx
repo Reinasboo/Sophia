@@ -226,7 +226,7 @@ export default function TransactionExplorer() {
                           </div>
                           <div>
                             <p className="text-xs text-gray-500 mb-1">Gas Spent</p>
-                            <p className="text-sm text-magenta-500 font-semibold">
+                            <p className="text-sm text-primary font-semibold">
                               {selected.gasSpent?.toFixed(6) || 'N/A'} SOL
                             </p>
                           </div>
@@ -310,7 +310,7 @@ export default function TransactionExplorer() {
                         {selected.amount && (
                           <div className="bg-gray-800/30 border border-gray-700 rounded p-3">
                             <p className="text-sm text-gray-400 font-semibold mb-2">Amount</p>
-                            <p className="text-sm font-mono text-magenta-500">
+                            <p className="text-sm font-mono text-primary">
                               {selected.amount} SOL
                             </p>
                           </div>

@@ -78,7 +78,7 @@ function StrategyCard({ strategy, isExpanded, onToggleExpand, onConfigure }: Str
           </span>
           <button
             onClick={() => onConfigure(strategy)}
-            className="flex-1 min-w-max bg-gradient-brand-accent hover:shadow-[0_0_30px_rgba(255,0,128,0.2)] text-white rounded-xl px-4 py-2.5 text-sm font-semibold transition-all inline-flex items-center justify-center gap-2"
+            className="flex-1 min-w-max bg-gradient-brand-accent hover:shadow-[0_0_30px_rgba(37,99,235,0.2)] text-white rounded-xl px-4 py-2.5 text-sm font-semibold transition-all inline-flex items-center justify-center gap-2"
           >
             <Settings className="w-4 h-4" />
             Configure

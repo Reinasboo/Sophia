@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { PrivySignin } from './PrivySignin';
 import { usePrivy } from '@privy-io/react-auth';
+import { BrandMark } from './BrandMark';
 
 const stats = [
   { label: 'Built-in strategies', value: '4' },
@@ -120,26 +121,18 @@ export function LandingExperience() {
       </Head>
 
       <div className="relative min-h-screen overflow-hidden bg-black text-white">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,0,128,0.18),_transparent_30%),radial-gradient(circle_at_top_right,_rgba(0,217,255,0.16),_transparent_28%),linear-gradient(180deg,_rgba(255,255,255,0.02),_transparent_24%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(37,99,235,0.22),_transparent_30%),radial-gradient(circle_at_top_right,_rgba(0,217,255,0.16),_transparent_28%),linear-gradient(180deg,_rgba(255,255,255,0.02),_transparent_24%)]" />
         <div className="pointer-events-none absolute inset-0 opacity-40 [background-image:linear-gradient(rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.04)_1px,transparent_1px)] [background-size:72px_72px] [mask-image:radial-gradient(ellipse_at_center,black_55%,transparent_100%)]" />
 
         <nav className="sticky top-0 z-40 border-b border-white/10 bg-black/80 backdrop-blur-xl">
           <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8">
-            <button
-              onClick={() => router.push('/')}
-              className="group flex items-center gap-3 rounded-xl px-2 py-1 text-left transition-transform duration-200 hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
-              aria-label="Sophia home"
-            >
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-brand-accent text-black shadow-[0_0_45px_rgba(255,0,128,0.26)]">
-                <span className="text-lg font-bold">S</span>
-              </div>
-              <div>
-                <div className="text-sm font-semibold uppercase tracking-[0.28em] text-cyan-300">
-                  Sophia
-                </div>
-                <div className="text-xs text-white/55">Autonomous control plane for Solana</div>
-              </div>
-            </button>
+            <BrandMark
+              href="/"
+              size="md"
+              label="Sophia"
+              sublabel="Autonomous control plane for Solana"
+              className="rounded-xl px-2 py-1 transition-transform duration-200 hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+            />
 
             <div className="hidden items-center gap-3 md:flex">
               <button
@@ -156,7 +149,7 @@ export function LandingExperience() {
               </button>
               <button
                 onClick={() => router.push('/dashboard')}
-                className="rounded-xl bg-gradient-brand-accent px-4 py-2 text-sm font-semibold text-white shadow-[0_0_30px_rgba(255,0,128,0.22)] transition hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+                className="rounded-xl bg-gradient-brand-accent px-4 py-2 text-sm font-semibold text-white shadow-[0_0_30px_rgba(37,99,235,0.22)] transition hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
               >
                 Open Dashboard
               </button>
@@ -188,7 +181,7 @@ export function LandingExperience() {
               <div className="flex flex-col gap-4 sm:flex-row">
                 <button
                   onClick={() => router.push('/landing#auth')}
-                  className="inline-flex items-center justify-center gap-3 rounded-2xl bg-gradient-brand-accent px-6 py-4 text-base font-semibold text-white shadow-[0_0_40px_rgba(255,0,128,0.24)] transition hover:translate-y-[-1px] hover:shadow-[0_0_55px_rgba(0,217,255,0.18)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+                  className="inline-flex items-center justify-center gap-3 rounded-2xl bg-gradient-brand-accent px-6 py-4 text-base font-semibold text-white shadow-[0_0_40px_rgba(37,99,235,0.24)] transition hover:translate-y-[-1px] hover:shadow-[0_0_55px_rgba(0,217,255,0.18)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
                 >
                   Login / Register
                   <ArrowRight className="h-5 w-5" />
@@ -387,7 +380,7 @@ export function LandingExperience() {
             </div>
           </section>
 
-          <section className="mt-24 overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-brand-accent-dark p-8 shadow-[0_0_70px_rgba(255,0,128,0.15)] sm:p-10">
+          <section className="mt-24 overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-brand-accent-dark p-8 shadow-[0_0_70px_rgba(37,99,235,0.15)] sm:p-10">
             <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
               <div>
                 <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-white/80">

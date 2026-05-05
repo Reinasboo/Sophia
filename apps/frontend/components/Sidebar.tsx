@@ -7,8 +7,8 @@
  * Navigation is present but unobtrusive.
  */
 
-import Link from 'next/link';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { usePrivy } from '@privy-io/react-auth';
 import {
@@ -20,6 +20,7 @@ import {
   Layers,
   UserPlus,
 } from 'lucide-react';
+import { BrandMark } from './BrandMark';
 import { cn } from '@/lib/utils';
 
 const navItems = [
@@ -79,17 +80,7 @@ export function Sidebar() {
     <aside className="fixed left-0 top-0 bottom-0 w-60 bg-black border-r border-primary/20 flex flex-col backdrop-blur-xl">
       {/* Logo */}
       <div className="h-18 flex items-center px-6 pt-6">
-        <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-9 h-9 rounded-xl bg-gradient-brand-accent flex items-center justify-center transition-all group-hover:shadow-lg group-hover:shadow-primary/50">
-            <span className="text-black font-bold text-lg">Ⓢ</span>
-          </div>
-          <div>
-            <span className="font-bold text-sm text-white group-hover:text-primary transition-colors">
-              Sophia
-            </span>
-            <span className="block text-xs text-text-secondary">Agentic Wallet</span>
-          </div>
-        </Link>
+        <BrandMark href="/" size="sm" label="Sophia" sublabel="Agentic Wallet" />
       </div>
 
       {/* Navigation */}

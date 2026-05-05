@@ -6,8 +6,8 @@ import type { Config } from 'tailwindcss';
  * High-impact, modern palette:
  * - Pure black backgrounds
  * - Crisp white text
- * - Electric magenta (#ff0080) primary
- * - Neon cyan (#00d9ff) secondary
+ * - Electric blue primary to match the uploaded logo
+ * - Neon cyan secondary for glow and focus accents
  * - Maximum contrast and precision
  */
 
@@ -36,19 +36,19 @@ const config: Config = {
           elevated: '#1a1a1a', // Charcoal
           hover: '#2d2d2d', // Hover state
         },
-        // Primary accent - electric magenta
+        // Primary accent - electric blue to match the uploaded logo
         primary: {
-          DEFAULT: '#ff0080',
-          50: '#ffe6f0',
-          100: '#ffcce1',
-          200: '#ff99c3',
-          300: '#ff66a5',
-          400: '#ff3387',
-          500: '#ff0080',
-          600: '#e60073',
-          700: '#cc0066',
-          800: '#b30059',
-          900: '#99004d',
+          DEFAULT: '#2563eb',
+          50: '#eff6ff',
+          100: '#dbeafe',
+          200: '#bfdbfe',
+          300: '#93c5fd',
+          400: '#60a5fa',
+          500: '#2563eb',
+          600: '#1d4ed8',
+          700: '#1e40af',
+          800: '#1e3a8a',
+          900: '#172554',
         },
         // Secondary accent - neon cyan
         secondary: {
@@ -98,21 +98,21 @@ const config: Config = {
       // ============================================
       backgroundImage: {
         // Full strength accent gradient
-        'gradient-brand-accent': 'linear-gradient(135deg, #ff0080 0%, #00d9ff 100%)',
+        'gradient-brand-accent': 'linear-gradient(135deg, #2563eb 0%, #00d9ff 100%)',
         // Semi-transparent accent for overlays
         'gradient-brand-accent-dark':
-          'linear-gradient(135deg, rgba(255, 0, 128, 0.2) 0%, rgba(0, 217, 255, 0.2) 100%)',
-        // Subtle background for cards - very light magenta to cyan
+          'linear-gradient(135deg, rgba(37, 99, 235, 0.2) 0%, rgba(0, 217, 255, 0.2) 100%)',
+        // Subtle background for cards - very light blue to cyan
         'gradient-brand-subtle':
-          'linear-gradient(135deg, rgba(255, 0, 128, 0.08) 0%, rgba(0, 217, 255, 0.08) 100%)',
+          'linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(0, 217, 255, 0.08) 100%)',
         // Card surface - sophisticated dark with brand accent
         'gradient-card': 'linear-gradient(135deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 217, 255, 0.05) 100%)',
         // Hover state - brighter version
         'gradient-card-hover': 'linear-gradient(135deg, rgba(0, 0, 0, 0.3) 0%, rgba(0, 217, 255, 0.08) 100%)',
-        // Icon background - subtle magenta tint
-        'gradient-icon-bg': 'linear-gradient(135deg, rgba(255, 0, 128, 0.1) 0%, rgba(255, 0, 128, 0.05) 100%)',
+        // Icon background - subtle blue tint
+        'gradient-icon-bg': 'linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%)',
         // Focus/Active state - stronger brand presence
-        'gradient-focus': 'linear-gradient(135deg, rgba(255, 0, 128, 0.15) 0%, rgba(0, 217, 255, 0.15) 100%)',
+        'gradient-focus': 'linear-gradient(135deg, rgba(37, 99, 235, 0.15) 0%, rgba(0, 217, 255, 0.15) 100%)',
       },
       // ============================================
       // TYPOGRAPHY - Bold Modern: Syne + Space Mono

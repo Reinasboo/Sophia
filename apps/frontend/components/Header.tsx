@@ -11,6 +11,7 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useStats, useWebSocket, useHealth } from '@/lib/hooks';
 import { formatUptime } from '@/lib/utils';
+import { BrandMark } from './BrandMark';
 
 interface HeaderProps {
   title?: string;
@@ -26,7 +27,8 @@ export function Header({ title, subtitle }: HeaderProps) {
     <header className="py-8 px-8 lg:px-12">
       <div className="flex items-start justify-between">
         {/* Title area */}
-        <div className="space-y-1">
+        <div className="space-y-3">
+          <BrandMark href="/dashboard" size="sm" showLabel={false} className="w-fit" />
           {title && (
             <motion.h1
               initial={{ opacity: 0, y: -4 }}

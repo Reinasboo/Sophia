@@ -2,6 +2,7 @@ import React from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 import { useRouter } from 'next/router';
 import { persistTenantSession } from '@/lib/privy-provider';
+import { BrandMark } from './BrandMark';
 
 interface PrivySigninProps {
   onSuccess?: () => void;
@@ -84,6 +85,9 @@ export const PrivySignin: React.FC<PrivySigninProps> = ({ onSuccess, onError }) 
   return (
     <div className="w-full space-y-8">
       <div className="text-center">
+        <div className="mb-4 flex justify-center">
+          <BrandMark href="/" size="md" label="Sophia" sublabel="Agentic Wallet" />
+        </div>
         <h1 className="text-4xl font-bold text-white mb-2">Agentic Wallet</h1>
         <p className="text-text-secondary">Login or register to access your control plane</p>
       </div>
