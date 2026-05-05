@@ -1,6 +1,6 @@
 import { createRemoteJWKSet, importSPKI, jwtVerify } from 'jose';
 
-const PRIVY_ISSUER = 'privy.io';
+const DEFAULT_PRIVY_ISSUER = 'privy.io';
 
 export interface VerifiedPrivyToken {
   userId: string;
@@ -60,7 +60,7 @@ export async function verifyPrivyAccessToken(
           userId: `dev_${accessToken.toLowerCase().replace(/[^a-z0-9]/g, '_')}`,
           sessionId: `dev_session_${Buffer.from(accessToken).toString('hex').slice(0, 16)}`,
           appId: process.env['PRIVY_APP_ID'] ?? 'dev-privy-app',
-          issuer: PRIVY_ISSUER,
+            issuer: DEFAULT_PRIVY_ISSUER,
           issuedAt: Math.floor(Date.now() / 1000),
           expiration: Math.floor(Date.now() / 1000) + 3600,
           email: accessToken,
@@ -72,15 +72,21 @@ export async function verifyPrivyAccessToken(
   }
 
   const appId = process.env['PRIVY_APP_ID'];
-  const issuer = process.env['PRIVY_ISSUER'] ?? PRIVY_ISSUER;
+  const configuredIssuer = process.env['PRIVY_ISSUER'];
 
   const verified = await jwtVerify<PrivyTokenClaims>(accessToken, verifier, {
-    issuer,
     algorithms: ['ES256'],
   });
 
   const payload = verified.payload;
   const tokenAppId = payload.appId ?? String(payload.aud ?? '');
+
+  if (configuredIssuer) {
+    const tokenIssuer = String(payload.iss ?? '');
+    if (tokenIssuer && tokenIssuer !== configuredIssuer) {
+      throw new Error('Privy token issuer mismatch');
+    }
+  }
 
   if (appId && tokenAppId && tokenAppId !== appId) {
     throw new Error('Privy token appId mismatch');
@@ -97,7 +103,7 @@ export async function verifyPrivyAccessToken(
     userId,
     sessionId,
     appId: tokenAppId || appId || '',
-    issuer: String(verified.payload.iss ?? issuer),
+    issuer: String(verified.payload.iss ?? configuredIssuer ?? DEFAULT_PRIVY_ISSUER),
     issuedAt: verified.payload.iat ?? 0,
     expiration: verified.payload.exp ?? 0,
     email: typeof payload.email === 'string' ? payload.email : undefined,

@@ -83,7 +83,9 @@ export function usePrivyAuthentication(): AuthenticationState {
 
         const data = await response.json();
 
-        if (!data.success || !data.data?.tenantId) {
+        const tenantId = data?.tenantId ?? data?.data?.tenantId;
+
+        if (!data.success || !tenantId) {
           throw new Error(data.error || 'Invalid authentication response');
         }
 
@@ -91,7 +93,7 @@ export function usePrivyAuthentication(): AuthenticationState {
         // The backend validates the Privy JWT directly for protected routes.
         if (typeof window !== 'undefined') {
           localStorage.setItem('sophia_api_key', accessToken);
-          localStorage.setItem('sophia_tenant_id', data.data.tenantId);
+          localStorage.setItem('sophia_tenant_id', tenantId);
         }
 
         setState({
