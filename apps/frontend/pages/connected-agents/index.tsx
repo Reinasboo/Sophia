@@ -145,25 +145,7 @@ export default function ConnectedAgentsPage() {
   const [isRevoking, setIsRevoking] = useState(false);
   const [revokeError, setRevokeError] = useState<string | null>(null);
 
-  // Show loading while checking authentication
-  if (authLoading) {
-    return (
-      <PageLayout
-        title="Connected Agents"
-        subtitle="Manage external agent connections and permissions"
-      >
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="w-8 h-8 animate-spin text-cyan-400" />
-        </div>
-      </PageLayout>
-    );
-  }
-
-  // Redirect handled by useAuthProtected hook
-  if (!isAuthenticated) {
-    return null;
-  }
-
+  // All hooks must be called BEFORE conditional returns
   const filteredAgents = useMemo(() => {
     if (!agents) return [];
 
@@ -196,6 +178,25 @@ export default function ConnectedAgentsPage() {
       inactive: agents.filter((a: ExternalAgent) => a.status === 'inactive').length,
     };
   }, [agents]);
+
+  // Show loading while checking authentication
+  if (authLoading) {
+    return (
+      <PageLayout
+        title="Connected Agents"
+        subtitle="Manage external agent connections and permissions"
+      >
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-cyan-400" />
+        </div>
+      </PageLayout>
+    );
+  }
+
+  // Redirect handled by useAuthProtected hook
+  if (!isAuthenticated) {
+    return null;
+  }
 
   const handleRevoke = async () => {
     if (!showRevokeModal) return;

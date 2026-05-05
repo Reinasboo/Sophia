@@ -168,22 +168,7 @@ export default function IntentHistoryPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [expandedIntent, setExpandedIntent] = useState<string | null>(null);
 
-  // Show loading while checking authentication
-  if (authLoading) {
-    return (
-      <PageLayout title="Intent History" subtitle="Track all agent intent executions">
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="w-8 h-8 animate-spin text-cyan-400" />
-        </div>
-      </PageLayout>
-    );
-  }
-
-  // Redirect handled by useAuthProtected hook
-  if (!isAuthenticated) {
-    return null;
-  }
-
+  // All hooks must be called BEFORE conditional returns
   const filteredIntents = useMemo(() => {
     let result = [...(intents || [])];
 
@@ -200,6 +185,22 @@ export default function IntentHistoryPage() {
 
     return result;
   }, [intents, search, statusFilter]);
+
+  // Show loading while checking authentication
+  if (authLoading) {
+    return (
+      <PageLayout title="Intent History" subtitle="Track all agent intent executions">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-cyan-400" />
+        </div>
+      </PageLayout>
+    );
+  }
+
+  // Redirect handled by useAuthProtected hook
+  if (!isAuthenticated) {
+    return null;
+  }
 
   const stats = useMemo(() => {
     const total = intents?.length || 0;

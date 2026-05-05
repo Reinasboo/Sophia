@@ -157,6 +157,7 @@ export default function StrategiesPage() {
   const [expandedStrategy, setExpandedStrategy] = useState<string | null>(null);
   const [selectedConfig, setSelectedConfig] = useState<StrategyDefinition | null>(null);
 
+  // All hooks must be called BEFORE conditional returns
   const recommendedStarter = useMemo(
     () => strategies?.find((s) => s.riskTier === 'low') ?? strategies?.[0],
     [strategies]

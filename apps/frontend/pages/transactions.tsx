@@ -165,22 +165,7 @@ export default function TransactionsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [expandedTx, setExpandedTx] = useState<string | null>(null);
 
-  // Show loading while checking authentication
-  if (authLoading) {
-    return (
-      <PageLayout title="Transactions" subtitle="Monitor and audit all wallet transactions">
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="w-8 h-8 animate-spin text-cyan-400" />
-        </div>
-      </PageLayout>
-    );
-  }
-
-  // Redirect handled by useAuthProtected hook
-  if (!isAuthenticated) {
-    return null;
-  }
-
+  // All hooks must be called BEFORE conditional returns
   const filteredTxs = useMemo(() => {
     let result = [...(transactions || [])];
 
@@ -210,6 +195,22 @@ export default function TransactionsPage() {
 
     return result;
   }, [transactions, search, typeFilter, statusFilter]);
+
+  // Show loading while checking authentication
+  if (authLoading) {
+    return (
+      <PageLayout title="Transactions" subtitle="Monitor and audit all wallet transactions">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-cyan-400" />
+        </div>
+      </PageLayout>
+    );
+  }
+
+  // Redirect handled by useAuthProtected hook
+  if (!isAuthenticated) {
+    return null;
+  }
 
   const stats = useMemo(() => {
     const total = transactions?.length || 0;
