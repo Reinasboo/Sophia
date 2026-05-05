@@ -44,8 +44,8 @@ export const PrivySignin: React.FC<PrivySigninProps> = ({ onSuccess, onError }) 
       const result = await response.json();
       if (!result.success) throw new Error(result.error || 'Privy sign-in failed');
 
-      const { tenantId, apiKey } = result;
-      persistTenantSession({ tenantId, apiKey });
+      const { tenantId } = result;
+      persistTenantSession({ tenantId, apiKey: accessToken });
 
       // Let parent handle navigation
       onSuccess?.();

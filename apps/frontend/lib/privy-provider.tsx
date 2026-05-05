@@ -54,7 +54,7 @@ function readTenantSession(): TenantSession | null {
     localStorage.getItem(TENANT_SESSION_KEYS.apiKey) ??
     localStorage.getItem(TENANT_SESSION_KEYS.legacyApiKey);
 
-  if (!tenantId || !apiKey) {
+  if (!tenantId || !apiKey || apiKey.split('.').length !== 3) {
     return null;
   }
 

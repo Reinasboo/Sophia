@@ -13,14 +13,14 @@ export function useAuthProtected() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    // Check if we have stored auth credentials from Privy callback
+    // Check if we have a stored Privy bearer token.
     const apiKey = typeof window !== 'undefined' ? localStorage.getItem('sophia_api_key') : null;
     const tenantId =
       typeof window !== 'undefined' ? localStorage.getItem('sophia_tenant_id') : null;
+    const hasJwtBearer = !!apiKey && apiKey.split('.').length === 3;
 
-    // Phase 1: Accept if both are present
-    // Phase 2: Will verify token with backend
-    if (apiKey && tenantId) {
+    // Accept only JWT-shaped bearer tokens for authenticated pages.
+    if (hasJwtBearer && tenantId) {
       setIsAuthenticated(true);
       setIsLoading(false);
     } else {

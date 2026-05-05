@@ -34,7 +34,12 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://sophia-production-1
 /** Get tenant API key from localStorage */
 function getTenantApiKey(): string | null {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem('sophia_api_key');
+  const token = localStorage.getItem('sophia_api_key');
+  if (!token) return null;
+
+  // Prefer Privy JWT bearer tokens; legacy tenant API keys are not valid
+  // for the production tenant middleware.
+  return token.split('.').length === 3 ? token : null;
 }
 
 /** Headers for authenticated requests (includes tenant Bearer token) */

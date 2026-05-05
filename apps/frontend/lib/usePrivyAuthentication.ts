@@ -1,11 +1,12 @@
 /**
  * Privy Authentication Hook
  *
- * Handles Privy login flow and exchanges JWT for API key.
+ * Handles Privy login flow and keeps the Privy access token available
+ * for authenticated API requests.
  * When user logs in via Privy, this hook:
  * 1. Gets the Privy JWT access token
- * 2. Exchanges it with the backend for a tenant API key
- * 3. Stores the API key in localStorage for API requests
+ * 2. Exchanges it with the backend for tenant provisioning
+ * 3. Stores the Privy bearer token in localStorage for API requests
  */
 
 import { usePrivy } from '@privy-io/react-auth';
@@ -20,8 +21,7 @@ interface AuthenticationState {
 }
 
 /**
- * Hook to sync Privy authentication with API key.
- * Automatically exchanges Privy JWT for API key and stores it.
+ * Hook to sync Privy authentication with API bearer token storage.
  */
 export function usePrivyAuthentication(): AuthenticationState {
   const { authenticated, getAccessToken } = usePrivy();
@@ -51,12 +51,12 @@ export function usePrivyAuthentication(): AuthenticationState {
           throw new Error('Failed to get Privy access token');
         }
 
-        // Check if we already have a valid API key
+        // Check if we already have the same bearer token
         const existingApiKey =
           typeof window !== 'undefined' ? localStorage.getItem('sophia_api_key') : null;
 
-        if (existingApiKey) {
-          // Already have API key, just mark as authenticated
+        if (existingApiKey === accessToken) {
+          // Already synced, just mark as authenticated
           setState({
             isLoading: false,
             isAuthenticated: true,
@@ -65,7 +65,7 @@ export function usePrivyAuthentication(): AuthenticationState {
           return;
         }
 
-        // Exchange Privy JWT for API key
+        // Exchange Privy JWT for backend tenant provisioning
         const response = await fetch(`${API_BASE}/api/auth/privy-callback`, {
           method: 'POST',
           headers: {
@@ -83,13 +83,14 @@ export function usePrivyAuthentication(): AuthenticationState {
 
         const data = await response.json();
 
-        if (!data.success || !data.data?.apiKey || !data.data?.tenantId) {
+        if (!data.success || !data.data?.tenantId) {
           throw new Error(data.error || 'Invalid authentication response');
         }
 
-        // Store API key and tenant ID in localStorage
+        // Store the Privy bearer token and tenant ID in localStorage.
+        // The backend validates the Privy JWT directly for protected routes.
         if (typeof window !== 'undefined') {
-          localStorage.setItem('sophia_api_key', data.data.apiKey);
+          localStorage.setItem('sophia_api_key', accessToken);
           localStorage.setItem('sophia_tenant_id', data.data.tenantId);
         }
 

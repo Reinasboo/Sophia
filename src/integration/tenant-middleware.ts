@@ -13,6 +13,7 @@ import { Request, Response, NextFunction } from 'express';
 import { createLogger } from '../utils/logger.js';
 import { TenantContext } from '../types/index.js';
 import { getConfig } from '../utils/config.js';
+import { verifyPrivyAccessToken } from '../utils/privy-auth.js';
 
 const logger = createLogger('TENANT_MIDDLEWARE');
 
@@ -60,12 +61,34 @@ export function tenantContextMiddleware() {
       }
 
       // For user requests: extract tenant ID from token
-      // In production, insecure token parsing is disabled unless explicitly enabled.
+      // In production, prefer verified Privy JWTs.
       const allowInsecureTenantTokens =
         process.env['NODE_ENV'] !== 'production' ||
         process.env['ALLOW_INSECURE_TENANT_TOKENS'] === 'true';
 
       if (apiKey) {
+        try {
+          const verifiedPrivyToken = await verifyPrivyAccessToken(apiKey);
+          if (verifiedPrivyToken) {
+            req.tenantContext = {
+              tenantId: verifiedPrivyToken.userId,
+              userId: verifiedPrivyToken.userId,
+              apiKey,
+            };
+            logger.debug('Privy bearer token authenticated', {
+              tenantId: verifiedPrivyToken.userId,
+              sessionId: verifiedPrivyToken.sessionId,
+            });
+            return next();
+          }
+        } catch (error) {
+          logger.warn('Privy token verification failed', {
+            path: req.path,
+            ip: req.ip,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+
         if (!allowInsecureTenantTokens) {
           logger.warn('Rejected insecure tenant token format in production', {
             path: req.path,
