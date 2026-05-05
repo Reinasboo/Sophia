@@ -157,27 +157,11 @@ export default function StrategiesPage() {
   const [expandedStrategy, setExpandedStrategy] = useState<string | null>(null);
   const [selectedConfig, setSelectedConfig] = useState<StrategyDefinition | null>(null);
 
-  // All hooks must be called BEFORE conditional returns
+  // All hooks must be called BEFORE conditional returns (React Hooks Rules)
   const recommendedStarter = useMemo(
     () => strategies?.find((s) => s.riskTier === 'low') ?? strategies?.[0],
     [strategies]
   );
-
-  // Show loading while checking authentication
-  if (authLoading) {
-    return (
-      <PageLayout title="Strategies" subtitle="Configure and manage agent strategies">
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="w-8 h-8 animate-spin text-cyan-400" />
-        </div>
-      </PageLayout>
-    );
-  }
-
-  // Redirect handled by useAuthProtected hook
-  if (!isAuthenticated) {
-    return null;
-  }
 
   const filteredStrategies = useMemo(() => {
     if (!strategies) return [];
@@ -210,6 +194,22 @@ export default function StrategiesPage() {
   const categories = useMemo(() => {
     return [...new Set(strategies?.map((s) => s.category || 'custom') || [])];
   }, [strategies]);
+
+  // Show loading while checking authentication
+  if (authLoading) {
+    return (
+      <PageLayout title="Strategies" subtitle="Configure and manage agent strategies">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-cyan-400" />
+        </div>
+      </PageLayout>
+    );
+  }
+
+  // Redirect handled by useAuthProtected hook
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <>
