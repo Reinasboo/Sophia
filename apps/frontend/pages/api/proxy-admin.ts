@@ -32,18 +32,6 @@ function isAllowedPath(targetPath: string): boolean {
 
 const ALLOWED_METHODS = new Set(['POST', 'PATCH', 'DELETE']);
 
-// Headers that must never be passed through from client
-const FORBIDDEN_HEADERS = new Set([
-  'authorization',
-  'x-admin-key',
-  'x-forwarded-for',
-  'x-forwarded-proto',
-  'x-forwarded-host',
-  'host',
-  'connection',
-  'transfer-encoding',
-]);
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!ALLOWED_METHODS.has(req.method ?? '')) {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
@@ -66,17 +54,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       'Content-Type': 'application/json',
       'X-Admin-Key': ADMIN_API_KEY,
     };
-
-    // Reject any forbidden headers from client request
-    const clientHeaders = req.headers;
-    for (const [key] of Object.entries(clientHeaders)) {
-      if (FORBIDDEN_HEADERS.has(key.toLowerCase())) {
-        return res.status(400).json({
-          success: false,
-          error: `Forbidden header: ${key}`,
-        });
-      }
-    }
 
     const upstream = await fetch(`${BACKEND_URL}${targetPath}`, {
       method: req.method,

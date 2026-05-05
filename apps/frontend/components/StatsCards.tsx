@@ -39,7 +39,7 @@ export function StatsCards() {
     {
       title: 'Network',
       value: stats?.networkStatus ?? 'unknown',
-      network: stats?.network ?? 'devnet',
+      network: stats?.network ?? 'mainnet-beta',
       icon: Radio,
       isStatus: true,
     },

@@ -64,6 +64,8 @@ export function Sidebar() {
   const router = useRouter();
   const pathname = router.pathname;
   const { authenticated } = usePrivy();
+  const network = process.env.NEXT_PUBLIC_SOLANA_NETWORK || 'mainnet-beta';
+  const networkLabel = network === 'mainnet-beta' ? 'Solana Mainnet' : `Solana ${network}`;
 
   const handleRegisterClick = (e: React.MouseEvent) => {
     if (!authenticated) {
@@ -141,7 +143,7 @@ export function Sidebar() {
       <div className="p-4 mx-4 mb-4">
         <div className="flex items-center gap-2 text-xs text-slate-400">
           <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
-          <span>Solana Devnet</span>
+          <span>{networkLabel}</span>
         </div>
       </div>
     </aside>

@@ -50,6 +50,8 @@ export default function TransactionExplorer() {
   const [error, setError] = useState<string | null>(null);
   const { isAuthenticated } = useAuthProtected();
   const router = useRouter();
+  const network = process.env.NEXT_PUBLIC_SOLANA_NETWORK || 'mainnet-beta';
+  const explorerCluster = network === 'mainnet-beta' ? '' : `?cluster=${network}`;
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -194,7 +196,7 @@ export default function TransactionExplorer() {
                             </p>
                           </div>
                           <a
-                            href={`https://explorer.solana.com/tx/${selected.signature}?cluster=devnet`}
+                            href={`https://explorer.solana.com/tx/${selected.signature}${explorerCluster}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="p-2 hover:bg-gray-800 rounded transition-colors"

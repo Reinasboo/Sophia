@@ -40,6 +40,8 @@ import {
 export default function AgentDetailPage() {
   const router = useRouter();
   const { id } = router.query;
+  const network = process.env.NEXT_PUBLIC_SOLANA_NETWORK || 'mainnet-beta';
+  const explorerCluster = network === 'mainnet-beta' ? '' : `?cluster=${network}`;
   const { data, loading, error, refetch } = useAgent(id as string | null);
   const [actionLoading, setActionLoading] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -237,7 +239,7 @@ export default function AgentDetailPage() {
                   )}
                 </button>
                 <a
-                  href={`https://explorer.solana.com/address/${agent.walletPublicKey}?cluster=devnet`}
+                  href={`https://explorer.solana.com/address/${agent.walletPublicKey}${explorerCluster}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="p-1.5 rounded-md hover:bg-slate-700/40 transition-colors duration-200"

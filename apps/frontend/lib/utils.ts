@@ -146,7 +146,7 @@ export async function copyToClipboard(text: string): Promise<boolean> {
 }
 
 // Get Solana explorer URL
-export function getExplorerUrl(signature: string, network: string = 'devnet'): string {
+export function getExplorerUrl(signature: string, network: string = 'mainnet-beta'): string {
   const cluster = network === 'mainnet-beta' ? '' : `?cluster=${network}`;
   return `https://explorer.solana.com/tx/${signature}${cluster}`;
 }

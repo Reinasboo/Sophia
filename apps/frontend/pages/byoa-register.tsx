@@ -76,6 +76,26 @@ export default function ByoaRegisterPage() {
   const router = useRouter();
   const { authenticated, ready } = usePrivy();
 
+  const [currentStep, setCurrentStep] = useState<Step>('type');
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [formData, setFormData] = useState<FormData>({
+    agentType: 'local',
+    agentName: '',
+    agentId: '',
+    agentSecret: '',
+    webhookUrl: '',
+    signingKey: '',
+    supportedIntents: [],
+    verificationMethods: ['none'],
+  });
+  const [showSecret, setShowSecret] = useState(false);
+  const [showKey, setShowKey] = useState(false);
+  const [registrationResult, setRegistrationResult] = useState<{
+    success: boolean;
+    message?: string;
+    agentId?: string;
+  } | null>(null);
+
   // Redirect to login if not authenticated
   useEffect(() => {
     if (ready && !authenticated) {
@@ -99,26 +119,6 @@ export default function ByoaRegisterPage() {
       </>
     );
   }
-
-  const [currentStep, setCurrentStep] = useState<Step>('type');
-  const [isRegistering, setIsRegistering] = useState(false);
-  const [formData, setFormData] = useState<FormData>({
-    agentType: 'local',
-    agentName: '',
-    agentId: '',
-    agentSecret: '',
-    webhookUrl: '',
-    signingKey: '',
-    supportedIntents: [],
-    verificationMethods: ['none'],
-  });
-  const [showSecret, setShowSecret] = useState(false);
-  const [showKey, setShowKey] = useState(false);
-  const [registrationResult, setRegistrationResult] = useState<{
-    success: boolean;
-    message?: string;
-    agentId?: string;
-  } | null>(null);
 
   const steps: { id: Step; label: string; icon: React.ElementType }[] = [
     { id: 'type', label: 'Agent Type', icon: Zap },

@@ -142,6 +142,10 @@ interface PrivyCallbackResponse {
   error?: string;
 }
 
+function getClientIp(req: NextApiRequest): string {
+  return (req.socket.remoteAddress || 'unknown') as string;
+}
+
 /**
  * POST /api/auth/privy-callback
  *
@@ -161,7 +165,7 @@ export default async function handler(
   }
 
   // H-1 FIX: Apply rate limiting to prevent brute-force attacks
-  const clientIp = (req.headers['x-forwarded-for'] || req.socket.remoteAddress) as string;
+  const clientIp = getClientIp(req);
   const rateLimitCheck = checkAuthRateLimit(clientIp);
 
   if (!rateLimitCheck.allowed) {
@@ -183,7 +187,7 @@ export default async function handler(
     }
 
     logger.debug('Privy auth callback received', {
-      ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+      ip: clientIp,
     });
 
     // Step 1: Verify Privy token
