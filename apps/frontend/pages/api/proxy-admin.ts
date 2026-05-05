@@ -49,11 +49,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // Build safe headers only - never pass through client headers
+    // Build safe headers - include admin key AND user authentication
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       'X-Admin-Key': ADMIN_API_KEY,
     };
+
+    // Pass through user's Bearer token if present
+    const authHeader = req.headers.authorization;
+    if (authHeader) {
+      headers['Authorization'] = authHeader;
+    }
 
     const upstream = await fetch(`${BACKEND_URL}${targetPath}`, {
       method: req.method,

@@ -68,7 +68,10 @@ async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<Api
       ...options,
       headers: {
         'Content-Type': 'application/json',
-        ...(method === 'GET' ? authHeaders() : {}),
+        // Always include auth headers for both GET and mutations
+        // GET requests go directly to backend
+        // Mutations go through proxy-admin which passes Authorization through
+        ...authHeaders(),
         ...options?.headers,
       },
     });
