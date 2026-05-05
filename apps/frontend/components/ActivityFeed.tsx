@@ -100,7 +100,7 @@ export function ActivityFeed({
   const displayEvents = events.slice(0, maxItems);
 
   return (
-    <div className="bg-gradient-to-br from-slate-800/20 to-slate-900/20 border border-slate-700/50 rounded-lg p-5 backdrop-blur-sm">
+    <div className="bg-gradient-card border border-slate-700/50 rounded-lg p-5 backdrop-blur-sm hover:bg-gradient-card-hover transition-all">
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <h3 className="text-sm font-semibold text-slate-50">{title}</h3>

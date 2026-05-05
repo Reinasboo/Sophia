@@ -24,7 +24,7 @@ export function AgentList({ onCreateClick }: AgentListProps) {
         {[1, 2, 3].map((i) => (
           <div
             key={i}
-            className="bg-gradient-to-br from-slate-800/20 to-slate-900/20 border border-slate-700/50 rounded-lg p-5 animate-pulse backdrop-blur-sm"
+            className="bg-gradient-card border border-slate-700/50 rounded-lg p-5 animate-pulse backdrop-blur-sm"
           >
             <div className="flex items-center gap-3 mb-5">
               <div className="w-10 h-10 rounded-lg bg-slate-700/30" />
@@ -45,7 +45,7 @@ export function AgentList({ onCreateClick }: AgentListProps) {
 
   if (error) {
     return (
-      <div className="bg-gradient-to-br from-slate-800/20 to-slate-900/20 border border-slate-700/50 rounded-lg p-8 text-center backdrop-blur-sm">
+      <div className="bg-gradient-card border border-slate-700/50 rounded-lg p-8 text-center backdrop-blur-sm hover:bg-gradient-card-hover transition-all">
         <p className="text-red-300 mb-4">{error}</p>
         <button
           onClick={refetch}
@@ -63,7 +63,7 @@ export function AgentList({ onCreateClick }: AgentListProps) {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-        className="bg-gradient-to-br from-slate-800/20 to-slate-900/20 border border-slate-700/50 rounded-lg backdrop-blur-sm"
+        className="bg-gradient-card border border-slate-700/50 rounded-lg backdrop-blur-sm hover:bg-gradient-card-hover transition-all"
       >
         <div className="py-16 text-center px-6">
           <div className="w-14 h-14 mx-auto mb-5 rounded-xl bg-slate-700/30 flex items-center justify-center">
@@ -76,7 +76,7 @@ export function AgentList({ onCreateClick }: AgentListProps) {
           {onCreateClick && (
             <button
               onClick={onCreateClick}
-              className="px-4 py-2 text-sm font-medium bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 hover:border-cyan-500/50 text-cyan-300 rounded-lg transition-all inline-flex items-center gap-2 hover:bg-cyan-500/30"
+              className="px-4 py-2 text-sm font-medium bg-gradient-focus border border-cyan-500/40 hover:border-cyan-500/60 text-cyan-300 hover:text-cyan-200 rounded-lg transition-all inline-flex items-center gap-2 hover:bg-gradient-brand-accent-dark"
             >
               <Plus className="w-4 h-4" />
               Create Agent

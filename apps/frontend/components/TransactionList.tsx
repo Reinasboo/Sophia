@@ -87,7 +87,7 @@ function getTransactionLabel(type: string) {
 export function TransactionList({ transactions, loading, compact = false }: TransactionListProps) {
   if (loading) {
     return (
-      <div className="bg-gradient-to-br from-slate-800/20 to-slate-900/20 border border-slate-700/50 rounded-lg p-5 backdrop-blur-sm">
+      <div className="bg-gradient-card border border-slate-700/50 rounded-lg p-5 backdrop-blur-sm hover:bg-gradient-card-hover transition-all">
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
             <div key={i} className="flex items-center gap-4 animate-pulse">
@@ -106,7 +106,7 @@ export function TransactionList({ transactions, loading, compact = false }: Tran
 
   if (transactions.length === 0) {
     return (
-      <div className="bg-gradient-to-br from-slate-800/20 to-slate-900/20 border border-slate-700/50 rounded-lg backdrop-blur-sm">
+      <div className="bg-gradient-card border border-slate-700/50 rounded-lg backdrop-blur-sm hover:bg-gradient-card-hover transition-all">
         <div className="py-12 text-center px-6">
           <div className="w-10 h-10 mx-auto mb-3 rounded-full bg-slate-700/30 flex items-center justify-center">
             <Clock className="w-5 h-5 text-slate-500" />
@@ -118,7 +118,7 @@ export function TransactionList({ transactions, loading, compact = false }: Tran
   }
 
   return (
-    <div className="bg-gradient-to-br from-slate-800/20 to-slate-900/20 border border-slate-700/50 rounded-lg overflow-hidden divide-y divide-slate-700/50 backdrop-blur-sm">
+    <div className="bg-gradient-card border border-slate-700/50 rounded-lg overflow-hidden divide-y divide-slate-700/50 backdrop-blur-sm hover:bg-gradient-card-hover transition-all">
       {transactions.map((tx, index) => (
         <motion.div
           key={tx.id}

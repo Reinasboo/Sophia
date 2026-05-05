@@ -60,7 +60,7 @@ export function StatsCards() {
               duration: 0.3,
               ease: [0.16, 1, 0.3, 1],
             }}
-            className="bg-gradient-to-br from-slate-800/20 to-slate-900/20 border border-slate-700/50 rounded-xl p-5"
+            className="bg-gradient-card border border-slate-700/50 rounded-xl p-5 hover:bg-gradient-card-hover transition-all"
           >
             {/* Header with icon */}
             <div className="flex items-center gap-3 mb-4">

@@ -68,7 +68,7 @@ export function AgentCard({ agent, onUpdate }: AgentCardProps) {
       <motion.div
         whileHover={{ y: -2 }}
         transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-        className="bg-gradient-to-br from-slate-800/20 to-slate-900/20 border border-slate-700/50 hover:border-cyan-500/40 rounded-lg p-5 cursor-pointer group transition-all backdrop-blur-sm hover:bg-slate-800/40"
+        className="bg-gradient-card border border-slate-700/50 hover:border-cyan-500/40 rounded-lg p-5 cursor-pointer group transition-all backdrop-blur-sm hover:bg-gradient-card-hover"
       >
         {/* Header */}
         <div className="flex items-start justify-between mb-5">

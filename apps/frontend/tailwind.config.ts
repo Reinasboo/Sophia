@@ -94,14 +94,25 @@ const config: Config = {
         },
       },
       // ============================================
-      // GRADIENTS - Brand spectrum (magenta → cyan)
+      // GRADIENTS - Professional brand spectrum
       // ============================================
       backgroundImage: {
-        'gradient-brand-subtle':
-          'linear-gradient(135deg, rgba(255, 0, 128, 0.1) 0%, rgba(0, 217, 255, 0.1) 100%)',
+        // Full strength accent gradient
         'gradient-brand-accent': 'linear-gradient(135deg, #ff0080 0%, #00d9ff 100%)',
+        // Semi-transparent accent for overlays
         'gradient-brand-accent-dark':
           'linear-gradient(135deg, rgba(255, 0, 128, 0.2) 0%, rgba(0, 217, 255, 0.2) 100%)',
+        // Subtle background for cards - very light magenta to cyan
+        'gradient-brand-subtle':
+          'linear-gradient(135deg, rgba(255, 0, 128, 0.08) 0%, rgba(0, 217, 255, 0.08) 100%)',
+        // Card surface - sophisticated dark with brand accent
+        'gradient-card': 'linear-gradient(135deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 217, 255, 0.05) 100%)',
+        // Hover state - brighter version
+        'gradient-card-hover': 'linear-gradient(135deg, rgba(0, 0, 0, 0.3) 0%, rgba(0, 217, 255, 0.08) 100%)',
+        // Icon background - subtle magenta tint
+        'gradient-icon-bg': 'linear-gradient(135deg, rgba(255, 0, 128, 0.1) 0%, rgba(255, 0, 128, 0.05) 100%)',
+        // Focus/Active state - stronger brand presence
+        'gradient-focus': 'linear-gradient(135deg, rgba(255, 0, 128, 0.15) 0%, rgba(0, 217, 255, 0.15) 100%)',
       },
       // ============================================
       // TYPOGRAPHY - Bold Modern: Syne + Space Mono

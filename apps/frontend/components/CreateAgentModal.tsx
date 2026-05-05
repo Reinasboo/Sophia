@@ -330,8 +330,7 @@ export function CreateAgentModal({ isOpen, onClose, onCreated }: CreateAgentModa
             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
             className="fixed left-1/2 top-[3vh] -translate-x-1/2 z-50 w-full max-w-lg px-4"
           >
-            <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl shadow-2xl border border-slate-700/50 flex flex-col max-h-[94vh]">
-              {/* Header */}
+            <div className="bg-gradient-card border border-slate-700/50 rounded-2xl shadow-2xl flex flex-col max-h-[94vh] backdrop-blur-md" style={{background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.6) 0%, rgba(0, 217, 255, 0.04) 100%)'}}>              {/* Header */}
               <div className="flex items-center justify-between px-6 py-5 border-b border-slate-700/50 shrink-0">
                 <div>
                   <h2 className="text-lg font-semibold text-slate-50">
