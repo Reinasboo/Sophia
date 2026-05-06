@@ -478,7 +478,8 @@ app.post(
     const { accessToken, apiKey } = req.body as { accessToken?: string; apiKey?: string };
 
     if (!accessToken || !apiKey) {
-      return res.status(400).json({ success: false, error: 'Missing accessToken or apiKey' });
+      res.status(400).json({ success: false, error: 'Missing accessToken or apiKey' });
+      return;
     }
 
     // Verify Privy access token (will throw if misconfigured)
@@ -486,11 +487,13 @@ app.post(
     try {
       verified = await verifyPrivyAccessToken(accessToken);
     } catch (err) {
-      return res.status(401).json({ success: false, error: 'Invalid accessToken' });
+      res.status(401).json({ success: false, error: 'Invalid accessToken' });
+      return;
     }
 
     if (!verified) {
-      return res.status(401).json({ success: false, error: 'Invalid accessToken' });
+      res.status(401).json({ success: false, error: 'Invalid accessToken' });
+      return;
     }
 
     // Persist token into data/bearer_tokens.json in server data dir
@@ -537,9 +540,9 @@ app.post(
         try { writeFileSync(filePath, JSON.stringify(records, null, 2), 'utf8'); } catch {}
       }
 
-      return res.status(200).json({ success: true });
+      res.status(200).json({ success: true });
     } catch (error) {
-      return res.status(500).json({ success: false, error: 'failed to persist token' });
+      res.status(500).json({ success: false, error: 'failed to persist token' });
     }
   })
 );
