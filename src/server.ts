@@ -2216,6 +2216,11 @@ app.post(
         (req.headers['x-helius-webhook-signature'] as string | undefined) ??
         (req.headers['helius-signature'] as string | undefined) ??
         '';
+      const webhookAuthHeader =
+        (req.headers['authorization'] as string | undefined) ??
+        (req.headers['x-webhook-auth'] as string | undefined) ??
+        (req.headers['x-api-key'] as string | undefined) ??
+        '';
 
       if (process.env['NODE_ENV'] === 'production') {
         const secret = config.HELIUS_WEBHOOK_SECRET;
@@ -2229,10 +2234,14 @@ app.post(
           return;
         }
 
-        if (!verifyHeliusSignature(rawBody, webhookSignature, secret)) {
+        const token = webhookAuthHeader.replace(/^Bearer\s+/i, '').trim();
+        const hasValidSignature = verifyHeliusSignature(rawBody, webhookSignature, secret);
+        const hasValidHeaderToken = token.length > 0 && secureCompare(token, secret);
+
+        if (!hasValidSignature && !hasValidHeaderToken) {
           sendError(
             res,
-            'Invalid Helius webhook signature',
+            'Invalid Helius webhook authentication',
             HTTP_STATUS.UNAUTHORIZED,
             ERROR_CODE.UNAUTHORIZED
           );
