@@ -147,6 +147,23 @@ interface PrivyCallbackResponse {
   error?: string;
 }
 
+const SESSION_COOKIE_NAME = 'sophia_session';
+const SESSION_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365 * 10;
+
+function serializeSessionCookie(value: string): string {
+  const secureFlag = process.env.NODE_ENV === 'production' ? 'Secure' : '';
+  return [
+    `${SESSION_COOKIE_NAME}=${encodeURIComponent(value)}`,
+    'Path=/',
+    'HttpOnly',
+    'SameSite=Lax',
+    `Max-Age=${SESSION_COOKIE_MAX_AGE_SECONDS}`,
+    secureFlag,
+  ]
+    .filter(Boolean)
+    .join('; ');
+}
+
 function getClientIp(req: NextApiRequest): string {
   return (req.socket.remoteAddress || 'unknown') as string;
 }
@@ -225,6 +242,7 @@ export default async function handler(
     // Frontend should store these in localStorage for future requests:
     //   localStorage.setItem('sophia_api_key', apiKey);
     //   localStorage.setItem('sophia_tenant_id', tenantId);
+    res.setHeader('Set-Cookie', serializeSessionCookie(apiKey));
     logger.info('Privy auth successful', {
       tenantId,
       privyUserId: privyUserInfo.id,

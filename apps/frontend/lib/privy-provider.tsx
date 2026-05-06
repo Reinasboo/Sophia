@@ -96,20 +96,59 @@ export function PrivyProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     const syncTenantSession = () => {
       setTenantSession(readTenantSession());
     };
 
-    syncTenantSession();
+    const bootstrapTenantSession = async () => {
+      syncTenantSession();
+
+      if (currentTenantSession) {
+        if (!cancelled) {
+          setLoading(false);
+        }
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/auth/session', {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (response.ok) {
+          const payload = (await response.json()) as {
+            success?: boolean;
+            tenantId?: string;
+            apiKey?: string;
+          };
+
+          if (payload.success && payload.tenantId && payload.apiKey) {
+            persistTenantSession({ tenantId: payload.tenantId, apiKey: payload.apiKey });
+          }
+        }
+      } catch {
+        // No persistent session available; login flow will bootstrap again.
+      } finally {
+        if (!cancelled) {
+          setTenantSession(readTenantSession());
+          setLoading(false);
+        }
+      }
+    };
+
+    void bootstrapTenantSession();
     window.addEventListener(TENANT_SESSION_EVENT, syncTenantSession);
 
     return () => {
+      cancelled = true;
       window.removeEventListener(TENANT_SESSION_EVENT, syncTenantSession);
     };
-  }, []);
-
-  useEffect(() => {
-    setLoading(false);
   }, []);
 
   const logout = () => {

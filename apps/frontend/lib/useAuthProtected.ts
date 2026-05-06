@@ -1,6 +1,6 @@
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import { usePrivy } from '@privy-io/react-auth';
+import { useTenantSession } from '@/lib/privy-provider';
 
 /**
  * Hook to protect pages with authentication.
@@ -12,24 +12,24 @@ export function useAuthProtected() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const { ready, authenticated } = usePrivy();
+  const { tenantSession, loading } = useTenantSession();
 
   useEffect(() => {
-    if (!ready) {
+    if (loading) {
       setIsLoading(true);
       return;
     }
 
     setIsLoading(false);
 
-    if (authenticated) {
+    if (tenantSession) {
       setIsAuthenticated(true);
       return;
     }
 
     setIsAuthenticated(false);
     router.push('/landing');
-  }, [authenticated, ready, router]);
+  }, [loading, router, tenantSession]);
 
   return { isLoading, isAuthenticated };
 }
