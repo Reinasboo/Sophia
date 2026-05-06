@@ -380,10 +380,13 @@ describe('Data Tracking', () => {
     it('should verify Helius webhook signatures', () => {
       const payload = '{"webhookID":"webhook-1","timestamp":"2026-05-03T18:00:00.000Z"}';
       const secret = 'test-webhook-secret-123';
-      const signature = crypto.createHmac('sha256', secret).update(payload).digest('hex');
+      const signatureHex = crypto.createHmac('sha256', secret).update(payload).digest('hex');
+      const signatureBase64 = crypto.createHmac('sha256', secret).update(payload).digest('base64');
 
-      expect(verifyHeliusSignature(payload, signature, secret)).toBe(true);
-      expect(verifyHeliusSignature(payload, `${signature}tampered`, secret)).toBe(false);
+      expect(verifyHeliusSignature(payload, signatureHex, secret)).toBe(true);
+      expect(verifyHeliusSignature(payload, `sha256=${signatureHex}`, secret)).toBe(true);
+      expect(verifyHeliusSignature(payload, signatureBase64, secret)).toBe(true);
+      expect(verifyHeliusSignature(payload, `${signatureHex}tampered`, secret)).toBe(false);
     });
 
     it('should parse and index Helius webhook events', async () => {

@@ -2213,7 +2213,9 @@ app.post(
       const rawBody = (req as Request & { rawBody?: string }).rawBody ?? JSON.stringify(payload);
       const webhookSignature =
         (req.headers['x-helius-signature'] as string | undefined) ??
+        (req.headers['x-helius-signature-v1'] as string | undefined) ??
         (req.headers['x-helius-webhook-signature'] as string | undefined) ??
+        (req.headers['x-helius-webhook-signature-v1'] as string | undefined) ??
         (req.headers['helius-signature'] as string | undefined) ??
         '';
       const webhookAuthHeader =
