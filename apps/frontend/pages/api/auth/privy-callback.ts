@@ -248,6 +248,23 @@ export default async function handler(
       privyUserId: privyUserInfo.id,
     });
 
+    // Try to register this bearer token with the backend so the server
+    // can validate the persistent apiKey for future requests.
+    // This is best-effort: auth succeeds even if registration fails.
+    (async () => {
+      try {
+        const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+        await fetch(`${API_BASE}/internal/register-bearer`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ accessToken, apiKey }),
+        });
+        console.log('[Auth] Registered bearer token with backend');
+      } catch (err) {
+        console.warn('[Auth] Failed to register bearer token with backend', err);
+      }
+    })();
+
     return res.status(200).json({
       success: true,
       tenantId,

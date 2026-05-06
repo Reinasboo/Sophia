@@ -49,6 +49,9 @@ import {
   verifyHeliusSignature,
 } from './data/index.js';
 import { getDeFiRegistry } from './defi/index.js';
+import { verifyPrivyAccessToken } from './utils/privy-auth.js';
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
+import { join } from 'path';
 
 const logger = createLogger('API');
 
@@ -465,6 +468,82 @@ app.get(
 );
 
 // ============================================
+// INTERNAL: Register server-issued bearer token
+// POST /internal/register-bearer
+// Body: { accessToken: string, apiKey: string }
+// Verifies the Privy accessToken then persists the apiKey into data/bearer_tokens.json
+app.post(
+  '/internal/register-bearer',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { accessToken, apiKey } = req.body as { accessToken?: string; apiKey?: string };
+
+    if (!accessToken || !apiKey) {
+      return res.status(400).json({ success: false, error: 'Missing accessToken or apiKey' });
+    }
+
+    // Verify Privy access token (will throw if misconfigured)
+    let verified;
+    try {
+      verified = await verifyPrivyAccessToken(accessToken);
+    } catch (err) {
+      return res.status(401).json({ success: false, error: 'Invalid accessToken' });
+    }
+
+    if (!verified) {
+      return res.status(401).json({ success: false, error: 'Invalid accessToken' });
+    }
+
+    // Persist token into data/bearer_tokens.json in server data dir
+    const dataDir = join(process.cwd(), 'data');
+    const filePath = join(dataDir, 'bearer_tokens.json');
+    try {
+      if (!existsSync(dataDir)) mkdirSync(dataDir, { recursive: true });
+
+      let records: any[] = [];
+      if (existsSync(filePath)) {
+        const raw = readFileSync(filePath, 'utf8');
+        records = JSON.parse(raw || '[]');
+      }
+
+      // Upsert record for this user
+      const userId = verified.userId;
+      const now = Date.now();
+      const existingIndex = records.findIndex((r) => r.privyUserId === userId);
+      const record = {
+        privyUserId: userId,
+        bearerToken: apiKey,
+        createdAt: new Date().toISOString(),
+        issuedAt: now,
+      };
+
+      if (existingIndex >= 0) {
+        records[existingIndex] = record;
+      } else {
+        records.push(record);
+      }
+
+      // Write atomically
+      const tmp = filePath + '.tmp';
+      writeFileSync(tmp, JSON.stringify(records, null, 2), 'utf8');
+      try {
+        if (existsSync(filePath)) {
+          const backup = filePath + '.bak';
+          if (existsSync(backup)) try { require('fs').unlinkSync(backup); } catch {}
+          require('fs').renameSync(filePath, backup);
+        }
+        require('fs').renameSync(tmp, filePath);
+      } catch (renameErr) {
+        // best effort
+        try { writeFileSync(filePath, JSON.stringify(records, null, 2), 'utf8'); } catch {}
+      }
+
+      return res.status(200).json({ success: true });
+    } catch (error) {
+      return res.status(500).json({ success: false, error: 'failed to persist token' });
+    }
+  })
+);
+
 // AGENT ENDPOINTS
 // ============================================
 
