@@ -49,16 +49,20 @@ export class SolanaClient {
 
   constructor() {
     const config = getConfig();
+    const rpcUrl = config.HELIUS_RPC_URL ?? config.SOLANA_RPC_URL;
+    const wsEndpoint = config.HELIUS_WS_URL;
 
-    this.connection = new Connection(config.SOLANA_RPC_URL, {
+    this.connection = new Connection(rpcUrl, {
       commitment: 'confirmed',
       confirmTransactionInitialTimeout: config.CONFIRMATION_TIMEOUT_MS,
+      wsEndpoint,
     });
 
     this.maxRetries = config.MAX_RETRIES;
 
     logger.info('Solana client initialized', {
-      rpcUrl: config.SOLANA_RPC_URL,
+      rpcUrl,
+      wsEndpoint,
       network: config.SOLANA_NETWORK,
     });
   }
