@@ -249,6 +249,24 @@ export interface ServicePolicy {
   readonly metadata?: Record<string, unknown>;
 }
 
+// ─── Withdrawal Types ────────────────────────────────────────────────────
+
+export type WithdrawalStatus = 'pending' | 'executed' | 'failed';
+
+export interface WithdrawalRecord {
+  readonly id: string;
+  readonly agentId: string;
+  readonly walletId: string;
+  readonly recipient: string;
+  readonly amount: number;
+  readonly status: WithdrawalStatus;
+  readonly signature?: string;
+  readonly error?: string;
+  readonly description?: string;
+  readonly requestedAt: string | Date;
+  readonly executedAt?: string | Date;
+}
+
 export interface ServiceUsageRecord {
   readonly serviceId: string;
   readonly tenantId?: string;

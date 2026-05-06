@@ -20,6 +20,7 @@ import type {
   StrategyDefinition,
   BYOARegistrationResult,
   ServicePolicy,
+  WithdrawalRecord,
   X402PaymentDescriptor,
 } from './types';
 import { getCurrentTenantApiKey } from './privy-provider';
@@ -176,6 +177,58 @@ export async function stopAgent(id: string): Promise<ApiResponse<void>> {
     method: 'POST',
     headers: adminHeaders(),
   });
+}
+
+// Withdrawals
+export async function requestWithdrawal(
+  agentId: string,
+  data: {
+    recipient: string;
+    amount?: number;
+    description?: string;
+  }
+): Promise<ApiResponse<WithdrawalRecord>> {
+  return fetchApi(`/api/agents/${agentId}/withdraw`, {
+    method: 'POST',
+    headers: adminHeaders(),
+    body: JSON.stringify(data),
+  });
+}
+
+export async function executeWithdrawal(
+  withdrawalId: string
+): Promise<ApiResponse<WithdrawalRecord>> {
+  return fetchApi(`/api/withdrawals/${withdrawalId}/execute`, {
+    method: 'POST',
+    headers: adminHeaders(),
+  });
+}
+
+export async function getWithdrawals(
+  limit?: number,
+  offset?: number
+): Promise<ApiResponse<WithdrawalRecord[]>> {
+  const params = new URLSearchParams();
+  if (limit) params.append('limit', limit.toString());
+  if (offset) params.append('offset', offset.toString());
+  const queryString = params.toString();
+  return fetchApi(`/api/withdrawals${queryString ? `?${queryString}` : ''}`);
+}
+
+export async function getAgentWithdrawals(
+  agentId: string,
+  limit?: number,
+  offset?: number
+): Promise<ApiResponse<WithdrawalRecord[]>> {
+  const params = new URLSearchParams();
+  if (limit) params.append('limit', limit.toString());
+  if (offset) params.append('offset', offset.toString());
+  const queryString = params.toString();
+  return fetchApi(`/api/agents/${agentId}/withdrawals${queryString ? `?${queryString}` : ''}`);
+}
+
+export async function getWithdrawal(withdrawalId: string): Promise<ApiResponse<WithdrawalRecord>> {
+  return fetchApi(`/api/withdrawals/${withdrawalId}`);
 }
 
 // Transactions

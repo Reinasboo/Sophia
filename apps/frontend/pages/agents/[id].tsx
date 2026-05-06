@@ -22,10 +22,20 @@ import {
   Wallet,
   Activity,
   RefreshCw,
+  Download,
 } from 'lucide-react';
-import { PageLayout, TransactionList, ActivityFeed, AgentSettingsPanel } from '@/components';
+import {
+  PageLayout,
+  TransactionList,
+  ActivityFeed,
+  AgentSettingsPanel,
+  WithdrawalModal,
+  WithdrawalConfirmDialog,
+  WithdrawalHistoryCard,
+} from '@/components';
 import { useAgent } from '@/lib/hooks';
 import * as api from '@/lib/api';
+import { WithdrawalRecord } from '@/lib/types';
 import {
   cn,
   formatSol,
@@ -45,6 +55,9 @@ export default function AgentDetailPage() {
   const { data, loading, error, refetch } = useAgent(id as string | null);
   const [actionLoading, setActionLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [withdrawalModalOpen, setWithdrawalModalOpen] = useState(false);
+  const [withdrawalConfirmOpen, setWithdrawalConfirmOpen] = useState(false);
+  const [pendingWithdrawal, setPendingWithdrawal] = useState<WithdrawalRecord | null>(null);
 
   const handleStart = async () => {
     if (!data?.agent.id) return;
@@ -170,6 +183,15 @@ export default function AgentDetailPage() {
                   />
                   {agent.status}
                 </span>
+
+                <button
+                  onClick={() => setWithdrawalModalOpen(true)}
+                  className="px-3 py-1.5 text-xs font-medium text-cyan-300 hover:text-cyan-200 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 hover:border-cyan-500/50 rounded-lg transition-all inline-flex items-center gap-2"
+                  title="Request withdrawal"
+                >
+                  <Download className="w-4 h-4" />
+                  Withdraw
+                </button>
 
                 {isRunning ? (
                   <button
@@ -342,7 +364,37 @@ export default function AgentDetailPage() {
               <ActivityFeed events={events} maxItems={10} />
             </motion.div>
           </div>
+
+          {/* Withdrawal History */}
+          <WithdrawalHistoryCard agentId={agent.id} />
         </div>
+
+        {/* Withdrawal Modal */}
+        <WithdrawalModal
+          isOpen={withdrawalModalOpen}
+          agentId={agent.id}
+          agentBalance={balance ?? 0}
+          onClose={() => setWithdrawalModalOpen(false)}
+          onWithdrawalRequested={(record) => {
+            setPendingWithdrawal(record);
+            setWithdrawalModalOpen(false);
+            setWithdrawalConfirmOpen(true);
+          }}
+        />
+
+        {/* Withdrawal Confirm Dialog */}
+        <WithdrawalConfirmDialog
+          isOpen={withdrawalConfirmOpen}
+          withdrawal={pendingWithdrawal}
+          onClose={() => {
+            setWithdrawalConfirmOpen(false);
+            setPendingWithdrawal(null);
+          }}
+          onConfirmed={() => {
+            refetch();
+            setPendingWithdrawal(null);
+          }}
+        />
       </PageLayout>
     </>
   );

@@ -15,3 +15,6 @@ export { ConnectedAgentsList } from './ConnectedAgentsList';
 export { IntentHistory } from './IntentHistory';
 export { AgentSettingsPanel } from './AgentSettingsPanel';
 export { ErrorBoundary } from './ErrorBoundary';
+export { WithdrawalModal } from './WithdrawalModal';
+export { WithdrawalConfirmDialog } from './WithdrawalConfirmDialog';
+export { WithdrawalHistoryCard } from './WithdrawalHistoryCard';
