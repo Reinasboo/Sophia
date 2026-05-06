@@ -12,7 +12,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { z } from 'zod';
 import { PublicKey } from '@solana/web3.js';
 import { getOrchestrator, eventBus } from './orchestrator/index.js';
-import { getWalletManager, getServicePolicyManager } from './wallet/index.js';
+import { getWalletManager, getServicePolicyManager, getWithdrawalManager } from './wallet/index.js';
 import { getSolanaClient, X402Handler, getX402Handler } from './rpc/index.js';
 import { getConfig, getExplorerUrl } from './utils/config.js';
 import { createLogger } from './utils/logger.js';
@@ -356,6 +356,17 @@ const UpdateAgentConfigSchema = z.object({
       enabled: z.boolean().optional(),
     })
     .optional(),
+});
+
+const RequestWithdrawalSchema = z.object({
+  agentId: z.string().min(1).max(100),
+  recipient: z.string().min(1),
+  amount: z.number().positive().optional(),
+  description: z.string().max(255).optional(),
+});
+
+const ExecuteWithdrawalSchema = z.object({
+  withdrawalId: z.string().min(1),
 });
 
 // ============================================
@@ -717,6 +728,206 @@ app.patch(
     }
 
     sendSuccess(res, result.value);
+  })
+);
+
+// ============================================
+// WITHDRAWAL ENDPOINTS
+// ============================================
+// SECURITY-CRITICAL: All endpoints perform multi-layer authorization checks
+// - Multi-tenant isolation
+// - Agent ownership verification
+// - BYOA agent blocking
+// - Rate limiting (max 1 withdrawal per 24h per agent)
+// - Balance verification
+// - Agent status verification (must be stopped)
+
+/**
+ * REQUEST WITHDRAWAL
+ *
+ * User requests to withdraw funds from an agent's wallet.
+ * Returns a pending withdrawal record for dashboard confirmation.
+ *
+ * SECURITY:
+ * - Only the owner of the agent can withdraw
+ * - Cannot withdraw from BYOA agents
+ * - Agent must be stopped
+ * - Max 1 withdrawal per agent per 24 hours
+ * - User provides recipient address
+ */
+app.post(
+  '/api/agents/:id/withdraw',
+  protectedRoute(),
+  asyncHandler(async (req: Request, res: Response) => {
+    const tenantId = getTenantIdOrFail(req, res);
+    if (!tenantId) return;
+
+    const agentId = req.params['id'] ?? '';
+    const validation = RequestWithdrawalSchema.safeParse(req.body);
+    if (!validation.success) {
+      sendError(
+        res,
+        validation.error.message,
+        HTTP_STATUS.BAD_REQUEST,
+        ERROR_CODE.VALIDATION_FAILED
+      );
+      return;
+    }
+
+    const withdrawalManager = getWithdrawalManager();
+    const result = await withdrawalManager.requestWithdrawal({
+      agentId,
+      tenantId,
+      recipient: validation.data.recipient,
+      amount: validation.data.amount,
+      description: validation.data.description,
+    });
+
+    if (!result.ok) {
+      // Determine appropriate status code based on error type
+      const message = result.error.message;
+      const status = message.includes('not found')
+        ? HTTP_STATUS.NOT_FOUND
+        : message.includes('rate limit')
+          ? HTTP_STATUS.TOO_MANY_REQUESTS
+          : message.includes('running')
+            ? HTTP_STATUS.CONFLICT
+            : HTTP_STATUS.BAD_REQUEST;
+
+      sendError(res, message, status, ERROR_CODE.OPERATION_FAILED);
+      return;
+    }
+
+    sendSuccess(res, result.value, HTTP_STATUS.CREATED);
+  })
+);
+
+/**
+ * EXECUTE WITHDRAWAL
+ *
+ * After user confirmation, execute the withdrawal on-chain.
+ * Returns updated withdrawal record with transaction signature.
+ */
+app.post(
+  '/api/withdrawals/:id/execute',
+  protectedRoute(),
+  asyncHandler(async (req: Request, res: Response) => {
+    const tenantId = getTenantIdOrFail(req, res);
+    if (!tenantId) return;
+
+    const withdrawalId = req.params['id'] ?? '';
+    const withdrawalManager = getWithdrawalManager();
+
+    // Verify withdrawal belongs to tenant (multi-tenant check)
+    const record = withdrawalManager.getWithdrawalRecord(withdrawalId);
+    if (!record || record.tenantId !== tenantId) {
+      sendError(
+        res,
+        'Withdrawal not found',
+        HTTP_STATUS.NOT_FOUND,
+        ERROR_CODE.NOT_FOUND
+      );
+      return;
+    }
+
+    const result = await withdrawalManager.executeWithdrawal(withdrawalId);
+
+    if (!result.ok) {
+      sendError(
+        res,
+        result.error.message,
+        HTTP_STATUS.BAD_REQUEST,
+        ERROR_CODE.OPERATION_FAILED
+      );
+      return;
+    }
+
+    sendSuccess(res, result.value);
+  })
+);
+
+/**
+ * GET WITHDRAWAL HISTORY
+ *
+ * List withdrawal records for the authenticated tenant.
+ */
+app.get(
+  '/api/withdrawals',
+  protectedRoute(),
+  asyncHandler(async (req: Request, res: Response) => {
+    const tenantId = getTenantIdOrFail(req, res);
+    if (!tenantId) return;
+
+    const limit = Math.min(parseInt(req.query['limit'] as string) || 100, 500);
+    const withdrawalManager = getWithdrawalManager();
+    const history = withdrawalManager.getWithdrawalHistory(tenantId, limit);
+
+    sendSuccess(res, history);
+  })
+);
+
+/**
+ * GET AGENT WITHDRAWAL HISTORY
+ *
+ * List withdrawal records for a specific agent.
+ */
+app.get(
+  '/api/agents/:id/withdrawals',
+  protectedRoute(),
+  asyncHandler(async (req: Request, res: Response) => {
+    const tenantId = getTenantIdOrFail(req, res);
+    if (!tenantId) return;
+
+    const agentId = req.params['id'] ?? '';
+    const orchestrator = getOrchestrator();
+
+    // Verify agent exists and belongs to tenant
+    const agentResult = orchestrator.getAgent(agentId);
+    if (!agentResult.ok) {
+      sendError(
+        res,
+        'Agent not found',
+        HTTP_STATUS.NOT_FOUND,
+        ERROR_CODE.AGENT_NOT_FOUND
+      );
+      return;
+    }
+
+    const limit = Math.min(parseInt(req.query['limit'] as string) || 50, 200);
+    const withdrawalManager = getWithdrawalManager();
+    const history = withdrawalManager.getAgentWithdrawalHistory(agentId, limit);
+
+    sendSuccess(res, history);
+  })
+);
+
+/**
+ * GET WITHDRAWAL RECORD
+ *
+ * Get details of a specific withdrawal.
+ */
+app.get(
+  '/api/withdrawals/:id',
+  protectedRoute(),
+  asyncHandler(async (req: Request, res: Response) => {
+    const tenantId = getTenantIdOrFail(req, res);
+    if (!tenantId) return;
+
+    const withdrawalId = req.params['id'] ?? '';
+    const withdrawalManager = getWithdrawalManager();
+    const record = withdrawalManager.getWithdrawalRecord(withdrawalId);
+
+    if (!record || record.tenantId !== tenantId) {
+      sendError(
+        res,
+        'Withdrawal not found',
+        HTTP_STATUS.NOT_FOUND,
+        ERROR_CODE.NOT_FOUND
+      );
+      return;
+    }
+
+    sendSuccess(res, record);
   })
 );
 

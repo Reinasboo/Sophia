@@ -7,3 +7,5 @@
 
 export { WalletManager, getWalletManager } from './wallet-manager.js';
 export { ServicePolicyManager, getServicePolicyManager } from './service-policy-manager.js';
+export { WithdrawalManager, getWithdrawalManager } from './withdrawal-manager.js';
+export type { WithdrawalRequest, WithdrawalRecord } from './withdrawal-manager.js';
