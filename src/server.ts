@@ -626,7 +626,11 @@ app.get(
 
 app.get(
   '/api/agents/:id',
+  protectedRoute(),
   asyncHandler(async (req: Request, res: Response) => {
+    const tenantId = getTenantIdOrFail(req, res);
+    if (!tenantId) return;
+
     const orchestrator = getOrchestrator();
     const walletManager = getWalletManager();
     const client = getSolanaClient();
@@ -638,6 +642,13 @@ app.get(
     }
 
     const agent = agentResult.value;
+
+    // Ensure the requesting tenant owns the agent to avoid cross-tenant info leaks
+    if (agent.tenantId !== tenantId) {
+      sendError(res, 'Agent not found', HTTP_STATUS.NOT_FOUND, ERROR_CODE.AGENT_NOT_FOUND);
+      return;
+    }
+
     let balance = 0;
     let tokenBalances: unknown[] = [];
 
@@ -1287,11 +1298,56 @@ app.get(
 
 app.get(
   '/api/events',
+  protectedRoute(),
   asyncHandler(async (req: Request, res: Response) => {
-    const count = Math.min(parseInt(req.query['count'] as string) || 100, 500);
-    const events = eventBus.getRecentEvents(count);
+    const tenantId = getTenantIdOrFail(req, res);
+    if (!tenantId) return;
 
-    sendSuccess(res, events);
+    const count = Math.min(parseInt(req.query['count'] as string) || 100, 500);
+    const rawEvents = eventBus.getRecentEvents(count);
+
+    const orchestrator = getOrchestrator();
+    const binder = getWalletBinder();
+
+    // Filter events to only those relevant to the requesting tenant.
+    const filtered = rawEvents.filter((e) => {
+      // AgentCreatedEvent contains agent with tenantId
+      if (e.type === 'agent_created' && 'agent' in e) {
+        return (e.agent.tenantId ?? '') === tenantId;
+      }
+
+      // Events that reference an agentId
+      if ('agentId' in e) {
+        const agentRes = orchestrator.getAgent(e.agentId);
+        if (agentRes.ok && agentRes.value.tenantId === tenantId) return true;
+        return false;
+      }
+
+      // Transaction events reference a walletId -> map to agent
+      if (e.type === 'transaction' && 'transaction' in e) {
+        const walletId = e.transaction.walletId;
+        if (!walletId) return false;
+        const mappedAgent = binder.getAgentForWallet(walletId);
+        if (!mappedAgent) return false;
+        const agentRes = orchestrator.getAgent(mappedAgent);
+        return agentRes.ok && agentRes.value.tenantId === tenantId;
+      }
+
+      // Balance changed events reference walletId similarly
+      if (e.type === 'balance_changed' && 'walletId' in e) {
+        const walletId = (e as any).walletId;
+        if (!walletId) return false;
+        const mappedAgent = binder.getAgentForWallet(walletId);
+        if (!mappedAgent) return false;
+        const agentRes = orchestrator.getAgent(mappedAgent);
+        return agentRes.ok && agentRes.value.tenantId === tenantId;
+      }
+
+      // Default: hide event
+      return false;
+    });
+
+    sendSuccess(res, filtered);
   })
 );
 

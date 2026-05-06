@@ -154,24 +154,45 @@ export class WithdrawalManager {
    * BYOA agents are external and their funds belong to external developers, not our users.
    */
   private checkNotByoaAgent(agentId: string): Result<true, Error> {
-    // Check if agent exists in wallet binder (which only contains BYOA agents)
-    const byoaAgentId = this.walletBinder.getAgentForWallet(agentId);
-    if (byoaAgentId) {
-      return failure(
-        new Error(
-          `Cannot withdraw from external agent "${agentId}". ` +
-            `BYOA agents are managed by their creators and cannot be withdrawn from.`
-        )
-      );
+    // Resolve agent to obtain its bound walletId (if any)
+    const agentResult = this.agentRegistry.getAgent(agentId);
+    if (!agentResult.ok) {
+      return failure(new Error(`Agent not found: ${agentId}`));
     }
 
-    // Also check agent registry for explicit type check
-    const agentResult = this.agentRegistry.getAgent(agentId);
-    if (agentResult.ok && agentResult.value.type === 'remote') {
+    // If registry declares agent type 'remote', treat as external
+    if (agentResult.value.type === 'remote') {
       return failure(
         new Error(
           `External agent "${agentId}" cannot be withdrawn from. ` +
             `Only built-in user agents support withdrawal.`
+        )
+      );
+    }
+
+    // If agent has a bound wallet, consult the binder reverse map (walletId -> agentId)
+    // The binder stores walletId keys, so look up by the agent's walletId.
+    const walletId = agentResult.value.walletId;
+    if (walletId) {
+      const byoaAgentId = this.walletBinder.getAgentForWallet(walletId);
+      if (byoaAgentId) {
+        return failure(
+          new Error(
+            `Cannot withdraw from external agent "${agentId}". ` +
+              `BYOA agents are managed by their creators and cannot be withdrawn from.`
+          )
+        );
+      }
+    }
+
+    // Defensive: historically some callers passed agentId into the binder lookup.
+    // Check the agentId key as a fallback to preserve backward compatibility.
+    const byoaAgentIdLegacy = this.walletBinder.getAgentForWallet(agentId);
+    if (byoaAgentIdLegacy) {
+      return failure(
+        new Error(
+          `Cannot withdraw from external agent "${agentId}". ` +
+            `BYOA agents are managed by their creators and cannot be withdrawn from.`
         )
       );
     }
@@ -322,13 +343,34 @@ export class WithdrawalManager {
       return rateLimitResult;
     }
 
-    // Get agent and wallet info
+    // Get agent and wallet info (authoritative source for tenant ownership)
     const agentResult = this.agentRegistry.getAgent(req.agentId);
     if (!agentResult.ok) {
       return failure(new Error(`Agent not found: ${req.agentId}`));
     }
 
     const agent = agentResult.value;
+
+    // SECURITY: Enforce that the caller's tenant matches the agent's tenant.
+    // If the registry does not populate `tenantId` (legacy tests or default local agents),
+    // fall back to the caller-provided tenant to preserve compatibility.
+    const callerTenant = req.tenantId;
+    const agentTenant = agent.tenantId ?? callerTenant;
+
+    if (!agent.tenantId) {
+      logger.warn('Agent missing tenantId in registry; defaulting to caller tenant', {
+        agentId: req.agentId,
+        callerTenant,
+      });
+    }
+
+    if (callerTenant !== agentTenant) {
+      return failure(
+        new Error(
+          `Unauthorized: agent "${req.agentId}" does not belong to tenant "${callerTenant}"`
+        )
+      );
+    }
     const walletId = agent.walletId;
     if (!walletId) {
       return failure(new Error(`Agent "${req.agentId}" has no wallet bound`));
@@ -376,7 +418,8 @@ export class WithdrawalManager {
       agentName: agent.name,
       walletId,
       walletPublicKey: wallet.publicKey,
-      tenantId: req.tenantId,
+      // Use authoritative tenant from agent registry (do not trust caller-supplied tenant)
+      tenantId: agentTenant,
       recipient: req.recipient,
       amountSol: finalWithdrawAmount,
       fee: estimatedFee,
@@ -389,9 +432,9 @@ export class WithdrawalManager {
     this.records.push(record);
 
     // Index by tenant and agent
-    const tenantRecords = this.recordsByTenant.get(req.tenantId) ?? [];
+    const tenantRecords = this.recordsByTenant.get(agentTenant) ?? [];
     tenantRecords.push(record);
-    this.recordsByTenant.set(req.tenantId, tenantRecords);
+    this.recordsByTenant.set(agentTenant, tenantRecords);
 
     const agentRecords = this.recordsByAgent.get(req.agentId) ?? [];
     agentRecords.push(record);
@@ -443,6 +486,27 @@ export class WithdrawalManager {
             `Only pending withdrawals can be executed.`
         )
       );
+    }
+
+    // Re-validate authoritative agent ownership and BYOA state before executing
+    const agentResult = this.agentRegistry.getAgent(record.agentId);
+    if (!agentResult.ok) {
+      return failure(new Error(`Agent not found for withdrawal: ${record.agentId}`));
+    }
+
+    const agent = agentResult.value;
+    // If the registry provides a tenantId, it must match the record. If missing (legacy/ tests), allow.
+    if (agent.tenantId && agent.tenantId !== record.tenantId) {
+      return failure(
+        new Error(
+          `Withdrawal tenant mismatch: record tenant "${record.tenantId}" does not match agent tenant "${agent.tenantId}"`
+        )
+      );
+    }
+
+    const byoaCheck = this.checkNotByoaAgent(record.agentId);
+    if (!byoaCheck.ok) {
+      return failure(byoaCheck.error);
     }
 
     try {
