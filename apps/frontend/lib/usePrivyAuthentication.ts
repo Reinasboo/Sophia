@@ -14,6 +14,7 @@
 
 import { usePrivy } from '@privy-io/react-auth';
 import { useEffect, useState } from 'react';
+import { getCurrentTenantApiKey, persistTenantSession } from './privy-provider';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://sophia-production-1a83.up.railway.app';
 
@@ -36,12 +37,11 @@ export function usePrivyAuthentication(): AuthenticationState {
 
   useEffect(() => {
     const syncAuthentication = async () => {
-      // Check if we already have a valid server-issued bearer token in localStorage
-      const existingBearerToken =
-        typeof window !== 'undefined' ? localStorage.getItem('sophia_api_key') : null;
+      // Check if we already have a valid server-issued bearer token in memory.
+      const existingBearerToken = getCurrentTenantApiKey();
 
-      // If we have a bearer token, validate it and mark as authenticated immediately
-      if (existingBearerToken && existingBearerToken.startsWith('bearer_')) {
+      // If we have a bearer token, mark as authenticated immediately.
+      if (existingBearerToken) {
         setState({
           isLoading: false,
           isAuthenticated: true,
@@ -96,10 +96,7 @@ export function usePrivyAuthentication(): AuthenticationState {
 
         // IMPORTANT: Store the server-issued bearer token (NOT the Privy token)
         // This token is unique, persistent, and never changes for the same user.
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('sophia_api_key', bearerToken);
-          localStorage.setItem('sophia_tenant_id', tenantId);
-        }
+        persistTenantSession({ tenantId, apiKey: bearerToken });
 
         console.log('[Auth] Received and stored server-issued bearer token', { tenantId });
 

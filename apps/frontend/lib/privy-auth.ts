@@ -54,13 +54,22 @@ export async function verifyPrivyAccessToken(
   const verifier = await getVerificationKey();
   if (!verifier) {
     if (process.env.NODE_ENV !== 'production') {
-      const looksLikeEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(accessToken);
+      const trimmedAccessToken = accessToken.trim();
+      const atIndex = trimmedAccessToken.indexOf('@');
+      const lastDotIndex = trimmedAccessToken.lastIndexOf('.');
+      const hasWhitespace = trimmedAccessToken !== accessToken || trimmedAccessToken.includes(' ');
+      const looksLikeEmail =
+        !hasWhitespace &&
+        atIndex > 0 &&
+        lastDotIndex > atIndex + 1 &&
+        lastDotIndex < trimmedAccessToken.length - 1 &&
+        trimmedAccessToken.indexOf('@', atIndex + 1) === -1;
       if (looksLikeEmail) {
         return {
           userId: `dev_${accessToken.toLowerCase().replace(/[^a-z0-9]/g, '_')}`,
           sessionId: `dev_session_${Buffer.from(accessToken).toString('hex').slice(0, 16)}`,
           appId: process.env['PRIVY_APP_ID'] ?? 'dev-privy-app',
-            issuer: DEFAULT_PRIVY_ISSUER,
+          issuer: DEFAULT_PRIVY_ISSUER,
           issuedAt: Math.floor(Date.now() / 1000),
           expiration: Math.floor(Date.now() / 1000) + 3600,
           email: accessToken,

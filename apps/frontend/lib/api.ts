@@ -22,6 +22,7 @@ import type {
   ServicePolicy,
   X402PaymentDescriptor,
 } from './types';
+import { getCurrentTenantApiKey } from './privy-provider';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://sophia-production-1a83.up.railway.app';
 
@@ -31,15 +32,9 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://sophia-production-1
 // server-only environment variable (no NEXT_PUBLIC_ prefix).
 // Direct browser calls to mutation endpoints will be rejected.
 
-/** Get tenant API key from localStorage */
+/** Get tenant API key from in-memory session state. */
 function getTenantApiKey(): string | null {
-  if (typeof window === 'undefined') return null;
-  const token = localStorage.getItem('sophia_api_key');
-  if (!token) return null;
-
-  // Prefer Privy JWT bearer tokens; legacy tenant API keys are not valid
-  // for the production tenant middleware.
-  return token.split('.').length === 3 ? token : null;
+  return getCurrentTenantApiKey();
 }
 
 /** Headers for authenticated requests (includes tenant Bearer token) */

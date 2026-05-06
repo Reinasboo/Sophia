@@ -61,6 +61,39 @@ const RATE_LIMIT_CLEANUP_INTERVAL_MS = 300_000; // 5 minutes cleanup interval
 const REQUEST_BODY_SIZE_LIMIT = '512kb'; // Maximum request body size
 const TRUST_PROXY_HOP_COUNT = 1; // Number of proxy hops to trust (prevents X-Forwarded-For spoofing)
 
+function createRouteRateLimitMiddleware(
+  routeName: string,
+  windowMs: number,
+  maxRequests: number
+): (req: Request, res: Response, next: NextFunction) => void {
+  const requestCounts = new Map<string, { count: number; windowStartMs: number }>();
+
+  return (req: Request, res: Response, next: NextFunction) => {
+    const now = Date.now();
+    const clientKey = `${req.ip ?? req.socket.remoteAddress ?? 'unknown'}:${routeName}`;
+    const bucket = requestCounts.get(clientKey);
+
+    if (!bucket || now - bucket.windowStartMs >= windowMs) {
+      requestCounts.set(clientKey, { count: 1, windowStartMs: now });
+      next();
+      return;
+    }
+
+    if (bucket.count >= maxRequests) {
+      sendError(
+        res,
+        `Too many ${routeName} requests. Please slow down.`,
+        HTTP_STATUS.TOO_MANY_REQUESTS,
+        ERROR_CODE.OPERATION_FAILED
+      );
+      return;
+    }
+
+    bucket.count += 1;
+    next();
+  };
+}
+
 // ── Helper: Validate CORS origin URL ──
 function isValidCorsOrigin(origin: string): boolean {
   try {
@@ -143,6 +176,10 @@ app.use(
   })
 );
 
+const authRouteRateLimit = createRouteRateLimitMiddleware('auth', 60_000, 60);
+const byoaRouteRateLimit = createRouteRateLimitMiddleware('byoa', 60_000, 30);
+const webhookRouteRateLimit = createRouteRateLimitMiddleware('webhook', 60_000, 20);
+
 // L-3 FIX: Explicitly handle OPTIONS preflight so browsers get correct CORS headers.
 app.options(
   '*',
@@ -219,7 +256,7 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
 
 // MULTI-TENANT FIX: Extract tenant context from Authorization header
 // Validates bearer token and attaches tenantId to req.tenantContext
-app.use(tenantContextMiddleware());
+app.use('/api', authRouteRateLimit, tenantContextMiddleware());
 
 /**
  * C-1/C-2: Require admin API key for mutation endpoints.
@@ -1369,6 +1406,7 @@ app.post(
  */
 app.post(
   '/api/byoa/verify/challenge-submit',
+  byoaRouteRateLimit,
   asyncHandler(async (req: Request, res: Response) => {
     const { agentId, challengeResponse } = req.body;
     if (
@@ -1408,6 +1446,7 @@ app.post(
  */
 app.post(
   '/api/byoa/intents',
+  byoaRouteRateLimit,
   asyncHandler(async (req: Request, res: Response) => {
     // Extract bearer token
     const authHeader = req.headers['authorization'];
@@ -1817,6 +1856,7 @@ app.get(
  */
 app.post(
   '/api/webhook/helius',
+  webhookRouteRateLimit,
   asyncHandler(async (req: Request, res: Response) => {
     try {
       const payload = req.body;

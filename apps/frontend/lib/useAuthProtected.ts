@@ -1,5 +1,6 @@
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
+import { usePrivy } from '@privy-io/react-auth';
 
 /**
  * Hook to protect pages with authentication.
@@ -11,26 +12,24 @@ export function useAuthProtected() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { ready, authenticated } = usePrivy();
 
   useEffect(() => {
-    // Check if we have a stored Privy bearer token.
-    const apiKey = typeof window !== 'undefined' ? localStorage.getItem('sophia_api_key') : null;
-    const tenantId =
-      typeof window !== 'undefined' ? localStorage.getItem('sophia_tenant_id') : null;
-    const hasJwtBearer = !!apiKey && apiKey.split('.').length === 3;
-
-    // Accept only JWT-shaped bearer tokens for authenticated pages.
-    if (hasJwtBearer && tenantId) {
-      setIsAuthenticated(true);
-      setIsLoading(false);
-    } else {
-      // Not authenticated - redirect to landing/login
-      setIsAuthenticated(false);
-      setIsLoading(false);
-      // Redirect to landing page if not authenticated
-      router.push('/landing');
+    if (!ready) {
+      setIsLoading(true);
+      return;
     }
-  }, [router]);
+
+    setIsLoading(false);
+
+    if (authenticated) {
+      setIsAuthenticated(true);
+      return;
+    }
+
+    setIsAuthenticated(false);
+    router.push('/landing');
+  }, [authenticated, ready, router]);
 
   return { isLoading, isAuthenticated };
 }

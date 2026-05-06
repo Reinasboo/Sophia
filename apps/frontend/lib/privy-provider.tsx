@@ -6,6 +6,10 @@ interface TenantSession {
   apiKey: string;
 }
 
+const TENANT_SESSION_EVENT = 'sophia-tenant-session-changed';
+
+let currentTenantSession: TenantSession | null = null;
+
 interface PrivyContextType {
   tenantSession: TenantSession | null;
   loading: boolean;
@@ -21,28 +25,40 @@ const TENANT_SESSION_KEYS = {
 } as const;
 
 export function persistTenantSession(tenantSession: TenantSession): void {
+  currentTenantSession = tenantSession;
+
   if (typeof window === 'undefined') {
     return;
   }
 
   localStorage.setItem(TENANT_SESSION_KEYS.tenantId, tenantSession.tenantId);
-  localStorage.setItem(TENANT_SESSION_KEYS.apiKey, tenantSession.apiKey);
   localStorage.setItem(TENANT_SESSION_KEYS.legacyTenantId, tenantSession.tenantId);
-  localStorage.setItem(TENANT_SESSION_KEYS.legacyApiKey, tenantSession.apiKey);
+  localStorage.removeItem(TENANT_SESSION_KEYS.apiKey);
+  localStorage.removeItem(TENANT_SESSION_KEYS.legacyApiKey);
+
+  window.dispatchEvent(new Event(TENANT_SESSION_EVENT));
 }
 
 export function clearTenantSession(): void {
+  currentTenantSession = null;
+
   if (typeof window === 'undefined') {
     return;
   }
 
   localStorage.removeItem(TENANT_SESSION_KEYS.tenantId);
-  localStorage.removeItem(TENANT_SESSION_KEYS.apiKey);
   localStorage.removeItem(TENANT_SESSION_KEYS.legacyTenantId);
+  localStorage.removeItem(TENANT_SESSION_KEYS.apiKey);
   localStorage.removeItem(TENANT_SESSION_KEYS.legacyApiKey);
+
+  window.dispatchEvent(new Event(TENANT_SESSION_EVENT));
 }
 
 function readTenantSession(): TenantSession | null {
+  if (currentTenantSession) {
+    return currentTenantSession;
+  }
+
   if (typeof window === 'undefined') {
     return null;
   }
@@ -58,15 +74,14 @@ function readTenantSession(): TenantSession | null {
     return null;
   }
 
-  // Accept both JWT-shaped tokens (ephemeral Privy tokens) and server-issued bearer tokens (persistent)
-  const isJwtToken = apiKey.split('.').length === 3;
-  const isServerBearerToken = apiKey.startsWith('bearer_');
+  currentTenantSession = { tenantId, apiKey };
+  localStorage.removeItem(TENANT_SESSION_KEYS.apiKey);
+  localStorage.removeItem(TENANT_SESSION_KEYS.legacyApiKey);
+  return currentTenantSession;
+}
 
-  if (!isJwtToken && !isServerBearerToken) {
-    return null;
-  }
-
-  return { tenantId, apiKey };
+export function getCurrentTenantApiKey(): string | null {
+  return currentTenantSession?.apiKey ?? null;
 }
 
 const PrivyContext = createContext<PrivyContextType | undefined>(undefined);
@@ -81,7 +96,19 @@ export function PrivyProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    setTenantSession(readTenantSession());
+    const syncTenantSession = () => {
+      setTenantSession(readTenantSession());
+    };
+
+    syncTenantSession();
+    window.addEventListener(TENANT_SESSION_EVENT, syncTenantSession);
+
+    return () => {
+      window.removeEventListener(TENANT_SESSION_EVENT, syncTenantSession);
+    };
+  }, []);
+
+  useEffect(() => {
     setLoading(false);
   }, []);
 
