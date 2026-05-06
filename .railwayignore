@@ -1,0 +1,21 @@
+# Keep Railway code snapshot lean to avoid SNAPSHOT_CODE timeout
+node_modules/
+apps/frontend/node_modules/
+apps/frontend/.next/
+apps/frontend/out/
+
+# Local/dev artifacts
+.git/
+.vscode/
+.vercel/
+apps/frontend/.vercel/
+coverage/
+*.log
+*-output.txt
+test_output.txt
+vitest-full.log
+
+# Optional local tooling and docs not needed to build backend service
+.agents/
+.brand-preview/
+.superstack/

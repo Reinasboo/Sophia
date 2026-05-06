@@ -25,6 +25,9 @@ coverage/
 
 # Logs
 *.log
+*-output.txt
+test_output.txt
+vitest-full.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
