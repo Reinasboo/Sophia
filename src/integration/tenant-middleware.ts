@@ -14,6 +14,7 @@ import { createLogger } from '../utils/logger.js';
 import { TenantContext } from '../types/index.js';
 import { getConfig } from '../utils/config.js';
 import { verifyPrivyAccessToken } from '../utils/privy-auth.js';
+import { verifyBearerToken } from '../utils/bearer-token-store.js';
 
 const logger = createLogger('TENANT_MIDDLEWARE');
 
@@ -61,12 +62,28 @@ export function tenantContextMiddleware() {
       }
 
       // For user requests: extract tenant ID from token
-      // In production, prefer verified Privy JWTs.
+      // Try server-issued bearer tokens first (most common, persistent)
+      // Then fall back to Privy JWTs (ephemeral)
       const allowInsecureTenantTokens =
         process.env['NODE_ENV'] !== 'production' ||
         process.env['ALLOW_INSECURE_TENANT_TOKENS'] === 'true';
 
       if (apiKey) {
+        // Step 1: Try server-issued bearer token (priority: persistent tokens)
+        const tenantIdFromBearerToken = verifyBearerToken(apiKey);
+        if (tenantIdFromBearerToken) {
+          req.tenantContext = {
+            tenantId: tenantIdFromBearerToken,
+            userId: tenantIdFromBearerToken,
+            apiKey,
+          };
+          logger.debug('Server-issued bearer token authenticated', {
+            tenantId: tenantIdFromBearerToken,
+          });
+          return next();
+        }
+
+        // Step 2: Fall back to Privy JWT verification (ephemeral, for backwards compatibility)
         try {
           const verifiedPrivyToken = await verifyPrivyAccessToken(apiKey);
           if (verifiedPrivyToken) {
@@ -75,17 +92,16 @@ export function tenantContextMiddleware() {
               userId: verifiedPrivyToken.userId,
               apiKey,
             };
-            logger.debug('Privy bearer token authenticated', {
+            logger.debug('Privy JWT bearer token authenticated', {
               tenantId: verifiedPrivyToken.userId,
               sessionId: verifiedPrivyToken.sessionId,
             });
             return next();
           }
         } catch (error) {
-          logger.warn('Privy token verification failed', {
+          logger.debug('Privy JWT verification failed (this is expected for server-issued tokens)', {
             path: req.path,
             ip: req.ip,
-            error: error instanceof Error ? error.message : String(error),
           });
         }
 

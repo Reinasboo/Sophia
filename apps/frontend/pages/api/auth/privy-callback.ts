@@ -16,6 +16,10 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { randomBytes } from 'crypto';
 import { verifyPrivyAccessToken } from '@/lib/privy-auth';
+import { getOrCreateBearerToken, initializeBearerTokenStore } from '@/lib/bearer-token-store';
+
+// Initialize bearer token store on module load
+initializeBearerTokenStore();
 
 // H-1 FIX: Simple in-memory rate limiter for auth endpoint
 const authRateLimit = new Map<string, { count: number; resetAt: number }>();
@@ -107,19 +111,20 @@ async function verifyPrivyToken(accessToken: string): Promise<PrivyUserInfo | nu
 /**
  * Get or create a tenant for a Privy user.
  *
- * Phase 1: Returns stub credentials with secure random generation.
- * Phase 2: Will integrate with persistent tenant database.
+ * Phase 2: Issue a server-signed bearer token that persists across sessions.
+ * The bearer token is stored in the bearer-token-store and never changes for the same user.
  */
 async function getOrCreateTenantForPrivyUser(privyUserInfo: PrivyUserInfo) {
-  // Phase 2: Implement actual database logic
-  // const existingTenant = await getTenantDatabase().findByPrivyUserId(privyUserInfo.id);
-  // if (existingTenant) return existingTenant;
-  // return await getTenantDatabase().create({ privyUserId: privyUserInfo.id });
+  // Use Privy user ID as the tenant ID (one tenant per Privy user)
+  const tenantId = privyUserInfo.id;
 
-  // Phase 1: Generate secure random credentials
+  // Get or create a persistent bearer token for this user
+  // This token remains the same across logins and devices.
+  const bearerToken = getOrCreateBearerToken(tenantId);
+
   return {
-    tenantId: 'tenant_' + randomBytes(8).toString('hex'),
-    apiKey: 'key_' + randomBytes(16).toString('hex'),
+    tenantId,
+    apiKey: bearerToken, // Return the server-issued bearer token
   };
 }
 
@@ -138,7 +143,7 @@ interface PrivyCallbackRequest {
 interface PrivyCallbackResponse {
   success: boolean;
   tenantId?: string;
-  apiKey?: string;
+  apiKey?: string; // Server-issued bearer token (persists across sessions)
   error?: string;
 }
 

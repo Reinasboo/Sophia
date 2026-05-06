@@ -54,7 +54,15 @@ function readTenantSession(): TenantSession | null {
     localStorage.getItem(TENANT_SESSION_KEYS.apiKey) ??
     localStorage.getItem(TENANT_SESSION_KEYS.legacyApiKey);
 
-  if (!tenantId || !apiKey || apiKey.split('.').length !== 3) {
+  if (!tenantId || !apiKey) {
+    return null;
+  }
+
+  // Accept both JWT-shaped tokens (ephemeral Privy tokens) and server-issued bearer tokens (persistent)
+  const isJwtToken = apiKey.split('.').length === 3;
+  const isServerBearerToken = apiKey.startsWith('bearer_');
+
+  if (!isJwtToken && !isServerBearerToken) {
     return null;
   }
 

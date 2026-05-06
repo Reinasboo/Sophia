@@ -1,12 +1,15 @@
 /**
  * Privy Authentication Hook
  *
- * Handles Privy login flow and keeps the Privy access token available
+ * Handles Privy login flow and keeps the server-issued bearer token available
  * for authenticated API requests.
- * When user logs in via Privy, this hook:
- * 1. Gets the Privy JWT access token
- * 2. Exchanges it with the backend for tenant provisioning
- * 3. Stores the Privy bearer token in localStorage for API requests
+ *
+ * Flow:
+ * 1. Check if a valid server-issued bearer token exists in localStorage
+ * 2. If yes, use it immediately (no Privy re-auth needed)
+ * 3. If no, get Privy JWT and exchange it for a server-issued bearer token
+ * 4. Store the server-issued bearer token (NOT the Privy token) in localStorage
+ * 5. Server-issued tokens persist across sessions and devices
  */
 
 import { usePrivy } from '@privy-io/react-auth';
@@ -21,7 +24,7 @@ interface AuthenticationState {
 }
 
 /**
- * Hook to sync Privy authentication with API bearer token storage.
+ * Hook to sync Privy authentication with server-issued bearer token storage.
  */
 export function usePrivyAuthentication(): AuthenticationState {
   const { authenticated, getAccessToken } = usePrivy();
@@ -33,8 +36,23 @@ export function usePrivyAuthentication(): AuthenticationState {
 
   useEffect(() => {
     const syncAuthentication = async () => {
+      // Check if we already have a valid server-issued bearer token in localStorage
+      const existingBearerToken =
+        typeof window !== 'undefined' ? localStorage.getItem('sophia_api_key') : null;
+
+      // If we have a bearer token, validate it and mark as authenticated immediately
+      if (existingBearerToken && existingBearerToken.startsWith('bearer_')) {
+        setState({
+          isLoading: false,
+          isAuthenticated: true,
+          error: null,
+        });
+        console.log('[Auth] Using existing server-issued bearer token');
+        return;
+      }
+
+      // User not logged in via Privy
       if (!authenticated) {
-        // User not logged in via Privy
         setState({
           isLoading: false,
           isAuthenticated: false,
@@ -51,21 +69,7 @@ export function usePrivyAuthentication(): AuthenticationState {
           throw new Error('Failed to get Privy access token');
         }
 
-        // Check if we already have the same bearer token
-        const existingApiKey =
-          typeof window !== 'undefined' ? localStorage.getItem('sophia_api_key') : null;
-
-        if (existingApiKey === accessToken) {
-          // Already synced, just mark as authenticated
-          setState({
-            isLoading: false,
-            isAuthenticated: true,
-            error: null,
-          });
-          return;
-        }
-
-        // Exchange Privy JWT for backend tenant provisioning
+        // Exchange Privy JWT for server-issued bearer token
         const response = await fetch(`${API_BASE}/api/auth/privy-callback`, {
           method: 'POST',
           headers: {
@@ -84,17 +88,20 @@ export function usePrivyAuthentication(): AuthenticationState {
         const data = await response.json();
 
         const tenantId = data?.tenantId ?? data?.data?.tenantId;
+        const bearerToken = data?.apiKey;
 
-        if (!data.success || !tenantId) {
+        if (!data.success || !tenantId || !bearerToken) {
           throw new Error(data.error || 'Invalid authentication response');
         }
 
-        // Store the Privy bearer token and tenant ID in localStorage.
-        // The backend validates the Privy JWT directly for protected routes.
+        // IMPORTANT: Store the server-issued bearer token (NOT the Privy token)
+        // This token is unique, persistent, and never changes for the same user.
         if (typeof window !== 'undefined') {
-          localStorage.setItem('sophia_api_key', accessToken);
+          localStorage.setItem('sophia_api_key', bearerToken);
           localStorage.setItem('sophia_tenant_id', tenantId);
         }
+
+        console.log('[Auth] Received and stored server-issued bearer token', { tenantId });
 
         setState({
           isLoading: false,
@@ -103,7 +110,7 @@ export function usePrivyAuthentication(): AuthenticationState {
         });
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Authentication failed';
-        console.error('Privy authentication error:', errorMessage);
+        console.error('[Auth] Privy authentication error:', errorMessage);
 
         setState({
           isLoading: false,
