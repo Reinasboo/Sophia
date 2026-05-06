@@ -9,7 +9,7 @@ info:
 servers:
   - url: http://localhost:3001
     description: Local development server
-  - url: https://api.sophia-wallet.com
+  - url: https://sophia-production-1a83.up.railway.app
     description: Production server
 
 paths:

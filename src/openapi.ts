@@ -21,7 +21,7 @@ export const openAPISpec = {
       description: 'Development server',
     },
     {
-      url: 'https://api.sophia.dev',
+      url: 'https://sophia-production-1a83.up.railway.app',
       description: 'Production server',
     },
   ],
