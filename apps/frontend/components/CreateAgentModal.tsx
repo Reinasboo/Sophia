@@ -468,6 +468,18 @@ export function CreateAgentModal({ isOpen, onClose, onCreated }: CreateAgentModa
                                     {s.riskLevel}
                                   </span>
                                 </div>
+                                {s.gmgnSkills?.length ? (
+                                  <div className="mt-3 flex flex-wrap gap-1.5 text-[10px]">
+                                    {s.gmgnSkills.map((skill) => (
+                                      <span
+                                        key={skill}
+                                        className="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-2 py-0.5 font-semibold uppercase tracking-wide text-cyan-200"
+                                      >
+                                        {skill}
+                                      </span>
+                                    ))}
+                                  </div>
+                                ) : null}
                               </button>
                             );
                           })}
@@ -580,6 +592,21 @@ export function CreateAgentModal({ isOpen, onClose, onCreated }: CreateAgentModa
                           label="Strategy"
                           value={currentStrategyDef?.label ?? selectedStrategy}
                         />
+                        {currentStrategyDef?.gmgnSkills?.length ? (
+                          <div className="space-y-2">
+                            <span className="text-xs text-slate-400">GMGN Skills</span>
+                            <div className="flex flex-wrap gap-1.5">
+                              {currentStrategyDef.gmgnSkills.map((skill) => (
+                                <span
+                                  key={skill}
+                                  className="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-cyan-200"
+                                >
+                                  {skill}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        ) : null}
                         <Row label="Auto-start" value={execEnabled ? 'Yes' : 'No'} />
                         <Row label="Cycle" value={`${cycleInterval.toLocaleString()} ms`} />
                         <Row label="Max actions/day" value={String(maxActions)} />

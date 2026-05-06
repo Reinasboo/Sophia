@@ -226,6 +226,7 @@ export interface ExternalAgent {
   readonly type: ExternalAgentType;
   readonly endpoint?: string;
   readonly supportedIntents: SupportedIntentType[];
+  readonly gmgnSkills?: string[];
   readonly status: ExternalAgentStatus;
   readonly walletId?: string;
   readonly walletPublicKey?: string;
@@ -276,6 +277,7 @@ export interface StrategyDefinition {
   readonly description: string;
   readonly supportedIntents: readonly string[];
   readonly defaultParams: Record<string, unknown>;
+  readonly gmgnSkills: readonly string[];
   readonly builtIn: boolean;
   readonly icon: string;
   readonly category: 'income' | 'distribution' | 'trading' | 'utility' | 'custom';

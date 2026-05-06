@@ -234,6 +234,21 @@ export function AgentSettingsPanel({ agent, onUpdated }: AgentSettingsPanelProps
         {/* Strategy Parameters */}
         <div>
           <h4 className="text-sm font-medium text-slate-300 mb-3">Strategy Parameters</h4>
+          {strategyDef?.gmgnSkills?.length ? (
+            <div className="mb-3">
+              <p className="text-xs text-slate-400 mb-2">GMGN Skills</p>
+              <div className="flex flex-wrap gap-1.5">
+                {strategyDef.gmgnSkills.map((skill: string) => (
+                  <span
+                    key={skill}
+                    className="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-cyan-200"
+                  >
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : null}
           {strategyDef && strategyDef.fields.length > 0 ? (
             <div className="space-y-3">
               {strategyDef.fields.map((field: any) => (

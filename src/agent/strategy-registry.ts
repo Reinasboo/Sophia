@@ -15,6 +15,7 @@ import type {
   ExecutionSettings as SharedExecutionSettings,
   StrategyFieldDescriptor as SharedStrategyFieldDescriptor,
 } from '../types/shared.js';
+import { getGmgnSkillsForStrategy } from '../integration/gmgn-skills.js';
 
 // ============================================
 // Strategy Definition Types
@@ -53,6 +54,8 @@ export interface StrategyDefinition<TParams extends ZodRawShape = ZodRawShape> {
   readonly paramSchema: ZodObject<TParams>;
   /** Default parameter values */
   readonly defaultParams: Record<string, unknown>;
+  /** GMGN skills that best support this strategy */
+  readonly gmgnSkills: readonly string[];
   /** Profit orientation for the strategy */
   readonly profitObjective:
     | 'capital_preservation'
@@ -86,6 +89,7 @@ export interface StrategyDefinitionDTO {
   description: string;
   supportedIntents: string[];
   defaultParams: Record<string, unknown>;
+  gmgnSkills: string[];
   profitObjective:
     | 'capital_preservation'
     | 'yield_compounding'
@@ -132,6 +136,7 @@ export const DCAStrategyDef: StrategyDefinition = {
     frequencyHours: 24,
     maxBuysPerDay: 2,
   },
+  gmgnSkills: getGmgnSkillsForStrategy('dca'),
   profitObjective: 'capital_preservation',
   riskLevel: 'low',
   riskTier: 'low',
@@ -168,6 +173,7 @@ export const GridTradingStrategyDef: StrategyDefinition = {
     maxSlippage: 0.5,
     priceCheckIntervalMins: 30,
   },
+  gmgnSkills: getGmgnSkillsForStrategy('grid_trading'),
   profitObjective: 'spread_capture',
   riskLevel: 'medium',
   riskTier: 'medium',
@@ -206,6 +212,7 @@ export const MomentumTradingStrategyDef: StrategyDefinition = {
     takeProfit: 10,
     stopLoss: 5,
   },
+  gmgnSkills: getGmgnSkillsForStrategy('momentum_trading'),
   profitObjective: 'trend_capture',
   riskLevel: 'high',
   riskTier: 'high',
@@ -242,6 +249,7 @@ export const ArbitrageStrategyDef: StrategyDefinition = {
     priceCheckIntervalSecs: 60,
     maxTradesPerHour: 10,
   },
+  gmgnSkills: getGmgnSkillsForStrategy('arbitrage'),
   profitObjective: 'spread_capture',
   riskLevel: 'high',
   riskTier: 'degen',
@@ -273,6 +281,7 @@ export const StopLossGuardStrategyDef: StrategyDefinition = {
     swapDex: 'jupiter',
     maxSlippage: 0.7,
   },
+  gmgnSkills: getGmgnSkillsForStrategy('stop_loss_guard'),
   profitObjective: 'drawdown_control',
   riskLevel: 'low',
   riskTier: 'low',
@@ -306,6 +315,7 @@ export const YieldHarvestingStrategyDef: StrategyDefinition = {
     maxSlippage: 0.3,
     harvestFrequencyHours: 12,
   },
+  gmgnSkills: getGmgnSkillsForStrategy('yield_harvesting'),
   profitObjective: 'yield_compounding',
   riskLevel: 'low',
   riskTier: 'low',
@@ -350,6 +360,7 @@ export const PortfolioRebalancerStrategyDef: StrategyDefinition = {
     maxSlippage: 0.5,
     rebalanceFrequencyHours: 168,
   },
+  gmgnSkills: getGmgnSkillsForStrategy('portfolio_rebalancer'),
   profitObjective: 'portfolio_efficiency',
   riskLevel: 'low',
   riskTier: 'low',
@@ -384,6 +395,7 @@ export const AirdropFarmerStrategyDef: StrategyDefinition = {
     maxSlippage: 1,
     checkFrequencyHours: 6,
   },
+  gmgnSkills: getGmgnSkillsForStrategy('airdrop_farmer'),
   profitObjective: 'opportunistic_claims',
   riskLevel: 'high',
   riskTier: 'degen',
@@ -418,6 +430,7 @@ export const ScalpingStrategyDef: StrategyDefinition = {
     maxSlippage: 0.2,
     maxTradesPerHour: 20,
   },
+  gmgnSkills: getGmgnSkillsForStrategy('scalping_trading'),
   profitObjective: 'spread_capture',
   riskLevel: 'high',
   riskTier: 'degen',
@@ -453,6 +466,7 @@ export const BreakoutStrategyDef: StrategyDefinition = {
     stopLoss: 7,
     swapDex: 'jupiter',
   },
+  gmgnSkills: getGmgnSkillsForStrategy('breakout_trading'),
   profitObjective: 'trend_capture',
   riskLevel: 'high',
   riskTier: 'high',
@@ -488,6 +502,7 @@ export const MeanReversionStrategyDef: StrategyDefinition = {
     stopLoss: 4,
     swapDex: 'jupiter',
   },
+  gmgnSkills: getGmgnSkillsForStrategy('mean_reversion_trading'),
   profitObjective: 'spread_capture',
   riskLevel: 'medium',
   riskTier: 'medium',
@@ -1213,6 +1228,7 @@ class StrategyRegistry {
         description: def.description,
         supportedIntents: [...def.supportedIntents],
         defaultParams: { ...def.defaultParams },
+        gmgnSkills: [...def.gmgnSkills],
         profitObjective: def.profitObjective,
         riskLevel: def.riskLevel,
         riskTier: def.riskTier,
@@ -1236,6 +1252,7 @@ class StrategyRegistry {
       description: def.description,
       supportedIntents: [...def.supportedIntents],
       defaultParams: { ...def.defaultParams },
+      gmgnSkills: [...def.gmgnSkills],
       profitObjective: def.profitObjective,
       riskLevel: def.riskLevel,
       riskTier: def.riskTier,

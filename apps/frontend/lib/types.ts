@@ -98,6 +98,7 @@ export interface StrategyDefinition {
   readonly description: string;
   readonly supportedIntents: readonly string[];
   readonly defaultParams: Record<string, unknown>;
+  readonly gmgnSkills: readonly string[];
   readonly profitObjective:
     | 'capital_preservation'
     | 'yield_compounding'
@@ -132,6 +133,7 @@ export interface ExternalAgent {
   readonly type: ExternalAgentType;
   readonly endpoint?: string;
   readonly supportedIntents: SupportedIntentType[];
+  readonly gmgnSkills?: string[];
   readonly status: ExternalAgentStatus;
   readonly walletId?: string;
   readonly walletPublicKey?: string;

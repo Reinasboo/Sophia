@@ -106,6 +106,21 @@ function ConnectedAgentCard({ agent }: ConnectedAgentCardProps) {
               ))}
             </div>
           </div>
+          {agent.gmgnSkills?.length ? (
+            <div className="flex items-start justify-between gap-3">
+              <span className="text-slate-400">GMGN Skills</span>
+              <div className="flex items-center gap-1 flex-wrap justify-end">
+                {agent.gmgnSkills.map((skill) => (
+                  <span
+                    key={skill}
+                    className="text-xs px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20"
+                  >
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : null}
           {agent.lastActiveAt && (
             <div className="flex items-center justify-between">
               <span className="text-slate-400">Last active</span>

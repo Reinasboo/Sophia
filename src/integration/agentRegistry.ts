@@ -17,6 +17,7 @@ import { createLogger } from '../utils/logger.js';
 import { Result, success, failure } from '../types/index.js';
 import { ExternalAgentType, ExternalAgentStatus, SupportedIntentType } from '../types/shared.js';
 import { saveState, loadState } from '../utils/store.js';
+import { getGmgnSkillsForSupportedIntents } from './gmgn-skills.js';
 
 const logger = createLogger('BYOA_REGISTRY');
 
@@ -36,6 +37,7 @@ export interface ExternalAgentRegistration {
   readonly agentType: ExternalAgentType;
   readonly agentEndpoint?: string; // Required for remote agents
   readonly supportedIntents: SupportedIntentType[];
+  readonly gmgnSkills?: string[];
   readonly metadata?: Record<string, unknown>;
   readonly verificationMethods?: string[]; // 'none' | 'challenge-response' | 'hmac-signature'
   readonly tenantId?: string; // MULTI-TENANT: Agent owner
@@ -47,6 +49,7 @@ export interface ExternalAgentRecord {
   readonly type: ExternalAgentType;
   readonly endpoint?: string;
   readonly supportedIntents: SupportedIntentType[];
+  readonly gmgnSkills?: string[];
   readonly status: ExternalAgentStatus;
   readonly walletId?: string;
   readonly walletPublicKey?: string;
@@ -68,6 +71,7 @@ export interface ExternalAgentInfo {
   readonly type: ExternalAgentType;
   readonly endpoint?: string;
   readonly supportedIntents: SupportedIntentType[];
+  readonly gmgnSkills?: string[];
   readonly status: ExternalAgentStatus;
   readonly walletId?: string;
   readonly walletPublicKey?: string;
@@ -236,6 +240,9 @@ export class AgentRegistry {
     const agentId = uuidv4();
     const controlToken = generateControlToken();
     const controlTokenHash = hashToken(controlToken);
+    const gmgnSkills = reg.gmgnSkills?.length
+      ? [...reg.gmgnSkills]
+      : getGmgnSkillsForSupportedIntents(reg.supportedIntents);
 
     const record: ExternalAgentRecord = {
       id: agentId,
@@ -243,6 +250,7 @@ export class AgentRegistry {
       type: reg.agentType,
       endpoint: reg.agentEndpoint,
       supportedIntents: [...reg.supportedIntents],
+      gmgnSkills,
       status: 'registered',
       controlTokenHash,
       createdAt: new Date(),
@@ -261,6 +269,7 @@ export class AgentRegistry {
       name: reg.agentName,
       type: reg.agentType,
       tenantId: reg.tenantId,
+      gmgnSkills,
     });
 
     return success({ agentId, controlToken });
@@ -511,6 +520,7 @@ export class AgentRegistry {
       type: record.type,
       endpoint: record.endpoint,
       supportedIntents: record.supportedIntents,
+      gmgnSkills: record.gmgnSkills,
       status: record.status,
       walletId: record.walletId,
       walletPublicKey: record.walletPublicKey,
