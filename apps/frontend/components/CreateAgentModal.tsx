@@ -24,9 +24,12 @@ import {
   ChevronRight,
   ChevronLeft,
   Check,
+  AlertCircle,
+  Lock,
 } from 'lucide-react';
 import * as api from '@/lib/api';
 import { useStrategies } from '@/lib/hooks';
+import { getCurrentTenantApiKey } from '@/lib/privy-provider';
 import { cn } from '@/lib/utils';
 import type { StrategyDefinition, StrategyFieldDescriptor } from '@/lib/types';
 
@@ -191,6 +194,7 @@ function FieldInput({
 /* ---------- Main modal ---------- */
 export function CreateAgentModal({ isOpen, onClose, onCreated }: CreateAgentModalProps) {
   const { strategies, loading: strategiesLoading } = useStrategies();
+  const [apiKey, setApiKey] = useState<string | null>(null);
 
   // Form state
   const [step, setStep] = useState(1);
@@ -202,6 +206,14 @@ export function CreateAgentModal({ isOpen, onClose, onCreated }: CreateAgentModa
   const [maxActions, setMaxActions] = useState(100);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Check authentication status when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      const currentApiKey = getCurrentTenantApiKey();
+      setApiKey(currentApiKey);
+    }
+  }, [isOpen]);
 
   // Derived
   const currentStrategyDef = useMemo(
@@ -269,6 +281,14 @@ export function CreateAgentModal({ isOpen, onClose, onCreated }: CreateAgentModa
   }, [step, name, selectedStrategy, cycleInterval, maxActions]);
 
   const handleCreate = async () => {
+    // Validate authentication before creating
+    const currentApiKey = getCurrentTenantApiKey();
+    if (!currentApiKey) {
+      setError('Authentication required. Please log in to create agents.');
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -296,7 +316,13 @@ export function CreateAgentModal({ isOpen, onClose, onCreated }: CreateAgentModa
     setLoading(false);
   };
 
+  const isAuthenticated = !!apiKey;
+
   const next = () => {
+    if (!isAuthenticated) {
+      setError('Authentication required. Please log in to create agents.');
+      return;
+    }
     if (step === TOTAL_STEPS) {
       handleCreate();
     } else {
@@ -633,6 +659,16 @@ export function CreateAgentModal({ isOpen, onClose, onCreated }: CreateAgentModa
                   )}
                 </AnimatePresence>
 
+                {/* Auth Warning */}
+                {!isAuthenticated && (
+                  <div className="mt-4 p-3 bg-amber-500/10 rounded-lg border border-amber-500/30 flex items-start gap-2">
+                    <Lock className="w-4 h-4 text-amber-300 mt-0.5 shrink-0" />
+                    <p className="text-sm text-amber-200">
+                      You need to be logged in to create agents. Please authenticate first.
+                    </p>
+                  </div>
+                )}
+
                 {/* Error */}
                 {error && (
                   <div className="mt-4 p-3 bg-red-500/10 rounded-lg border border-red-500/30">
@@ -666,11 +702,22 @@ export function CreateAgentModal({ isOpen, onClose, onCreated }: CreateAgentModa
 
                 <button
                   onClick={next}
-                  className="px-4 py-2 text-sm font-medium bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 hover:border-cyan-500/50 text-cyan-300 rounded-lg transition-all inline-flex items-center gap-2 hover:bg-cyan-500/30 disabled:opacity-50"
-                  disabled={!canAdvance() || loading}
+                  className={cn(
+                    'px-4 py-2 text-sm font-medium rounded-lg transition-all inline-flex items-center gap-2',
+                    isAuthenticated
+                      ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 hover:border-cyan-500/50 text-cyan-300 hover:bg-cyan-500/30 disabled:opacity-50'
+                      : 'bg-slate-700/30 border border-amber-500/30 text-amber-300 cursor-not-allowed opacity-60'
+                  )}
+                  disabled={!canAdvance() || loading || !isAuthenticated}
+                  title={!isAuthenticated ? 'Please log in to create agents' : ''}
                 >
                   {loading ? (
                     <div className="w-4 h-4 border-2 border-cyan-400/30 border-t-cyan-400 rounded-full animate-spin" />
+                  ) : !isAuthenticated ? (
+                    <>
+                      <Lock className="w-4 h-4" />
+                      Locked
+                    </>
                   ) : step === TOTAL_STEPS ? (
                     <>
                       <Bot className="w-4 h-4" />

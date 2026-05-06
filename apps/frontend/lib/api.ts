@@ -112,6 +112,14 @@ export async function getStats(): Promise<ApiResponse<SystemStats>> {
   return fetchApi('/api/stats');
 }
 
+export async function getMonitoringCache(): Promise<ApiResponse<any>> {
+  return fetchApi('/api/monitoring/cache');
+}
+
+export async function getRateLimitStats(): Promise<ApiResponse<any>> {
+  return fetchApi('/api/monitoring/rate-limits');
+}
+
 // Agents
 export async function getAgents(): Promise<ApiResponse<Agent[]>> {
   return fetchApi('/api/agents');
@@ -173,6 +181,10 @@ export async function stopAgent(id: string): Promise<ApiResponse<void>> {
 // Transactions
 export async function getTransactions(): Promise<ApiResponse<Transaction[]>> {
   return fetchApi('/api/transactions');
+}
+
+export async function getTransaction(signature: string): Promise<ApiResponse<any>> {
+  return fetchApi(`/api/data/transactions/${signature}`);
 }
 
 // Events

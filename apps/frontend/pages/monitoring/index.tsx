@@ -18,6 +18,7 @@ import { useRouter } from 'next/router';
 import { useAuthProtected } from '@/lib/useAuthProtected';
 import { TrendingUp, Zap, Activity, AlertCircle, Database, Gauge } from 'lucide-react';
 import { Sidebar, Header } from '@/components';
+import * as api from '@/lib/api';
 
 interface MetricCard {
   label: string;
@@ -58,18 +59,17 @@ export default function PerformanceMonitoring() {
 
   const fetchMetrics = async () => {
     try {
-      // Fetch stats
-      const statsRes = await fetch('/api/stats');
-      if (!statsRes.ok) throw new Error('Failed to fetch stats');
-      const statsData = await statsRes.json();
+      const statsRes = await api.getStats();
+      if (!statsRes.success || !statsRes.data) {
+        throw new Error(statsRes.error || 'Failed to fetch stats');
+      }
+      const statsData = statsRes.data as any;
 
-      // Fetch cache metrics
-      const cacheRes = await fetch('/api/monitoring/cache');
-      const cacheData = cacheRes.ok ? await cacheRes.json() : null;
+      const cacheRes = await api.getMonitoringCache();
+      const cacheData = cacheRes.success ? cacheRes.data : null;
 
-      // Fetch rate limit metrics
-      const rateLimitRes = await fetch('/api/monitoring/rate-limits');
-      const rateLimitData = rateLimitRes.ok ? await rateLimitRes.json() : null;
+      const rateLimitRes = await api.getRateLimitStats();
+      const rateLimitData = rateLimitRes.success ? rateLimitRes.data : null;
 
       // Build metric cards
       const cards: MetricCard[] = [

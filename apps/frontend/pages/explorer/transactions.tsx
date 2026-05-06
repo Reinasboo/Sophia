@@ -17,6 +17,7 @@ import { useRouter } from 'next/router';
 import { useAuthProtected } from '@/lib/useAuthProtected';
 import { ArrowRightLeft, Download, ExternalLink, Loader } from 'lucide-react';
 import { Sidebar, Header } from '@/components';
+import * as api from '@/lib/api';
 
 interface Transaction {
   signature: string;
@@ -63,10 +64,10 @@ export default function TransactionExplorer() {
 
   const fetchTransactions = async () => {
     try {
-      const res = await fetch('/api/transactions?limit=50');
-      if (!res.ok) throw new Error('Failed to fetch transactions');
-      const data = await res.json();
-      setTransactions(data || []);
+      const res = await api.getTransactions();
+      if (!res.success || !res.data) throw new Error(res.error || 'Failed to fetch transactions');
+      const data = (res.data as any)?.transactions ?? res.data;
+      setTransactions(Array.isArray(data) ? data : []);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch transactions');
@@ -77,10 +78,9 @@ export default function TransactionExplorer() {
 
   const fetchTransactionDetail = async (signature: string) => {
     try {
-      const res = await fetch(`/api/transactions/${signature}`);
-      if (!res.ok) throw new Error('Failed to fetch transaction details');
-      const data = await res.json();
-      setSelected(data);
+      const res = await api.getTransaction(signature);
+      if (!res.success || !res.data) throw new Error(res.error || 'Failed to fetch transaction details');
+      setSelected(res.data as TransactionDetail);
     } catch (err) {
       console.error('Failed to fetch transaction details:', err);
     }
