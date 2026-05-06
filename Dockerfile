@@ -1,23 +1,23 @@
-FROM node:24-bullseye
+FROM node:24-bullseye AS build
 
-# Create app directory
 WORKDIR /app
 
-# Install dependencies (production only)
 COPY package.json package-lock.json* ./
-RUN npm ci --omit=dev
+RUN npm ci
 
-# Copy source
 COPY . .
-
-# Build TypeScript
 RUN npm run build
 
-# Production env
+FROM node:24-bullseye AS runtime
+
+WORKDIR /app
 ENV NODE_ENV=production
 
-# Expose server port (uses PORT env at runtime)
+COPY package.json package-lock.json* ./
+RUN npm ci --omit=dev && npm cache clean --force
+
+COPY --from=build /app/dist ./dist
+
 EXPOSE 3001
 
-# Start the compiled server
 CMD ["npm", "run", "start:server"]
