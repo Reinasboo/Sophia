@@ -475,12 +475,15 @@ app.get(
 app.post(
   '/internal/register-bearer',
   asyncHandler(async (req: Request, res: Response) => {
-    const { accessToken, apiKey } = req.body as { accessToken?: string; apiKey?: string };
+      const { accessToken, apiKey: providedApiKey } = req.body as {
+        accessToken?: string;
+        apiKey?: string;
+      };
 
-    if (!accessToken || !apiKey) {
-      res.status(400).json({ success: false, error: 'Missing accessToken or apiKey' });
-      return;
-    }
+      if (!accessToken) {
+        res.status(400).json({ success: false, error: 'Missing accessToken' });
+        return;
+      }
 
     // Verify Privy access token (will throw if misconfigured)
     let verified;
@@ -512,9 +515,16 @@ app.post(
       const userId = verified.userId;
       const now = Date.now();
       const existingIndex = records.findIndex((r) => r.privyUserId === userId);
+
+      // If the caller didn't supply an apiKey, generate a secure server-issued bearer token.
+      const apiKeyToStore =
+        providedApiKey && typeof providedApiKey === 'string' && providedApiKey.length > 0
+          ? providedApiKey
+          : `bearer_${userId}_${crypto.randomBytes(32).toString('hex')}`;
+
       const record = {
         privyUserId: userId,
-        bearerToken: apiKey,
+        bearerToken: apiKeyToStore,
         createdAt: new Date().toISOString(),
         issuedAt: now,
       };
@@ -540,7 +550,8 @@ app.post(
         try { writeFileSync(filePath, JSON.stringify(records, null, 2), 'utf8'); } catch {}
       }
 
-      res.status(200).json({ success: true });
+      // Return the tenant id and the stored apiKey so callers can persist it client-side.
+      res.status(200).json({ success: true, tenantId: userId, apiKey: apiKeyToStore });
     } catch (error) {
       res.status(500).json({ success: false, error: 'failed to persist token' });
     }
