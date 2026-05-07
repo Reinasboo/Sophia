@@ -32,9 +32,12 @@ export class BalanceGuardAgent extends BaseAgent {
     name: string,
     walletId: string,
     walletPublicKey: string,
-    params?: Partial<BalanceGuardParams>
+    params?: Partial<BalanceGuardParams>,
+    executionSettings?: Record<string, unknown>,
+    idOverride?: string,
+    tenantId?: string
   ) {
-    super(name, 'balance_guard', walletId, walletPublicKey, params as Record<string, unknown>);
+    super(name, 'balance_guard', walletId, walletPublicKey, params, executionSettings, idOverride, tenantId);
     this.params = { ...DEFAULT_PARAMS, ...params };
   }
 

@@ -35,9 +35,12 @@ export class ScheduledPayerAgent extends BaseAgent {
     name: string,
     walletId: string,
     walletPublicKey: string,
-    params?: Partial<ScheduledPayerParams>
+    params?: Partial<ScheduledPayerParams>,
+    executionSettings?: Record<string, unknown>,
+    idOverride?: string,
+    tenantId?: string
   ) {
-    super(name, 'scheduled_payer', walletId, walletPublicKey, params as Record<string, unknown>);
+    super(name, 'scheduled_payer', walletId, walletPublicKey, params, executionSettings, idOverride, tenantId);
     this.params = { ...DEFAULT_PARAMS, ...params };
   }
 

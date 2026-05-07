@@ -50,6 +50,7 @@ export abstract class BaseAgent {
   readonly name: string;
   readonly strategy: AgentStrategy;
   readonly createdAt: Date;
+  readonly tenantId?: string; // MULTI-TENANT: Store tenant context for filtering
 
   protected status: AgentStatus = 'idle';
   protected walletId: string;
@@ -68,13 +69,15 @@ export abstract class BaseAgent {
     walletPublicKey: string,
     strategyParams?: Record<string, unknown>,
     executionSettings?: Partial<ExecutionSettings>,
-    idOverride?: string
+    idOverride?: string,
+    tenantId?: string // MULTI-TENANT: Accept tenant context in constructor
   ) {
     this.id = idOverride ?? uuidv4();
     this.name = name;
     this.strategy = strategy;
     this.walletId = walletId;
     this.walletPublicKey = walletPublicKey;
+    this.tenantId = tenantId; // MULTI-TENANT: Store tenant context
     this.createdAt = new Date();
     this.strategyParams = strategyParams ?? {};
     this.executionSettings = {
@@ -100,6 +103,7 @@ export abstract class BaseAgent {
       createdAt: this.createdAt,
       lastActionAt: this.lastActionAt,
       errorMessage: this.errorMessage,
+      tenantId: this.tenantId, // MULTI-TENANT: Include tenant context in agent info
     };
   }
 

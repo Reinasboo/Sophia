@@ -23,9 +23,12 @@ export class StrategyDrivenAgent extends BaseAgent {
     walletId: string,
     walletPublicKey: string,
     strategyParams: Record<string, unknown>,
-    supportedIntents: readonly string[]
+    supportedIntents: readonly string[],
+    executionSettings?: Record<string, unknown>,
+    idOverride?: string,
+    tenantId?: string // MULTI-TENANT: Pass tenant context to parent
   ) {
-    super(name, strategy, walletId, walletPublicKey, strategyParams);
+    super(name, strategy, walletId, walletPublicKey, strategyParams, executionSettings, idOverride, tenantId);
     this.supportedIntents = [...supportedIntents];
   }
 

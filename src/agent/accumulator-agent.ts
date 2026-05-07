@@ -34,9 +34,12 @@ export class AccumulatorAgent extends BaseAgent {
     name: string,
     walletId: string,
     walletPublicKey: string,
-    params?: Partial<AccumulatorParams>
+    params?: Partial<AccumulatorParams>,
+    executionSettings?: Record<string, unknown>,
+    idOverride?: string,
+    tenantId?: string
   ) {
-    super(name, 'accumulator', walletId, walletPublicKey);
+    super(name, 'accumulator', walletId, walletPublicKey, params, executionSettings, idOverride, tenantId);
     this.params = { ...DEFAULT_PARAMS, ...params };
   }
 

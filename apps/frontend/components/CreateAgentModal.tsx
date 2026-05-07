@@ -208,27 +208,11 @@ export function CreateAgentModal({ isOpen, onClose, onCreated }: CreateAgentModa
   const [error, setError] = useState<string | null>(null);
 
   // Check authentication status when modal opens
-  // IMPORTANT: We listen to auth changes in real-time in case the user logs in after modal opens
   useEffect(() => {
-    if (!isOpen) return;
-
-    const currentApiKey = getCurrentTenantApiKey();
-    setApiKey(currentApiKey);
-    console.log('[CreateAgent] Auth check on modal open:', {
-      hasApiKey: !!currentApiKey,
-      keyPrefix: currentApiKey?.substring(0, 10) + '...',
-      timestamp: new Date().toISOString(),
-    });
-
-    // Listen for auth changes
-    const handleAuthChange = () => {
-      const updatedKey = getCurrentTenantApiKey();
-      console.log('[CreateAgent] Auth changed:', { hasKey: !!updatedKey });
-      setApiKey(updatedKey);
-    };
-
-    window.addEventListener('sophia-tenant-session-changed', handleAuthChange);
-    return () => window.removeEventListener('sophia-tenant-session-changed', handleAuthChange);
+    if (isOpen) {
+      const currentApiKey = getCurrentTenantApiKey();
+      setApiKey(currentApiKey);
+    }
   }, [isOpen]);
 
   // Derived
@@ -297,23 +281,15 @@ export function CreateAgentModal({ isOpen, onClose, onCreated }: CreateAgentModa
   }, [step, name, selectedStrategy, cycleInterval, maxActions]);
 
   const handleCreate = async () => {
-    // Validate authentication before creating
     const currentApiKey = getCurrentTenantApiKey();
     if (!currentApiKey) {
       setError('❌ Authentication required. Please log in to create agents.');
       setLoading(false);
-      console.error('[CreateAgent] No API key found');
       return;
     }
 
     setLoading(true);
     setError(null);
-
-    console.log('[CreateAgent] Creating agent', {
-      name: name.trim(),
-      strategy: selectedStrategy,
-      hasApiKey: !!currentApiKey,
-    });
 
     const response = await api.createAgent({
       name: name.trim(),
@@ -326,19 +302,14 @@ export function CreateAgentModal({ isOpen, onClose, onCreated }: CreateAgentModa
       },
     });
 
-    console.log('[CreateAgent] Response:', { success: response.success, hasData: !!response.data, error: response.error });
-
     if (response.success && response.data) {
-      console.log('[CreateAgent] Agent created successfully:', response.data.id);
       if (execEnabled) {
-        console.log('[CreateAgent] Starting agent...');
         await api.startAgent(response.data.id);
       }
       onCreated?.();
       onClose();
     } else {
       const errorMsg = response.error || 'Failed to create agent';
-      console.error('[CreateAgent] Failed:', errorMsg);
       setError(`❌ ${errorMsg}`);
     }
 
@@ -348,37 +319,13 @@ export function CreateAgentModal({ isOpen, onClose, onCreated }: CreateAgentModa
   const isAuthenticated = !!apiKey;
 
   const next = () => {
-    console.log('[CreateAgent.next()] Button clicked', {
-      step,
-      isAuthenticated,
-      formValid: canAdvance(),
-      loading,
-      apiKeyPresent: !!apiKey,
-      apiKeyPrefix: apiKey?.substring(0, 10) + '...',
-    });
-
     if (!isAuthenticated) {
-      const msg = 'Authentication required. Please log in to create agents.';
-      console.warn('[CreateAgent.next()]', msg);
-      setError(`❌ ${msg}`);
+      setError('Authentication required. Please log in to create agents.');
       return;
     }
-    
-    if (!canAdvance()) {
-      console.warn('[CreateAgent.next()] Form validation failed', {
-        step,
-        name: name.trim(),
-        selectedStrategy,
-      });
-      setError('❌ Please fill in all required fields.');
-      return;
-    }
-
     if (step === TOTAL_STEPS) {
-      console.log('[CreateAgent.next()] Final step - calling handleCreate()');
       handleCreate();
     } else {
-      console.log('[CreateAgent.next()] Advancing to step', step + 1);
       setError(null);
       setStep((s) => Math.min(s + 1, TOTAL_STEPS));
     }
@@ -728,18 +675,6 @@ export function CreateAgentModal({ isOpen, onClose, onCreated }: CreateAgentModa
                     <p className="text-sm text-red-300">{error}</p>
                   </div>
                 )}
-
-                {/* DEBUG: Button State Info */}
-                {process.env.NODE_ENV === 'development' && (
-                  <div className="mt-4 p-2 bg-slate-900/50 rounded-lg border border-slate-700/50 text-[10px] text-slate-400 font-mono space-y-1">
-                    <div>apiKey: {apiKey ? '✓ present' : '✗ null'}</div>
-                    <div>isAuthenticated: {isAuthenticated ? '✓ true' : '✗ false'}</div>
-                    <div>canAdvance: {canAdvance() ? '✓ true' : '✗ false'}</div>
-                    <div>loading: {loading ? '✓ true' : '✗ false'}</div>
-                    <div>button disabled: {!canAdvance() || loading || !isAuthenticated ? '✓ yes' : '✗ no'}</div>
-                    <div className="mt-1 text-slate-500">Step {step}/{TOTAL_STEPS}</div>
-                  </div>
-                )}
               </div>
 
               {/* Actions — always pinned at bottom */}
@@ -774,13 +709,7 @@ export function CreateAgentModal({ isOpen, onClose, onCreated }: CreateAgentModa
                       : 'bg-slate-700/30 border border-amber-500/30 text-amber-300 cursor-not-allowed opacity-60'
                   )}
                   disabled={!canAdvance() || loading || !isAuthenticated}
-                  title={
-                    !isAuthenticated
-                      ? 'Please log in to create agents'
-                      : !canAdvance()
-                        ? 'Please complete all required fields'
-                        : ''
-                  }
+                  title={!isAuthenticated ? 'Please log in to create agents' : ''}
                 >
                   {loading ? (
                     <div className="w-4 h-4 border-2 border-cyan-400/30 border-t-cyan-400 rounded-full animate-spin" />
