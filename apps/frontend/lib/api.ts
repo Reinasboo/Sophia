@@ -38,13 +38,25 @@ function getTenantApiKey(): string | null {
   return getCurrentTenantApiKey();
 }
 
+function isLikelyValidApiKey(token: string): boolean {
+  if (!token) {
+    return false;
+  }
+
+  if (token.startsWith('bearer_')) {
+    return true;
+  }
+
+  return token.split('.').length === 3;
+}
+
 /** Headers for authenticated requests (includes tenant Bearer token) */
 function authHeaders(): Record<string, string> {
   const headers: Record<string, string> = {};
   const apiKey = getTenantApiKey();
 
   // MULTI-TENANT FIX: Include API key as Bearer token for all requests
-  if (apiKey) {
+  if (apiKey && isLikelyValidApiKey(apiKey)) {
     headers['Authorization'] = `Bearer ${apiKey}`;
   }
 

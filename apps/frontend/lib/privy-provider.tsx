@@ -24,6 +24,24 @@ const TENANT_SESSION_KEYS = {
   legacyApiKey: 'apiKey',
 } as const;
 
+function isLikelyValidApiKey(token: string): boolean {
+  if (!token) {
+    return false;
+  }
+
+  // Preferred server-issued token format.
+  if (token.startsWith('bearer_')) {
+    return true;
+  }
+
+  // Backward-compat for JWT-style tokens during migration.
+  if (token.split('.').length === 3) {
+    return true;
+  }
+
+  return false;
+}
+
 export function persistTenantSession(tenantSession: TenantSession): void {
   currentTenantSession = tenantSession;
 
@@ -71,6 +89,11 @@ function readTenantSession(): TenantSession | null {
     localStorage.getItem(TENANT_SESSION_KEYS.legacyApiKey);
 
   if (!tenantId || !apiKey) {
+    return null;
+  }
+
+  if (!isLikelyValidApiKey(apiKey)) {
+    clearTenantSession();
     return null;
   }
 
