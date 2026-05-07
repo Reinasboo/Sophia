@@ -57,19 +57,30 @@ export default async function handler(
     });
   }
 
-  initializeBearerTokenStore();
-  const tenantId = verifyBearerToken(apiKey);
+  // Verify the stored apiKey with the authoritative backend to avoid
+  // filesystem path mismatches between frontend and backend runtimes.
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  const verifyUrl = `${API_BASE.replace(/\/+$/, '')}/internal/verify-bearer`;
 
-  if (!tenantId) {
-    return res.status(401).json({
-      success: false,
-      error: 'Invalid session',
+  try {
+    const verifyRes = await fetch(verifyUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ apiKey }),
     });
-  }
 
-  return res.status(200).json({
-    success: true,
-    tenantId,
-    apiKey,
-  });
+    if (!verifyRes.ok) {
+      const body = await verifyRes.json().catch(() => null);
+      return res.status(401).json({ success: false, error: body?.error || 'Invalid session' });
+    }
+
+    const payload = await verifyRes.json().catch(() => null);
+    if (!payload?.success || !payload?.tenantId) {
+      return res.status(401).json({ success: false, error: 'Invalid session' });
+    }
+
+    return res.status(200).json({ success: true, tenantId: payload.tenantId, apiKey });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: 'Session verification failed' });
+  }
 }

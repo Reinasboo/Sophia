@@ -50,6 +50,7 @@ import {
 } from './data/index.js';
 import { getDeFiRegistry } from './defi/index.js';
 import { verifyPrivyAccessToken } from './utils/privy-auth.js';
+import { verifyBearerToken } from './utils/bearer-token-store.js';
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
 
@@ -554,6 +555,44 @@ app.post(
       res.status(200).json({ success: true, tenantId: userId, apiKey: apiKeyToStore });
     } catch (error) {
       res.status(500).json({ success: false, error: 'failed to persist token' });
+    }
+  })
+);
+
+// INTERNAL: Verify a stored bearer token and return tenant info
+// POST /internal/verify-bearer
+// Body: { apiKey?: string }
+app.post(
+  '/internal/verify-bearer',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { apiKey } = req.body as { apiKey?: string };
+
+    if (!apiKey) {
+      res.status(400).json({ success: false, error: 'Missing apiKey' });
+      return;
+    }
+
+    try {
+      // Prefer verifyBearerToken (server-issued), fallback to privy JWT verification
+      let tenantId: string | null = null;
+      tenantId = verifyBearerToken(apiKey);
+      if (!tenantId) {
+        try {
+          const verified = await verifyPrivyAccessToken(apiKey);
+          if (verified) tenantId = verified.userId;
+        } catch {
+          tenantId = null;
+        }
+      }
+
+      if (!tenantId) {
+        res.status(401).json({ success: false, error: 'Invalid apiKey' });
+        return;
+      }
+
+      res.status(200).json({ success: true, tenantId, apiKey });
+    } catch (err) {
+      res.status(500).json({ success: false, error: 'verification failed' });
     }
   })
 );
