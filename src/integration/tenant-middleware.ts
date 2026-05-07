@@ -98,8 +98,9 @@ export function tenantContextMiddleware() {
              userId: tokenRecord.privyUserId,
             apiKey,
           };
-          logger.debug('Server-issued bearer token authenticated', {
+          logger.info('[TenantAuth] Server-issued bearer token authenticated', {
              tenantId: tokenRecord.privyUserId,
+             apiKeyPrefix: apiKey.substring(0, 20) + '...',
           });
           return next();
         }

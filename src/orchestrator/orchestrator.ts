@@ -143,8 +143,18 @@ export class Orchestrator {
     // MULTI-TENANT: Require tenantId for agent creation
     const tenantId = config.tenantId;
     if (!tenantId) {
+      logger.error('[Orchestrator.createAgent] SECURITY: Missing tenantId - agent would be unscoped!', {
+        agentName: config.name,
+        strategy: config.strategy,
+      });
       return failure(new Error('tenantId is required for agent creation'));
     }
+
+    logger.info('[Orchestrator.createAgent] Creating agent with tenantId', {
+      agentName: config.name,
+      tenantId,
+      strategy: config.strategy,
+    });
 
     // Create wallet for agent (scoped to tenant)
     const walletResult = this.walletManager.createWallet(config.name, tenantId);
@@ -1201,9 +1211,20 @@ export class Orchestrator {
    * Returns only agents that belong to the specified tenant
    */
   getAgentsByTenant(tenantId: string): AgentInfo[] {
-    return Array.from(this.agents.values())
-      .map((m) => m.agent.getInfo())
-      .filter((agent) => agent.tenantId === tenantId);
+    const allAgents = Array.from(this.agents.values())
+      .map((m) => m.agent.getInfo());
+    
+    const filtered = allAgents.filter((agent) => agent.tenantId === tenantId);
+    
+    logger.info('[Orchestrator] getAgentsByTenant', {
+      tenantId,
+      totalAgents: allAgents.length,
+      filteredCount: filtered.length,
+      agentsWithMissingTenantId: allAgents.filter(a => !a.tenantId).length,
+      agentTenantIds: allAgents.map(a => ({ id: a.id, tenantId: a.tenantId })),
+    });
+    
+    return filtered;
   }
 
   /**
