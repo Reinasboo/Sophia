@@ -4,7 +4,7 @@
  * Verifies server-issued bearer tokens created by the frontend.
  * Tokens are loaded from data/bearer_tokens.json (shared with frontend).
  *
- * Token format: "bearer_<privy_user_id>_<32-byte-random>"
+ * Token format: "bearer_<random>" and the backend looks up the full token.
  */
 
 import { existsSync, readFileSync } from 'fs';
@@ -67,30 +67,19 @@ export function verifyBearerToken(token: string): string | null {
     return null;
   }
 
-  // Load fresh tokens from disk (stay in sync with frontend)
+  // Load fresh tokens from disk (stay in sync with backend persistence).
   const cache = loadBearerTokensFromDisk();
 
-  // Parse token format: "bearer_<privy_user_id>_<random>"
-  const parts = token.split('_');
-  if (parts.length < 3) {
-    return null;
-  }
-
-  const privyUserId = parts.slice(1, -1).join('_');
-  const record = cache.get(privyUserId);
+  // Find the record by the full bearer token, not by a parsed user ID.
+  // This avoids failures for Privy user IDs containing characters like @ or .
+  const record = Array.from(cache.values()).find((r) => r.bearerToken === token);
 
   if (!record) {
     return null;
   }
 
-  // Verify the token matches
-  if (record.bearerToken !== token) {
-    logger.warn('Bearer token mismatch for user', { privyUserId });
-    return null;
-  }
-
-  logger.debug('Bearer token verified for user', { privyUserId });
-  return privyUserId;
+  logger.debug('Bearer token verified for user', { privyUserId: record.privyUserId });
+  return record.privyUserId;
 }
 
 /**

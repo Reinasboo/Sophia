@@ -470,15 +470,15 @@ app.get(
 // ============================================
 // INTERNAL: Register server-issued bearer token
 // POST /internal/register-bearer
-// Body: { accessToken: string, apiKey: string }
-// Verifies the Privy accessToken then persists the apiKey into data/bearer_tokens.json
+// Body: { accessToken: string, apiKey?: string }
+// Verifies the Privy accessToken then persists or returns the user's bearer token.
 app.post(
   '/internal/register-bearer',
   asyncHandler(async (req: Request, res: Response) => {
     const { accessToken, apiKey } = req.body as { accessToken?: string; apiKey?: string };
 
-    if (!accessToken || !apiKey) {
-      res.status(400).json({ success: false, error: 'Missing accessToken or apiKey' });
+    if (!accessToken) {
+      res.status(400).json({ success: false, error: 'Missing accessToken' });
       return;
     }
 
@@ -508,20 +508,31 @@ app.post(
         records = JSON.parse(raw || '[]');
       }
 
-      // Upsert record for this user
       const userId = verified.userId;
       const now = Date.now();
       const existingIndex = records.findIndex((r) => r.privyUserId === userId);
-      const record = {
-        privyUserId: userId,
-        bearerToken: apiKey,
-        createdAt: new Date().toISOString(),
-        issuedAt: now,
-      };
+      let tokenToReturn = apiKey;
 
       if (existingIndex >= 0) {
-        records[existingIndex] = record;
+        const existingRecord = records[existingIndex];
+
+        if (!apiKey || apiKey !== existingRecord.bearerToken) {
+          tokenToReturn = existingRecord.bearerToken;
+        }
+
+        records[existingIndex] = {
+          ...existingRecord,
+          bearerToken: tokenToReturn,
+          issuedAt: existingRecord.issuedAt,
+        };
       } else {
+        tokenToReturn = apiKey || `bearer_${crypto.randomBytes(32).toString('hex')}`;
+        const record = {
+          privyUserId: userId,
+          bearerToken: tokenToReturn,
+          createdAt: new Date().toISOString(),
+          issuedAt: now,
+        };
         records.push(record);
       }
 
@@ -540,7 +551,7 @@ app.post(
         try { writeFileSync(filePath, JSON.stringify(records, null, 2), 'utf8'); } catch {}
       }
 
-      res.status(200).json({ success: true });
+      res.status(200).json({ success: true, tenantId: userId, apiKey: tokenToReturn });
     } catch (error) {
       res.status(500).json({ success: false, error: 'failed to persist token' });
     }
