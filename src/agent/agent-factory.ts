@@ -10,6 +10,7 @@ import { AccumulatorAgent, AccumulatorParams } from './accumulator-agent.js';
 import { DistributorAgent, DistributorParams } from './distributor-agent.js';
 import { BalanceGuardAgent, BalanceGuardParams } from './balance-guard-agent.js';
 import { ScheduledPayerAgent, ScheduledPayerParams } from './scheduled-payer-agent.js';
+import { StrategyDrivenAgent } from './strategy-driven-agent.js';
 import { AgentStrategy, Result, success, failure } from '../types/shared.js';
 import { AgentConfig } from '../types/internal.js';
 import { getStrategyRegistry } from './strategy-registry.js';
@@ -95,9 +96,15 @@ export function createAgent(options: CreateAgentOptions): Result<BaseAgent, Erro
       }
 
       default:
-        return failure(
-          new Error(`Strategy "${config.strategy}" is registered but has no agent implementation`)
+        agent = new StrategyDrivenAgent(
+          config.name,
+          config.strategy,
+          walletId,
+          walletPublicKey,
+          validatedParams,
+          strategyDef?.supportedIntents ?? []
         );
+        break;
     }
 
     // Apply execution settings if provided

@@ -25,3 +25,4 @@ export {
 } from './strategy-registry.js';
 export { BalanceGuardAgent } from './balance-guard-agent.js';
 export { ScheduledPayerAgent } from './scheduled-payer-agent.js';
+export { StrategyDrivenAgent } from './strategy-driven-agent.js';

@@ -36,6 +36,35 @@ import { getStrategyRegistry } from '../src/agent/strategy-registry.js';
  */
 
 describe('Strategy Registry', () => {
+  it('creates an agent implementation for every built-in strategy', async () => {
+    const registry = getStrategyRegistry();
+    const allBuiltIn = registry.getAllDTOs().filter((strategy) => strategy.builtIn);
+
+    for (const strategy of allBuiltIn) {
+      const created = createAgent({
+        config: {
+          name: `test-${strategy.name}`,
+          strategy: strategy.name,
+          strategyParams: strategy.defaultParams,
+        },
+        walletId: 'wallet-test',
+        walletPublicKey: '11111111111111111111111111111111',
+      });
+
+      expect(created.ok).toBe(true);
+      if (!created.ok) continue;
+
+      const decision = await created.value.think({
+        walletPublicKey: '11111111111111111111111111111111',
+        balance: { sol: 100, lamports: 100000000000n },
+        tokenBalances: [],
+        recentTransactions: [],
+      });
+
+      expect(decision.reasoning).toBeTruthy();
+    }
+  });
+
   it('has 11 realistic trading strategies registered', () => {
     const registry = getStrategyRegistry();
     const all = registry.getAllDTOs();
