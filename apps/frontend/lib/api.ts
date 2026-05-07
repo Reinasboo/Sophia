@@ -408,7 +408,7 @@ export async function getExternalIntents(
   }
   const params = limit ? `?limit=${limit}` : '';
   return cachedFetch(`${API_BASE}/api/byoa/intents${params}`, { ttl: 5000, staleTtl: 15000 });
-}}
+}
 
 /**
  * Get ALL intent history (both built-in and BYOA agents).
