@@ -167,15 +167,21 @@ export const requestDeduplicator = new RequestDeduplicator();
  */
 export async function cachedFetch<T = any>(
   url: string,
-  options?: { method?: string; body?: any; ttl?: number; staleTtl?: number }
+  options?: { 
+    method?: string; 
+    body?: any; 
+    ttl?: number; 
+    staleTtl?: number;
+    headers?: Record<string, string>;
+  }
 ): Promise<T> {
-  const { method = 'GET', body, ttl = 30000, staleTtl = 60000 } = options || {};
+  const { method = 'GET', body, ttl = 30000, staleTtl = 60000, headers = {} } = options || {};
 
   // Skip caching for mutations (POST, PUT, DELETE)
   if (method !== 'GET') {
     const response = await fetch(url, {
       method,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...headers },
       body: body ? JSON.stringify(body) : undefined,
     });
 
@@ -199,7 +205,10 @@ export async function cachedFetch<T = any>(
   return requestDeduplicator.execute(
     cacheKey,
     async () => {
-      const response = await fetch(url, { method });
+      const response = await fetch(url, { 
+        method,
+        headers: { 'Content-Type': 'application/json', ...headers }
+      });
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
