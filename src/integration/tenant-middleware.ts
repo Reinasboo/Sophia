@@ -14,7 +14,7 @@ import { createLogger } from '../utils/logger.js';
 import { TenantContext } from '../types/index.js';
 import { getConfig } from '../utils/config.js';
 import { verifyPrivyAccessToken } from '../utils/privy-auth.js';
-import { verifyBearerToken } from '../utils/bearer-token-store.js';
+import { getBearerTokenByValue } from '../utils/bearer-token-store-db.js';
 
 const logger = createLogger('TENANT_MIDDLEWARE');
 
@@ -91,15 +91,15 @@ export function tenantContextMiddleware() {
 
       if (apiKey) {
         // Step 1: Try server-issued bearer token (priority: persistent tokens)
-        const tenantIdFromBearerToken = verifyBearerToken(apiKey);
-        if (tenantIdFromBearerToken) {
+        const tokenRecord = await getBearerTokenByValue(apiKey);
+        if (tokenRecord) {
           req.tenantContext = {
-            tenantId: tenantIdFromBearerToken,
-            userId: tenantIdFromBearerToken,
+             tenantId: tokenRecord.privyUserId,
+             userId: tokenRecord.privyUserId,
             apiKey,
           };
           logger.debug('Server-issued bearer token authenticated', {
-            tenantId: tenantIdFromBearerToken,
+             tenantId: tokenRecord.privyUserId,
           });
           return next();
         }

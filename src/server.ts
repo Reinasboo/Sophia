@@ -50,7 +50,12 @@ import {
 } from './data/index.js';
 import { getDeFiRegistry } from './defi/index.js';
 import { verifyPrivyAccessToken } from './utils/privy-auth.js';
-import { verifyBearerToken } from './utils/bearer-token-store.js';
+import {
+  storeBearerToken,
+  getBearerTokenByValue,
+  initializeBearerTokenStore,
+  closeBearerTokenStore,
+} from './utils/bearer-token-store-db.js';
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
 
@@ -516,32 +521,9 @@ app.post(
       return;
     }
 
-    // Get writable data directory (use /tmp on Lambda, ./data locally)
-    // Lambda: /var/task is read-only, must use /tmp
-    const getDataDir = () => {
-      // Check if we're in Lambda environment
-      if (process.env.LAMBDA_TASK_ROOT || process.env.RAILWAY_ENVIRONMENT) {
-        return process.env.DATA_DIR || '/tmp/sophia';
-      }
-      return join(process.cwd(), 'data');
-    };
-
-    // Persist token into data/bearer_tokens.json in server data dir
-    const dataDir = getDataDir();
-    const filePath = join(dataDir, 'bearer_tokens.json');
     try {
-      if (!existsSync(dataDir)) mkdirSync(dataDir, { recursive: true });
-
-      let records: any[] = [];
-      if (existsSync(filePath)) {
-        const raw = readFileSync(filePath, 'utf8');
-        records = JSON.parse(raw || '[]');
-      }
-
-      // Upsert record for this user
       const userId = verified.userId;
       const now = Date.now();
-      const existingIndex = records.findIndex((r) => r.privyUserId === userId);
 
       // If the caller didn't supply an apiKey, generate a secure server-issued bearer token.
       const apiKeyToStore =
@@ -549,6 +531,7 @@ app.post(
           ? providedApiKey
           : `bearer_${userId}_${crypto.randomBytes(32).toString('hex')}`;
 
+      // Persist to database (or file fallback)
       const record = {
         privyUserId: userId,
         bearerToken: apiKeyToStore,
@@ -556,30 +539,15 @@ app.post(
         issuedAt: now,
       };
 
-      if (existingIndex >= 0) {
-        records[existingIndex] = record;
-      } else {
-        records.push(record);
-      }
-
-      // Write atomically
-      const tmp = filePath + '.tmp';
-      writeFileSync(tmp, JSON.stringify(records, null, 2), 'utf8');
-      try {
-        if (existsSync(filePath)) {
-          const backup = filePath + '.bak';
-          if (existsSync(backup)) try { require('fs').unlinkSync(backup); } catch {}
-          require('fs').renameSync(filePath, backup);
-        }
-        require('fs').renameSync(tmp, filePath);
-      } catch (renameErr) {
-        // best effort
-        try { writeFileSync(filePath, JSON.stringify(records, null, 2), 'utf8'); } catch {}
-      }
+      await storeBearerToken(record);
+      logger.info('[Register Bearer] Token persisted successfully', { userId });
 
       // Return the tenant id and the stored apiKey so callers can persist it client-side.
       res.status(200).json({ success: true, tenantId: userId, apiKey: apiKeyToStore });
     } catch (error) {
+      logger.error('[Register Bearer] Failed to persist token', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       res.status(500).json({ success: false, error: 'failed to persist token' });
     }
   })
@@ -599,17 +567,19 @@ app.post(
     }
 
     try {
-      // Prefer verifyBearerToken (server-issued), fallback to privy JWT verification
-      let tenantId: string | null = null;
-      tenantId = verifyBearerToken(apiKey);
-      if (!tenantId) {
-        try {
-          const verified = await verifyPrivyAccessToken(apiKey);
-          if (verified) tenantId = verified.userId;
-        } catch {
-          tenantId = null;
-        }
-      }
+       // Prefer bearer token store (server-issued), fallback to privy JWT verification
+       let tenantId: string | null = null;
+       const tokenRecord = await getBearerTokenByValue(apiKey);
+       if (tokenRecord) {
+         tenantId = tokenRecord.privyUserId;
+       } else {
+         try {
+           const verified = await verifyPrivyAccessToken(apiKey);
+           if (verified) tenantId = verified.userId;
+         } catch {
+           tenantId = null;
+         }
+       }
 
       if (!tenantId) {
         res.status(401).json({ success: false, error: 'Invalid apiKey' });
@@ -2821,6 +2791,13 @@ let httpServer: import('http').Server | null = null;
 export function startServer(): void {
   const config = getConfig();
 
+  // Initialize bearer token store (PostgreSQL with file fallback)
+  initializeBearerTokenStore().catch((err) => {
+    logger.error('Failed to initialize bearer token store', {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  });
+
   // Initialize data tracker and attach to event bus
   const tracker = getDataTracker();
   attachDataTracker(eventBus);
@@ -2834,7 +2811,7 @@ export function startServer(): void {
 }
 
 // Graceful shutdown — drain in-flight requests before exiting
-function gracefulShutdown(signal: string): void {
+async function gracefulShutdown(signal: string): Promise<void> {
   logger.info(`Received ${signal}, shutting down gracefully...`);
 
   const orchestrator = getOrchestrator();
@@ -2853,6 +2830,15 @@ function gracefulShutdown(signal: string): void {
     wss.close();
   }
 
+  // Close bearer token store database connection
+  try {
+    await closeBearerTokenStore();
+  } catch (err) {
+    logger.error('Error closing bearer token store', {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+
   // Close HTTP server (drain in-flight requests with a timeout)
   if (httpServer) {
     httpServer.close(() => {
@@ -2869,7 +2855,7 @@ function gracefulShutdown(signal: string): void {
   }
 }
 
-process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT').catch(() => process.exit(1)));
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM').catch(() => process.exit(1)));
 
 export { app };
