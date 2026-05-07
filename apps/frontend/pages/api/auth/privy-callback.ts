@@ -15,11 +15,6 @@
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { randomBytes } from 'crypto';
-import { verifyPrivyAccessToken } from '@/lib/privy-auth';
-import { getOrCreateBearerToken, initializeBearerTokenStore } from '@/lib/bearer-token-store';
-
-// Initialize bearer token store on module load
-initializeBearerTokenStore();
 
 // H-1 FIX: Simple in-memory rate limiter for auth endpoint
 const authRateLimit = new Map<string, { count: number; resetAt: number }>();
@@ -218,64 +213,35 @@ export default async function handler(
       hasPayload: tokenParts.length >= 2,
     });
 
-    // Step 1: Verify Privy token
-    const privyUserInfo = await verifyPrivyToken(accessToken);
-
-    if (!privyUserInfo) {
-      logger.warn('Privy token verification failed', {
-        hasVerifier:
-          Boolean(process.env['PRIVY_JWKS_URL']) || Boolean(process.env['PRIVY_PUBLIC_KEY_PEM']),
-        env: process.env.NODE_ENV,
+    // For production (and serverless) do not persist tokens to the frontend filesystem.
+    // Instead, proxy the accessToken to the centralized backend which will verify and persist
+    // the server-issued bearer token in PostgreSQL.
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    try {
+      const backendRes = await fetch(`${API_BASE.replace(/\/+$/, '')}/internal/register-bearer`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accessToken }),
       });
-      return res.status(401).json({
-        success: false,
-        error:
-          process.env.NODE_ENV === 'production'
-            ? 'Invalid Privy token'
-            : 'Privy sign-in is not configured. In development, enter an email address to use the local fallback or set PRIVY_JWKS_URL / PRIVY_PUBLIC_KEY_PEM.',
-      });
-    }
 
-    logger.info('Privy token verified', {
-      privyUserId: privyUserInfo.id,
-      email: privyUserInfo.email,
-    });
+      const backendJson = await backendRes.json().catch(() => ({}));
 
-    // Step 2: Create or get Sophia tenant
-    const { tenantId, apiKey } = await getOrCreateTenantForPrivyUser(privyUserInfo);
-
-    // Step 3: Return credentials to frontend
-    // Frontend should store these in localStorage for future requests:
-    //   localStorage.setItem('sophia_api_key', apiKey);
-    //   localStorage.setItem('sophia_tenant_id', tenantId);
-    res.setHeader('Set-Cookie', serializeSessionCookie(apiKey));
-    logger.info('Privy auth successful', {
-      tenantId,
-      privyUserId: privyUserInfo.id,
-    });
-
-    // Try to register this bearer token with the backend so the server
-    // can validate the persistent apiKey for future requests.
-    // This is best-effort: auth succeeds even if registration fails.
-    (async () => {
-      try {
-        const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-        await fetch(`${API_BASE}/internal/register-bearer`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ accessToken, apiKey }),
-        });
-        console.log('[Auth] Registered bearer token with backend');
-      } catch (err) {
-        console.warn('[Auth] Failed to register bearer token with backend', err);
+      if (!backendRes.ok || !backendJson || !backendJson.success) {
+        logger.warn('Backend register-bearer failed', { status: backendRes.status, body: backendJson });
+        return res.status(500).json({ success: false, error: 'Failed to register tenant with backend' });
       }
-    })();
 
-    return res.status(200).json({
-      success: true,
-      tenantId,
-      apiKey,
-    });
+      const tenantId = backendJson.tenantId;
+      const apiKey = backendJson.apiKey;
+
+      // Set HttpOnly cookie and return credentials
+      res.setHeader('Set-Cookie', serializeSessionCookie(apiKey));
+      logger.info('Privy auth proxied to backend and successful', { tenantId });
+      return res.status(200).json({ success: true, tenantId, apiKey });
+    } catch (err) {
+      logger.error('Privy auth proxy error', { error: err instanceof Error ? err.message : String(err) });
+      return res.status(500).json({ success: false, error: 'Authentication failed' });
+    }
   } catch (error) {
     logger.error('Privy auth callback error:', error);
     return res.status(500).json({
