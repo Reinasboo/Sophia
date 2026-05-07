@@ -363,9 +363,10 @@ export class DataTracker {
     const client = await this.dbPool.connect();
     try {
       await client.query('BEGIN');
-      await client.query(
-        'TRUNCATE indexed_transactions, indexed_intents, indexed_events, indexing_state'
-      );
+      
+      // DO NOT TRUNCATE - this is why data was being wiped on deploy!
+      // Instead, upsert only changed records.
+      // For now: write transactions/intents (idempotent by signature/id)
 
       for (const tx of this.transactions.values()) {
         await client.query(
@@ -375,7 +376,9 @@ export class DataTracker {
             error, parsed_data, created_at, indexed_at
           ) VALUES (
             $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19
-          )`,
+          )
+          ON CONFLICT (signature) DO UPDATE SET
+            status = $8, error = $16, parsed_data = $17, indexed_at = $19`,
           [
             tx.signature,
             tx.id,
@@ -407,7 +410,9 @@ export class DataTracker {
             signature, created_at, executed_at, indexed_at
           ) VALUES (
             $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12
-          )`,
+          )
+          ON CONFLICT (id) DO UPDATE SET
+            status = $5, result = $7, error = $8, executed_at = $11, indexed_at = $12`,
           [
             intent.id,
             intent.tenantId,
@@ -431,7 +436,9 @@ export class DataTracker {
             id, tenant_id, event_type, entity_id, entity_type, data, created_at, indexed_at
           ) VALUES (
             $1,$2,$3,$4,$5,$6,$7,$8
-          )`,
+          )
+          ON CONFLICT (id) DO UPDATE SET
+            data = $6, indexed_at = $8`,
           [
             event.id,
             event.tenantId,
