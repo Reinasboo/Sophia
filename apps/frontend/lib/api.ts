@@ -393,7 +393,7 @@ export async function getExternalAgents(): Promise<ApiResponse<ExternalAgent[]>>
 
 export async function getExternalAgent(id: string): Promise<ApiResponse<ExternalAgentDetail>> {
   return cachedFetch(`${API_BASE}/api/byoa/agents/${id}`, { ttl: 5000, staleTtl: 15000 });
-}}
+}
 
 export async function getExternalIntents(
   agentId?: string,
