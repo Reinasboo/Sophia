@@ -16,8 +16,6 @@
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { randomBytes } from 'crypto';
-import { verifyPrivyAccessToken } from '@/lib/privy-auth';
 
 // H-1 FIX: Simple in-memory rate limiter for auth endpoint
 const authRateLimit = new Map<string, { count: number; resetAt: number }>();
@@ -50,60 +48,6 @@ function checkAuthRateLimit(clientIp: string): { allowed: boolean; retryAfter?: 
 
   record.count++;
   return { allowed: true };
-}
-
-interface PrivyUserInfo {
-  id: string;
-  email?: string;
-  walletAddress?: string;
-}
-
-/**
- * Verify a Privy access token.
- *
- * Phase 1: Returns error if PRIVY_APP_ID not configured.
- * Phase 2: Will use @privy-io/server-auth to verify against Privy.
- *
- * DO NOT DEPLOY TO PRODUCTION without full implementation.
- */
-async function verifyPrivyToken(accessToken: string): Promise<PrivyUserInfo | null> {
-  if (!accessToken) return null;
-
-  try {
-    const verified = await verifyPrivyAccessToken(accessToken);
-    if (verified) {
-      return {
-        id: verified.userId,
-        email: verified.email,
-        walletAddress: verified.walletAddress,
-      };
-    }
-  } catch (error) {
-    console.error('SECURITY ERROR: Privy token verification failed', {
-      error: error instanceof Error ? error.message : String(error),
-    });
-    if (process.env.NODE_ENV === 'production') {
-      return null;
-    }
-  }
-
-  if (process.env.NODE_ENV === 'production') {
-    return null;
-  }
-
-  const allowStub = process.env['ALLOW_INSECURE_PRIVY_STUB'] === 'true';
-  if (!allowStub) {
-    return null;
-  }
-
-  console.warn(
-    '[DEV] Privy stub enabled. Install real JWKS or public key verification for production.'
-  );
-
-  return {
-    id: 'user_test_' + randomBytes(4).toString('hex'),
-    email: 'test@example.com',
-  };
 }
 
 // Simple logger for this endpoint
@@ -190,32 +134,10 @@ export default async function handler(
       ip: clientIp,
     });
 
-    // Step 1: Verify Privy token
-    const privyUserInfo = await verifyPrivyToken(accessToken);
-
-    if (!privyUserInfo) {
-      logger.warn('Privy token verification failed', {
-        hasVerifier:
-          Boolean(process.env['PRIVY_JWKS_URL']) || Boolean(process.env['PRIVY_PUBLIC_KEY_PEM']),
-        env: process.env.NODE_ENV,
-      });
-      return res.status(401).json({
-        success: false,
-        error:
-          process.env.NODE_ENV === 'production'
-            ? 'Invalid Privy token'
-            : 'Privy sign-in is not configured. In development, enter an email address to use the local fallback or set PRIVY_JWKS_URL / PRIVY_PUBLIC_KEY_PEM.',
-      });
-    }
-
-    logger.info('Privy token verified', {
-      privyUserId: privyUserInfo.id,
-      email: privyUserInfo.email,
-    });
-
-    // Step 2: Request the backend to create or return the persistent bearer token.
-    const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-    const registrationUrl = `${API_BASE}/internal/register-bearer`;
+    // Step 1: Forward the Privy access token to the backend and let the backend verify it.
+    const API_BASE = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    const normalizedApiBase = API_BASE.replace(/\/+$/, '');
+    const registrationUrl = `${normalizedApiBase}/internal/register-bearer`;
 
     const registerResponse = await fetch(registrationUrl, {
       method: 'POST',
@@ -225,6 +147,8 @@ export default async function handler(
 
     if (!registerResponse.ok) {
       const registerBody = await registerResponse.json().catch(() => null);
+      const backendError =
+        registerBody?.error || registerBody?.message || 'Failed to register bearer token with backend';
       logger.error('Failed to register bearer token with backend', {
         registrationUrl,
         status: registerResponse.status,
@@ -232,7 +156,7 @@ export default async function handler(
       });
       return res.status(502).json({
         success: false,
-        error: 'Failed to register bearer token with backend',
+        error: backendError,
       });
     }
 
@@ -253,7 +177,6 @@ export default async function handler(
 
     logger.info('Privy auth successful', {
       tenantId: backendTenantId,
-      privyUserId: privyUserInfo.id,
       registeredWithBackend: true,
     });
 

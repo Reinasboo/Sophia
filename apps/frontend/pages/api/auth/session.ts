@@ -8,7 +8,7 @@
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { verifyBearerToken } from '@/lib/bearer-token-store';
+import { initializeBearerTokenStore, verifyBearerToken } from '@/lib/bearer-token-store';
 
 interface SessionResponse {
   success: boolean;
@@ -57,6 +57,7 @@ export default async function handler(
     });
   }
 
+  initializeBearerTokenStore();
   const tenantId = verifyBearerToken(apiKey);
 
   if (!tenantId) {
