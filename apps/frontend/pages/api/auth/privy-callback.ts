@@ -10,6 +10,8 @@
  * - NEVER use in production without proper Privy integration (@privy-io/server-auth)
  * - Token generation uses cryptographically secure randomBytes()
  * - In production: enable PRIVY_APP_ID and PRIVY_API_SECRET for real verification
+ * - This endpoint also registers the server-issued bearer token with the backend
+ *   service before returning success.
  * - Rate limiting: 5 requests per minute per IP to prevent brute-force attacks
  */
 
@@ -238,33 +240,51 @@ export default async function handler(
     // Step 2: Create or get Sophia tenant
     const { tenantId, apiKey } = await getOrCreateTenantForPrivyUser(privyUserInfo);
 
-    // Step 3: Return credentials to frontend
-    // Frontend should store these in localStorage for future requests:
-    //   localStorage.setItem('sophia_api_key', apiKey);
-    //   localStorage.setItem('sophia_tenant_id', tenantId);
-    res.setHeader('Set-Cookie', serializeSessionCookie(apiKey));
+    // Step 3: Register the server-issued bearer token with the backend.
+    // Without registration, the frontend may hold a local session while the
+    // backend rejects API requests.
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    const registrationUrl = `${API_BASE}/internal/register-bearer`;
+
+    const registerResponse = await fetch(registrationUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ accessToken, apiKey }),
+    });
+
+    if (!registerResponse.ok) {
+      const registerBody = await registerResponse.json().catch(() => null);
+      logger.error('Failed to register bearer token with backend', {
+        registrationUrl,
+        status: registerResponse.status,
+        body: registerBody,
+      });
+      return res.status(502).json({
+        success: false,
+        error: 'Failed to register bearer token with backend',
+      });
+    }
+
+    const registerPayload = await registerResponse.json().catch(() => null);
+    if (!registerPayload?.success) {
+      logger.error('Bearer token registration response was invalid', {
+        registrationUrl,
+        status: registerResponse.status,
+        body: registerPayload,
+      });
+      return res.status(502).json({
+        success: false,
+        error: 'Failed to register bearer token with backend',
+      });
+    }
+
     logger.info('Privy auth successful', {
       tenantId,
       privyUserId: privyUserInfo.id,
+      registeredWithBackend: true,
     });
 
-    // Try to register this bearer token with the backend so the server
-    // can validate the persistent apiKey for future requests.
-    // This is best-effort: auth succeeds even if registration fails.
-    (async () => {
-      try {
-        const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-        await fetch(`${API_BASE}/internal/register-bearer`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ accessToken, apiKey }),
-        });
-        console.log('[Auth] Registered bearer token with backend');
-      } catch (err) {
-        console.warn('[Auth] Failed to register bearer token with backend', err);
-      }
-    })();
-
+    res.setHeader('Set-Cookie', serializeSessionCookie(apiKey));
     return res.status(200).json({
       success: true,
       tenantId,

@@ -16,8 +16,6 @@ import { usePrivy } from '@privy-io/react-auth';
 import { useEffect, useState } from 'react';
 import { getCurrentTenantApiKey, persistTenantSession } from './privy-provider';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://sophia-production-1a83.up.railway.app';
-
 interface AuthenticationState {
   isLoading: boolean;
   isAuthenticated: boolean;
@@ -70,7 +68,7 @@ export function usePrivyAuthentication(): AuthenticationState {
         }
 
         // Exchange Privy JWT for server-issued bearer token
-        const response = await fetch(`${API_BASE}/api/auth/privy-callback`, {
+        const response = await fetch('/api/auth/privy-callback', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
