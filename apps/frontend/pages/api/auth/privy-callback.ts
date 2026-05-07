@@ -14,6 +14,7 @@
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { randomBytes } from 'crypto';
 
 // H-1 FIX: Simple in-memory rate limiter for auth endpoint
 const authRateLimit = new Map<string, { count: number; resetAt: number }>();
@@ -143,13 +144,28 @@ export default async function handler(
     // the server-issued bearer token in PostgreSQL.
     const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
     try {
-      const backendRes = await fetch(`${API_BASE.replace(/\/+$/, '')}/internal/register-bearer`, {
+      const endpoint = `${API_BASE.replace(/\/+$/, '')}/internal/register-bearer`;
+      let backendRes = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ accessToken }),
       });
 
-      const backendJson = await backendRes.json().catch(() => ({}));
+      let backendJson = await backendRes.json().catch(() => ({}));
+
+      // Backward compatibility for older backend deployments that still require apiKey.
+      if (
+        backendRes.status === 400 &&
+        backendJson?.error === 'Missing accessToken or apiKey'
+      ) {
+        const fallbackApiKey = `bearer_fallback_${randomBytes(24).toString('hex')}`;
+        backendRes = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ accessToken, apiKey: fallbackApiKey }),
+        });
+        backendJson = await backendRes.json().catch(() => ({}));
+      }
 
       if (!backendRes.ok || !backendJson || !backendJson.success) {
         logger.warn('Backend register-bearer failed', { status: backendRes.status, body: backendJson });
