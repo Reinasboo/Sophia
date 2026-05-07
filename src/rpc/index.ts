@@ -5,6 +5,7 @@
  */
 
 export { SolanaClient, getSolanaClient } from './solana-client.js';
+export { MultiRpcClient, getMultiRpcClient } from './multi-rpc-client.js';
 export {
   buildSolTransfer,
   buildTokenTransfer,

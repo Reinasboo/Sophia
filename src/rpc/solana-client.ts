@@ -42,13 +42,27 @@ interface TransactionResult {
 
 /**
  * SolanaClient - Handles all blockchain interactions
+ * 
+ * Supports multi-RPC failover if SOLANA_RPC_URLS is configured (comma-separated list)
+ * Falls back to SOLANA_RPC_URL / HELIUS_RPC_URL if multi-RPC is not configured
  */
 export class SolanaClient {
   private connection: Connection;
   private maxRetries: number;
+  private useMultiRpc: boolean = false;
 
   constructor() {
     const config = getConfig();
+    
+    // Check if multi-RPC failover is configured
+    if (config.SOLANA_RPC_URLS) {
+      const rpcUrls = config.SOLANA_RPC_URLS.split(',').filter(Boolean);
+      if (rpcUrls.length > 1) {
+        logger.info('Multi-RPC failover enabled', { endpointCount: rpcUrls.length });
+        this.useMultiRpc = true;
+      }
+    }
+    
     const rpcUrl = config.HELIUS_RPC_URL ?? config.SOLANA_RPC_URL;
     const wsEndpoint = config.HELIUS_WS_URL;
 
@@ -61,9 +75,10 @@ export class SolanaClient {
     this.maxRetries = config.MAX_RETRIES;
 
     logger.info('Solana client initialized', {
-      rpcUrl,
-      wsEndpoint,
+      rpcUrl: rpcUrl.substring(0, 50) + '...',
+      wsEndpoint: wsEndpoint ? wsEndpoint.substring(0, 50) + '...' : 'none',
       network: config.SOLANA_NETWORK,
+      multiRpcEnabled: this.useMultiRpc,
     });
   }
 

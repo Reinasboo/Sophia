@@ -12,6 +12,7 @@ config();
 const ConfigSchema = z.object({
   // Solana
   SOLANA_RPC_URL: z.string().url().default('https://api.devnet.solana.com'),
+  SOLANA_RPC_URLS: z.string().optional(), // Comma-separated list of RPC endpoints for failover
   SOLANA_NETWORK: z.enum(['devnet', 'testnet', 'mainnet-beta']).default('devnet'),
   HELIUS_RPC_URL: z.string().url().optional(),
   HELIUS_WS_URL: z.string().url().optional(),
