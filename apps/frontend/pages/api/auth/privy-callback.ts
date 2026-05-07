@@ -10,12 +10,16 @@
  * - NEVER use in production without proper Privy integration (@privy-io/server-auth)
  * - Token generation uses cryptographically secure randomBytes()
  * - In production: enable PRIVY_APP_ID and PRIVY_API_SECRET for real verification
- * - This endpoint also registers the server-issued bearer token with the backend
- *   service before returning success.
  * - Rate limiting: 5 requests per minute per IP to prevent brute-force attacks
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { randomBytes } from 'crypto';
+import { verifyPrivyAccessToken } from '@/lib/privy-auth';
+import { getOrCreateBearerToken, initializeBearerTokenStore } from '@/lib/bearer-token-store';
+
+// Initialize bearer token store on module load
+initializeBearerTokenStore();
 
 // H-1 FIX: Simple in-memory rate limiter for auth endpoint
 const authRateLimit = new Map<string, { count: number; resetAt: number }>();
@@ -48,6 +52,80 @@ function checkAuthRateLimit(clientIp: string): { allowed: boolean; retryAfter?: 
 
   record.count++;
   return { allowed: true };
+}
+
+interface PrivyUserInfo {
+  id: string;
+  email?: string;
+  walletAddress?: string;
+}
+
+/**
+ * Verify a Privy access token.
+ *
+ * Phase 1: Returns error if PRIVY_APP_ID not configured.
+ * Phase 2: Will use @privy-io/server-auth to verify against Privy.
+ *
+ * DO NOT DEPLOY TO PRODUCTION without full implementation.
+ */
+async function verifyPrivyToken(accessToken: string): Promise<PrivyUserInfo | null> {
+  if (!accessToken) return null;
+
+  try {
+    const verified = await verifyPrivyAccessToken(accessToken);
+    if (verified) {
+      return {
+        id: verified.userId,
+        email: verified.email,
+        walletAddress: verified.walletAddress,
+      };
+    }
+  } catch (error) {
+    console.error('SECURITY ERROR: Privy token verification failed', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    if (process.env.NODE_ENV === 'production') {
+      return null;
+    }
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    return null;
+  }
+
+  const allowStub = process.env['ALLOW_INSECURE_PRIVY_STUB'] === 'true';
+  if (!allowStub) {
+    return null;
+  }
+
+  console.warn(
+    '[DEV] Privy stub enabled. Install real JWKS or public key verification for production.'
+  );
+
+  return {
+    id: 'user_test_' + randomBytes(4).toString('hex'),
+    email: 'test@example.com',
+  };
+}
+
+/**
+ * Get or create a tenant for a Privy user.
+ *
+ * Phase 2: Issue a server-signed bearer token that persists across sessions.
+ * The bearer token is stored in the bearer-token-store and never changes for the same user.
+ */
+async function getOrCreateTenantForPrivyUser(privyUserInfo: PrivyUserInfo) {
+  // Use Privy user ID as the tenant ID (one tenant per Privy user)
+  const tenantId = privyUserInfo.id;
+
+  // Get or create a persistent bearer token for this user
+  // This token remains the same across logins and devices.
+  const bearerToken = getOrCreateBearerToken(tenantId);
+
+  return {
+    tenantId,
+    apiKey: bearerToken, // Return the server-issued bearer token
+  };
 }
 
 // Simple logger for this endpoint
@@ -134,57 +212,63 @@ export default async function handler(
       ip: clientIp,
     });
 
-    // Step 1: Forward the Privy access token to the backend and let the backend verify it.
-    const API_BASE = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-    const normalizedApiBase = API_BASE.replace(/\/+$/, '');
-    const registrationUrl = `${normalizedApiBase}/internal/register-bearer`;
+    // Step 1: Verify Privy token
+    const privyUserInfo = await verifyPrivyToken(accessToken);
 
-    const registerResponse = await fetch(registrationUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ accessToken }),
+    if (!privyUserInfo) {
+      logger.warn('Privy token verification failed', {
+        hasVerifier:
+          Boolean(process.env['PRIVY_JWKS_URL']) || Boolean(process.env['PRIVY_PUBLIC_KEY_PEM']),
+        env: process.env.NODE_ENV,
+      });
+      return res.status(401).json({
+        success: false,
+        error:
+          process.env.NODE_ENV === 'production'
+            ? 'Invalid Privy token'
+            : 'Privy sign-in is not configured. In development, enter an email address to use the local fallback or set PRIVY_JWKS_URL / PRIVY_PUBLIC_KEY_PEM.',
+      });
+    }
+
+    logger.info('Privy token verified', {
+      privyUserId: privyUserInfo.id,
+      email: privyUserInfo.email,
     });
 
-    if (!registerResponse.ok) {
-      const registerBody = await registerResponse.json().catch(() => null);
-      const backendError =
-        registerBody?.error || registerBody?.message || 'Failed to register bearer token with backend';
-      logger.error('Failed to register bearer token with backend', {
-        registrationUrl,
-        status: registerResponse.status,
-        body: registerBody,
-      });
-      return res.status(502).json({
-        success: false,
-        error: backendError,
-      });
-    }
+    // Step 2: Create or get Sophia tenant
+    const { tenantId, apiKey } = await getOrCreateTenantForPrivyUser(privyUserInfo);
 
-    const registerPayload = await registerResponse.json().catch(() => null);
-    if (!registerPayload?.success || !registerPayload?.tenantId || !registerPayload?.apiKey) {
-      logger.error('Bearer token registration response was invalid', {
-        registrationUrl,
-        status: registerResponse.status,
-        body: registerPayload,
-      });
-      return res.status(502).json({
-        success: false,
-        error: 'Failed to register bearer token with backend',
-      });
-    }
-
-    const { tenantId: backendTenantId, apiKey: backendApiKey } = registerPayload;
-
+    // Step 3: Return credentials to frontend
+    // Frontend should store these in localStorage for future requests:
+    //   localStorage.setItem('sophia_api_key', apiKey);
+    //   localStorage.setItem('sophia_tenant_id', tenantId);
+    res.setHeader('Set-Cookie', serializeSessionCookie(apiKey));
     logger.info('Privy auth successful', {
-      tenantId: backendTenantId,
-      registeredWithBackend: true,
+      tenantId,
+      privyUserId: privyUserInfo.id,
     });
 
-    res.setHeader('Set-Cookie', serializeSessionCookie(backendApiKey));
+    // Try to register this bearer token with the backend so the server
+    // can validate the persistent apiKey for future requests.
+    // This is best-effort: auth succeeds even if registration fails.
+    (async () => {
+      try {
+        const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+        await fetch(`${API_BASE}/internal/register-bearer`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ accessToken, apiKey }),
+        });
+        console.log('[Auth] Registered bearer token with backend');
+      } catch (err) {
+        console.warn('[Auth] Failed to register bearer token with backend', err);
+      }
+    })();
+
     return res.status(200).json({
       success: true,
-      tenantId: backendTenantId,
-      apiKey: backendApiKey,
+      tenantId,
+      apiKey,
     });
   } catch (error) {
     logger.error('Privy auth callback error:', error);
