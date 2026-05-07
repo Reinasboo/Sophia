@@ -37,6 +37,17 @@ function parseAuthHeader(authHeader?: string): string | null {
   return authHeader.slice(7).trim();
 }
 
+function parseCookieHeader(cookieHeader?: string): Record<string, string> {
+  if (!cookieHeader) return {};
+  return cookieHeader.split(';').reduce<Record<string, string>>((acc, part) => {
+    const [k, ...v] = part.split('=');
+    const key = k?.trim();
+    if (!key) return acc;
+    acc[key] = decodeURIComponent((v || []).join('=').trim());
+    return acc;
+  }, {});
+}
+
 /**
  * Middleware that extracts TenantContext from authorization header
  *
@@ -50,7 +61,17 @@ export function tenantContextMiddleware() {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       const authHeader = req.headers['authorization'];
-      const apiKey = parseAuthHeader(authHeader as string);
+      let apiKey = parseAuthHeader(authHeader as string);
+
+      // Fallback: check HttpOnly session cookie set by frontend
+      if (!apiKey && req.headers.cookie) {
+        const cookies = parseCookieHeader(req.headers.cookie);
+        const sessionKey = cookies['sophia_session'] || cookies['sophia_session'.replace(/_/g, '%5F')];
+        if (sessionKey) {
+          apiKey = sessionKey;
+          logger.debug('Using session cookie for tenant auth', { path: req.path });
+        }
+      }
 
       // Check for admin API key (for backward compatibility and admin operations)
       const config = getConfig();
