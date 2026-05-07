@@ -74,6 +74,7 @@ export function createAgent(options: CreateAgentOptions): Result<BaseAgent, Erro
     let agent: BaseAgent;
 
     switch (config.strategy) {
+      // Legacy agents (maintained for backward compatibility)
       case 'accumulator': {
         const params: Partial<AccumulatorParams> = validatedParams;
         agent = new AccumulatorAgent(config.name, walletId, walletPublicKey, params);
@@ -95,7 +96,18 @@ export function createAgent(options: CreateAgentOptions): Result<BaseAgent, Erro
         break;
       }
 
-      default:
+      // 11 Realistic Mainnet Trading Strategies (StrategyDrivenAgent-backed)
+      case 'scalping_trading':
+      case 'breakout_trading':
+      case 'mean_reversion_trading':
+      case 'dca':
+      case 'grid_trading':
+      case 'momentum_trading':
+      case 'arbitrage':
+      case 'stop_loss_guard':
+      case 'yield_harvesting':
+      case 'portfolio_rebalancer':
+      case 'airdrop_farmer': {
         agent = new StrategyDrivenAgent(
           config.name,
           config.strategy,
@@ -105,6 +117,16 @@ export function createAgent(options: CreateAgentOptions): Result<BaseAgent, Erro
           strategyDef?.supportedIntents ?? []
         );
         break;
+      }
+
+      default:
+        // Fallback for any unknown strategy
+        return failure(
+          new Error(
+            `Strategy "${config.strategy}" has no agent implementation. ` +
+            `Known strategies: ${registry.list().join(', ')}`
+          )
+        );
     }
 
     // Apply execution settings if provided
