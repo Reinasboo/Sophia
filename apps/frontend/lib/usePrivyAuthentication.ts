@@ -67,6 +67,15 @@ export function usePrivyAuthentication(): AuthenticationState {
           throw new Error('Failed to get Privy access token');
         }
 
+        // Log token structure for debugging "Invalid Compact JWS" errors
+        const tokenParts = String(accessToken).split('.');
+        console.log('[Auth] Privy accessToken received', {
+          length: String(accessToken).length,
+          parts: tokenParts.length,
+          firstPart: tokenParts[0]?.slice(0, 20) + '...',
+          hasValidStructure: tokenParts.length === 3,
+        });
+
         // Exchange Privy JWT for server-issued bearer token via frontend API route.
         // This keeps auth flow on the same origin and preserves cookie/session behavior.
         const response = await fetch('/api/auth/privy-callback', {

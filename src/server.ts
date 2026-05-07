@@ -489,8 +489,24 @@ app.post(
     // Verify Privy access token (will throw if misconfigured)
     let verified;
     try {
+      // Log environment configuration for debugging
+      console.log('[Register Bearer] Privy config', {
+        hasAppId: !!process.env['PRIVY_APP_ID'],
+        hasJwksUrl: !!process.env['PRIVY_JWKS_URL'],
+        hasPem: !!process.env['PRIVY_PUBLIC_KEY_PEM'],
+        hasIssuer: !!process.env['PRIVY_ISSUER'],
+        tokenLength: String(accessToken).length,
+        tokenParts: String(accessToken).split('.').length,
+      });
       verified = await verifyPrivyAccessToken(accessToken);
     } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      console.error('[Register Bearer] Privy verification failed', {
+        error: errorMsg,
+        hasAppId: !!process.env['PRIVY_APP_ID'],
+        hasJwksUrl: !!process.env['PRIVY_JWKS_URL'],
+        hasPem: !!process.env['PRIVY_PUBLIC_KEY_PEM'],
+      });
       res.status(401).json({ success: false, error: 'Invalid accessToken' });
       return;
     }

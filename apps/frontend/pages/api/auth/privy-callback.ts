@@ -208,8 +208,14 @@ export default async function handler(
       });
     }
 
+    // Log incoming token structure for debugging "Invalid Compact JWS" error
+    const tokenParts = String(accessToken).split('.');
     logger.debug('Privy auth callback received', {
       ip: clientIp,
+      tokenLength: String(accessToken).length,
+      tokenParts: tokenParts.length,
+      firstPart: tokenParts[0]?.slice(0, 20) + '...',
+      hasPayload: tokenParts.length >= 2,
     });
 
     // Step 1: Verify Privy token

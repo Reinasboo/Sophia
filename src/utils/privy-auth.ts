@@ -48,20 +48,45 @@ export async function verifyPrivyAccessToken(
   accessToken: string
 ): Promise<VerifiedPrivyToken | null> {
   if (!accessToken) {
+    console.log('[Privy Auth] No access token provided');
     return null;
   }
 
   const verifier = await getVerificationKey();
   if (!verifier) {
+    console.warn('[Privy Auth] No verification key available (PRIVY_JWKS_URL or PRIVY_PUBLIC_KEY_PEM not set)');
     return null;
   }
 
   const appId = process.env['PRIVY_APP_ID'];
   const configuredIssuer = process.env['PRIVY_ISSUER'];
-
-  const verified = await jwtVerify<PrivyTokenClaims>(accessToken, verifier, {
-    algorithms: ['ES256'],
+  
+  // Log JWT structure for debugging
+  const jwtParts = accessToken.split('.');
+  console.log('[Privy Auth] JWT Structure Check', {
+    length: accessToken.length,
+    parts: jwtParts.length,
+    firstPart: jwtParts[0]?.slice(0, 20) + '...',
+    appIdConfigured: !!appId,
+    issuerConfigured: !!configuredIssuer,
   });
+
+  let verified;
+  try {
+    verified = await jwtVerify<PrivyTokenClaims>(accessToken, verifier, {
+      algorithms: ['ES256'],
+    });
+  } catch (err) {
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    console.error('[Privy Auth] JWT verification failed', {
+      error: errorMsg,
+      jwtLength: accessToken.length,
+      jwtParts: jwtParts.length,
+      usingJwks: !!process.env['PRIVY_JWKS_URL'],
+      usingPem: !!process.env['PRIVY_PUBLIC_KEY_PEM'],
+    });
+    throw err; // Re-throw for caller to handle
+  }
 
   const payload = verified.payload;
   const tokenAppId = payload.appId ?? String(payload.aud ?? '');
