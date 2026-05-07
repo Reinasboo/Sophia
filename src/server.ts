@@ -65,7 +65,7 @@ const app = express();
 
 // ── Rate limiting and server configuration constants ──
 const API_RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute sliding window for rate limit
-const API_RATE_LIMIT_MAX_REQUESTS = 120; // requests per minute per IP address
+const API_RATE_LIMIT_MAX_REQUESTS = 600; // 10 req/sec = 600 requests per minute per IP address (accommodates dashboard polling + user actions)
 const RATE_LIMIT_CLEANUP_INTERVAL_MS = 300_000; // 5 minutes cleanup interval
 const REQUEST_BODY_SIZE_LIMIT = '512kb'; // Maximum request body size
 const TRUST_PROXY_HOP_COUNT = 1; // Number of proxy hops to trust (prevents X-Forwarded-For spoofing)
@@ -185,7 +185,7 @@ app.use(
   })
 );
 
-const authRouteRateLimit = createRouteRateLimitMiddleware('auth', 60_000, 60);
+const authRouteRateLimit = createRouteRateLimitMiddleware('auth', 60_000, 300); // 300 req/min = 5 req/sec avg
 const byoaRouteRateLimit = createRouteRateLimitMiddleware('byoa', 60_000, 30);
 const webhookRouteRateLimit = createRouteRateLimitMiddleware('webhook', 60_000, 20);
 
