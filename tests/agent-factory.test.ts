@@ -39,6 +39,12 @@ describe('Strategy Registry', () => {
   it('creates an agent implementation for every built-in strategy', async () => {
     const registry = getStrategyRegistry();
     const allBuiltIn = registry.getAllDTOs().filter((strategy) => strategy.builtIn);
+    const context = {
+      walletPublicKey: '11111111111111111111111111111111',
+      balance: { sol: 100, lamports: 100000000000n },
+      tokenBalances: [],
+      recentTransactions: [],
+    };
 
     for (const strategy of allBuiltIn) {
       const created = createAgent({
@@ -48,19 +54,21 @@ describe('Strategy Registry', () => {
           strategyParams: strategy.defaultParams,
         },
         walletId: 'wallet-test',
-        walletPublicKey: '11111111111111111111111111111111',
+        walletPublicKey: context.walletPublicKey,
       });
 
       expect(created.ok).toBe(true);
       if (!created.ok) continue;
 
-      const decision = await created.value.think({
-        walletPublicKey: '11111111111111111111111111111111',
-        balance: { sol: 100, lamports: 100000000000n },
-        tokenBalances: [],
-        recentTransactions: [],
-      });
+      const decision = await created.value.think(context);
 
+      expect(decision.shouldAct).toBe(true);
+      expect(decision.intent).toBeDefined();
+      expect(decision.intent?.type).toBe('autonomous');
+      expect(decision.intent?.action).toBe(strategy.supportedIntents[0]);
+      expect(decision.intent?.params.strategy).toBe(strategy.name);
+      expect(decision.intent?.params.strategyParams).toEqual(strategy.defaultParams);
+      expect(decision.intent?.params.walletPublicKey).toBe(context.walletPublicKey);
       expect(decision.reasoning).toBeTruthy();
     }
   });
