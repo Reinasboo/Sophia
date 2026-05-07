@@ -463,14 +463,14 @@ export async function revokeExternalAgent(id: string): Promise<ApiResponse<void>
 
 export async function getServicePolicies(): Promise<ApiResponse<ServicePolicy[]>> {
   return cachedFetch(`${API_BASE}/api/byoa/service-policies`, { ttl: 30000, staleTtl: 60000 });
-}}
+}
 
 export async function getServicePolicy(serviceId: string): Promise<ApiResponse<ServicePolicy>> {
   return cachedFetch(`${API_BASE}/api/byoa/service-policies/${serviceId}`, {
     ttl: 30000,
     staleTtl: 60000,
   });
-}}
+}
 
 export async function createServicePolicy(
   data: ServicePolicy
