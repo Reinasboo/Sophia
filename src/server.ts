@@ -65,7 +65,7 @@ const app = express();
 
 // ── Rate limiting and server configuration constants ──
 const API_RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute sliding window for rate limit
-const API_RATE_LIMIT_MAX_REQUESTS = 600; // 10 req/sec = 600 requests per minute per IP address (accommodates dashboard polling + user actions)
+const API_RATE_LIMIT_MAX_REQUESTS = 10000; // ~167 req/sec per IP - allows unlimited concurrent users with polling
 const RATE_LIMIT_CLEANUP_INTERVAL_MS = 300_000; // 5 minutes cleanup interval
 const REQUEST_BODY_SIZE_LIMIT = '512kb'; // Maximum request body size
 const TRUST_PROXY_HOP_COUNT = 1; // Number of proxy hops to trust (prevents X-Forwarded-For spoofing)
@@ -185,9 +185,9 @@ app.use(
   })
 );
 
-const authRouteRateLimit = createRouteRateLimitMiddleware('auth', 60_000, 300); // 300 req/min = 5 req/sec avg
-const byoaRouteRateLimit = createRouteRateLimitMiddleware('byoa', 60_000, 30);
-const webhookRouteRateLimit = createRouteRateLimitMiddleware('webhook', 60_000, 20);
+const authRouteRateLimit = createRouteRateLimitMiddleware('auth', 60_000, 1000); // Permissive for login flows
+const byoaRouteRateLimit = createRouteRateLimitMiddleware('byoa', 60_000, 100); // Permissive for external agents
+const webhookRouteRateLimit = createRouteRateLimitMiddleware('webhook', 60_000, 100); // Permissive for webhook handlers
 
 // L-3 FIX: Explicitly handle OPTIONS preflight so browsers get correct CORS headers.
 app.options(
@@ -263,9 +263,32 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
 // TENANT CONTEXT MIDDLEWARE
 // ============================================
 
+// Middleware to skip rate limiting for read-only polling endpoints
+function bypassRateLimitForReadOnly(req: Request, res: Response, next: NextFunction): void {
+  const readOnlyPaths = [
+    '/api/health',
+    '/api/stats',
+    '/api/strategies',
+  ];
+  
+  // GET requests to read-only paths skip rate limiting
+  const isReadOnly = req.method === 'GET' && readOnlyPaths.some(p => req.path.startsWith(p));
+  if (isReadOnly) {
+    // Skip rate limiter for read-only endpoints
+    tenantContextMiddleware()(req, res, next);
+    return;
+  }
+  
+  // Everything else goes through rate limiting
+  authRouteRateLimit(req, res, () => {
+    tenantContextMiddleware()(req, res, next);
+  });
+}
+
 // MULTI-TENANT FIX: Extract tenant context from Authorization header
 // Validates bearer token and attaches tenantId to req.tenantContext
-app.use('/api', authRouteRateLimit, tenantContextMiddleware());
+// OPTIMIZATION: Bypass rate limiting for read-only polling endpoints
+app.use('/api', bypassRateLimitForReadOnly);
 
 /**
  * C-1/C-2: Require admin API key for mutation endpoints.
