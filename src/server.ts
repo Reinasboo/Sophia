@@ -274,21 +274,18 @@ function bypassRateLimitForReadOnly(req: Request, res: Response, next: NextFunct
   // GET requests to read-only paths skip rate limiting
   const isReadOnly = req.method === 'GET' && readOnlyPaths.some(p => req.path.startsWith(p));
   if (isReadOnly) {
-    // Skip rate limiter for read-only endpoints
-    tenantContextMiddleware()(req, res, next);
-    return;
+    // Skip rate limiter, go straight to next middleware
+    return next();
   }
   
   // Everything else goes through rate limiting
-  authRouteRateLimit(req, res, () => {
-    tenantContextMiddleware()(req, res, next);
-  });
+  authRouteRateLimit(req, res, next);
 }
 
 // MULTI-TENANT FIX: Extract tenant context from Authorization header
 // Validates bearer token and attaches tenantId to req.tenantContext
 // OPTIMIZATION: Bypass rate limiting for read-only polling endpoints
-app.use('/api', bypassRateLimitForReadOnly);
+app.use('/api', bypassRateLimitForReadOnly, tenantContextMiddleware());
 
 /**
  * C-1/C-2: Require admin API key for mutation endpoints.
