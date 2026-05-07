@@ -25,8 +25,13 @@ let bearerTokensByPrivyUserId: Map<string, BearerTokenRecord> | null = null;
 
 /**
  * Get the data directory for persistent storage (shared with frontend).
+ * On Lambda (/var/task is read-only), uses /tmp. Locally uses ./data
  */
 function getDataDir(): string {
+  // Check if we're in Lambda environment (Railway/AWS Lambda)
+  if (process.env.LAMBDA_TASK_ROOT || process.env.RAILWAY_ENVIRONMENT) {
+    return process.env.DATA_DIR || '/tmp/sophia';
+  }
   return join(process.cwd(), 'data');
 }
 

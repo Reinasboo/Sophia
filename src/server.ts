@@ -516,8 +516,18 @@ app.post(
       return;
     }
 
+    // Get writable data directory (use /tmp on Lambda, ./data locally)
+    // Lambda: /var/task is read-only, must use /tmp
+    const getDataDir = () => {
+      // Check if we're in Lambda environment
+      if (process.env.LAMBDA_TASK_ROOT || process.env.RAILWAY_ENVIRONMENT) {
+        return process.env.DATA_DIR || '/tmp/sophia';
+      }
+      return join(process.cwd(), 'data');
+    };
+
     // Persist token into data/bearer_tokens.json in server data dir
-    const dataDir = join(process.cwd(), 'data');
+    const dataDir = getDataDir();
     const filePath = join(dataDir, 'bearer_tokens.json');
     try {
       if (!existsSync(dataDir)) mkdirSync(dataDir, { recursive: true });

@@ -28,8 +28,13 @@ const STORE_KEY = 'bearer_tokens';
 
 /**
  * Get the data directory for persistent storage.
+ * On Lambda (/var/task is read-only), uses /tmp. Locally uses ../../data
  */
 function getDataDir(): string {
+  // Check if we're in Lambda environment (Railway/AWS Lambda)
+  if (process.env.LAMBDA_TASK_ROOT || process.env.RAILWAY_ENVIRONMENT) {
+    return process.env.DATA_DIR || '/tmp/sophia';
+  }
   // Store tokens in the repo root's data/ directory
   return join(process.cwd(), '..', '..', 'data');
 }
