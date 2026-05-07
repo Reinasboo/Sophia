@@ -14,7 +14,6 @@
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { randomBytes } from 'crypto';
 
 // H-1 FIX: Simple in-memory rate limiter for auth endpoint
 const authRateLimit = new Map<string, { count: number; resetAt: number }>();
@@ -47,80 +46,6 @@ function checkAuthRateLimit(clientIp: string): { allowed: boolean; retryAfter?: 
 
   record.count++;
   return { allowed: true };
-}
-
-interface PrivyUserInfo {
-  id: string;
-  email?: string;
-  walletAddress?: string;
-}
-
-/**
- * Verify a Privy access token.
- *
- * Phase 1: Returns error if PRIVY_APP_ID not configured.
- * Phase 2: Will use @privy-io/server-auth to verify against Privy.
- *
- * DO NOT DEPLOY TO PRODUCTION without full implementation.
- */
-async function verifyPrivyToken(accessToken: string): Promise<PrivyUserInfo | null> {
-  if (!accessToken) return null;
-
-  try {
-    const verified = await verifyPrivyAccessToken(accessToken);
-    if (verified) {
-      return {
-        id: verified.userId,
-        email: verified.email,
-        walletAddress: verified.walletAddress,
-      };
-    }
-  } catch (error) {
-    console.error('SECURITY ERROR: Privy token verification failed', {
-      error: error instanceof Error ? error.message : String(error),
-    });
-    if (process.env.NODE_ENV === 'production') {
-      return null;
-    }
-  }
-
-  if (process.env.NODE_ENV === 'production') {
-    return null;
-  }
-
-  const allowStub = process.env['ALLOW_INSECURE_PRIVY_STUB'] === 'true';
-  if (!allowStub) {
-    return null;
-  }
-
-  console.warn(
-    '[DEV] Privy stub enabled. Install real JWKS or public key verification for production.'
-  );
-
-  return {
-    id: 'user_test_' + randomBytes(4).toString('hex'),
-    email: 'test@example.com',
-  };
-}
-
-/**
- * Get or create a tenant for a Privy user.
- *
- * Phase 2: Issue a server-signed bearer token that persists across sessions.
- * The bearer token is stored in the bearer-token-store and never changes for the same user.
- */
-async function getOrCreateTenantForPrivyUser(privyUserInfo: PrivyUserInfo) {
-  // Use Privy user ID as the tenant ID (one tenant per Privy user)
-  const tenantId = privyUserInfo.id;
-
-  // Get or create a persistent bearer token for this user
-  // This token remains the same across logins and devices.
-  const bearerToken = getOrCreateBearerToken(tenantId);
-
-  return {
-    tenantId,
-    apiKey: bearerToken, // Return the server-issued bearer token
-  };
 }
 
 // Simple logger for this endpoint
