@@ -5,6 +5,7 @@
  * The frontend is READ-ONLY for observing system state.
  *
  * MULTI-TENANT FIX: All requests now include tenant auth via Bearer token
+ * DEDUPLICATION FIX: Read-only requests use request deduplication layer to reduce 429 errors
  */
 
 import type {
@@ -24,6 +25,7 @@ import type {
   X402PaymentDescriptor,
 } from './types';
 import { getCurrentTenantApiKey } from './privy-provider';
+import { cachedFetch, requestDeduplicator } from './request-deduplication';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://sophia-production-1a83.up.railway.app';
 
@@ -117,29 +119,33 @@ async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<Api
 
 // Health check
 export async function checkHealth(): Promise<ApiResponse<{ status: string }>> {
-  return fetchApi('/api/health');
+  // Health is read-only, cache for 30 seconds, serve stale for up to 60 seconds
+  return cachedFetch(`${API_BASE}/api/health`, { ttl: 30000, staleTtl: 60000 });
 }
 
-// Stats
+// Stats - high traffic endpoint, cache aggressively
 export async function getStats(): Promise<ApiResponse<SystemStats>> {
-  return fetchApi('/api/stats');
+  // Cache for 5 seconds, serve stale for 15 seconds
+  return cachedFetch(`${API_BASE}/api/stats`, { ttl: 5000, staleTtl: 15000 });
 }
 
 export async function getMonitoringCache(): Promise<ApiResponse<any>> {
-  return fetchApi('/api/monitoring/cache');
+  return cachedFetch(`${API_BASE}/api/monitoring/cache`, { ttl: 10000, staleTtl: 30000 });
 }
 
 export async function getRateLimitStats(): Promise<ApiResponse<any>> {
-  return fetchApi('/api/monitoring/rate-limits');
+  return cachedFetch(`${API_BASE}/api/monitoring/rate-limits`, { ttl: 10000, staleTtl: 30000 });
 }
 
-// Agents
+// Agents - high traffic endpoint, cache with moderate TTL
 export async function getAgents(): Promise<ApiResponse<Agent[]>> {
-  return fetchApi('/api/agents');
+  // Cache for 5 seconds, serve stale for 15 seconds
+  return cachedFetch(`${API_BASE}/api/agents`, { ttl: 5000, staleTtl: 15000 });
 }
 
 export async function getAgent(id: string): Promise<ApiResponse<AgentDetail>> {
-  return fetchApi(`/api/agents/${id}`);
+  // Cache individual agent for 3 seconds (more frequently accessed)
+  return cachedFetch(`${API_BASE}/api/agents/${id}`, { ttl: 3000, staleTtl: 10000 });
 }
 
 export async function createAgent(data: {
@@ -224,7 +230,10 @@ export async function getWithdrawals(
   if (limit) params.append('limit', limit.toString());
   if (offset) params.append('offset', offset.toString());
   const queryString = params.toString();
-  return fetchApi(`/api/withdrawals${queryString ? `?${queryString}` : ''}`);
+  return cachedFetch(`${API_BASE}/api/withdrawals${queryString ? `?${queryString}` : ''}`, {
+    ttl: 5000,
+    staleTtl: 15000,
+  });
 }
 
 export async function getAgentWithdrawals(
@@ -236,31 +245,34 @@ export async function getAgentWithdrawals(
   if (limit) params.append('limit', limit.toString());
   if (offset) params.append('offset', offset.toString());
   const queryString = params.toString();
-  return fetchApi(`/api/agents/${agentId}/withdrawals${queryString ? `?${queryString}` : ''}`);
+  return cachedFetch(`${API_BASE}/api/agents/${agentId}/withdrawals${queryString ? `?${queryString}` : ''}`, {
+    ttl: 5000,
+    staleTtl: 15000,
+  });
 }
 
 export async function getWithdrawal(withdrawalId: string): Promise<ApiResponse<WithdrawalRecord>> {
-  return fetchApi(`/api/withdrawals/${withdrawalId}`);
+  return cachedFetch(`${API_BASE}/api/withdrawals/${withdrawalId}`, { ttl: 10000, staleTtl: 30000 });
 }
 
 // Transactions
 export async function getTransactions(): Promise<ApiResponse<Transaction[]>> {
-  return fetchApi('/api/transactions');
+  return cachedFetch(`${API_BASE}/api/transactions`, { ttl: 5000, staleTtl: 15000 });
 }
 
 export async function getTransaction(signature: string): Promise<ApiResponse<any>> {
-  return fetchApi(`/api/data/transactions/${signature}`);
+  return cachedFetch(`${API_BASE}/api/data/transactions/${signature}`, { ttl: 30000, staleTtl: 60000 });
 }
 
 // Events
 export async function getEvents(count?: number): Promise<ApiResponse<SystemEvent[]>> {
   const params = count ? `?count=${count}` : '';
-  return fetchApi(`/api/events${params}`);
+  return cachedFetch(`${API_BASE}/api/events${params}`, { ttl: 5000, staleTtl: 15000 });
 }
 
 // Explorer URL
 export async function getExplorerUrl(signature: string): Promise<ApiResponse<{ url: string }>> {
-  return fetchApi(`/api/explorer/${signature}`);
+  return cachedFetch(`${API_BASE}/api/explorer/${signature}`, { ttl: 60000, staleTtl: 120000 });
 }
 
 /**
@@ -349,11 +361,11 @@ export function createWebSocket(
 // ============================================\n// Strategy API\n// ============================================
 
 export async function getStrategies(): Promise<ApiResponse<StrategyDefinition[]>> {
-  return fetchApi('/api/strategies');
+  return cachedFetch(`${API_BASE}/api/strategies`, { ttl: 60000, staleTtl: 120000 });
 }
 
 export async function getStrategy(name: string): Promise<ApiResponse<StrategyDefinition>> {
-  return fetchApi(`/api/strategies/${name}`);
+  return cachedFetch(`${API_BASE}/api/strategies/${name}`, { ttl: 60000, staleTtl: 120000 });
 }
 
 // ============================================
@@ -376,12 +388,12 @@ export async function registerExternalAgent(data: {
 }
 
 export async function getExternalAgents(): Promise<ApiResponse<ExternalAgent[]>> {
-  return fetchApi('/api/byoa/agents');
+  return cachedFetch(`${API_BASE}/api/byoa/agents`, { ttl: 5000, staleTtl: 15000 });
 }
 
 export async function getExternalAgent(id: string): Promise<ApiResponse<ExternalAgentDetail>> {
-  return fetchApi(`/api/byoa/agents/${id}`);
-}
+  return cachedFetch(`${API_BASE}/api/byoa/agents/${id}`, { ttl: 5000, staleTtl: 15000 });
+}}
 
 export async function getExternalIntents(
   agentId?: string,
@@ -389,11 +401,14 @@ export async function getExternalIntents(
 ): Promise<ApiResponse<IntentHistoryRecord[]>> {
   if (agentId) {
     const params = limit ? `?limit=${limit}` : '';
-    return fetchApi(`/api/byoa/agents/${agentId}/intents${params}`);
+    return cachedFetch(`${API_BASE}/api/byoa/agents/${agentId}/intents${params}`, {
+      ttl: 5000,
+      staleTtl: 15000,
+    });
   }
   const params = limit ? `?limit=${limit}` : '';
-  return fetchApi(`/api/byoa/intents${params}`);
-}
+  return cachedFetch(`${API_BASE}/api/byoa/intents${params}`, { ttl: 5000, staleTtl: 15000 });
+}}
 
 /**
  * Get ALL intent history (both built-in and BYOA agents).
@@ -402,7 +417,7 @@ export async function getAllIntentHistory(
   limit?: number
 ): Promise<ApiResponse<IntentHistoryRecord[]>> {
   const params = limit ? `?limit=${limit}` : '';
-  return fetchApi(`/api/intents${params}`);
+  return cachedFetch(`${API_BASE}/api/intents${params}`, { ttl: 5000, staleTtl: 15000 });
 }
 
 export async function deactivateExternalAgent(id: string): Promise<ApiResponse<void>> {
@@ -447,12 +462,15 @@ export async function revokeExternalAgent(id: string): Promise<ApiResponse<void>
 }
 
 export async function getServicePolicies(): Promise<ApiResponse<ServicePolicy[]>> {
-  return fetchApi('/api/byoa/service-policies');
-}
+  return cachedFetch(`${API_BASE}/api/byoa/service-policies`, { ttl: 30000, staleTtl: 60000 });
+}}
 
 export async function getServicePolicy(serviceId: string): Promise<ApiResponse<ServicePolicy>> {
-  return fetchApi(`/api/byoa/service-policies/${serviceId}`);
-}
+  return cachedFetch(`${API_BASE}/api/byoa/service-policies/${serviceId}`, {
+    ttl: 30000,
+    staleTtl: 60000,
+  });
+}}
 
 export async function createServicePolicy(
   data: ServicePolicy
