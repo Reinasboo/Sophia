@@ -30,6 +30,7 @@ import { getConfig } from '../utils/config.js';
 import { toError } from '../utils/error-helpers.js';
 import { createLogger } from '../utils/logger.js';
 import { getAgentContextCache } from '../utils/agent-context-cache.js';
+import { MultiRpcClient } from './multi-rpc-client.js';
 
 const logger = createLogger('RPC');
 
@@ -48,6 +49,7 @@ interface TransactionResult {
  */
 export class SolanaClient {
   private connection: Connection;
+  private multiRpcClient: MultiRpcClient | null = null;
   private maxRetries: number;
   private useMultiRpc: boolean = false;
 
@@ -58,8 +60,15 @@ export class SolanaClient {
     if (config.SOLANA_RPC_URLS) {
       const rpcUrls = config.SOLANA_RPC_URLS.split(',').filter(Boolean);
       if (rpcUrls.length > 1) {
-        logger.info('Multi-RPC failover enabled', { endpointCount: rpcUrls.length });
-        this.useMultiRpc = true;
+        try {
+          this.multiRpcClient = new MultiRpcClient(rpcUrls);
+          this.useMultiRpc = true;
+          logger.info('Multi-RPC failover enabled', { endpointCount: rpcUrls.length });
+        } catch (error) {
+          logger.warn('Failed to initialize multi-RPC client, falling back to primary', {
+            error: toError(error).message,
+          });
+        }
       }
     }
     
@@ -133,6 +142,21 @@ export class SolanaClient {
   }
 
   /**
+   * Execute RPC operation with multi-RPC failover if configured
+   * Falls back to primary connection if multi-RPC is not available
+   */
+  private async executeRpcOperation<T>(
+    operation: (conn: Connection) => Promise<T>,
+    operationName: string
+  ): Promise<T> {
+    if (this.multiRpcClient) {
+      return this.multiRpcClient.execute(operation, operationName);
+    }
+    // Fallback to primary connection
+    return operation(this.connection);
+  }
+
+  /**
    * Get singleton connection for advanced operations.
    * Reuses the same Connection instance to maintain state and avoid overhead.
    */
@@ -170,7 +194,10 @@ export class SolanaClient {
 
     // Cache miss - fetch from RPC
     const result = await this.withRetry(async () => {
-      const lamports = await this.connection.getBalance(publicKey);
+      const lamports = await this.executeRpcOperation(
+        (conn) => conn.getBalance(publicKey),
+        `getBalance(${publicKey.toBase58()})`
+      );
       return {
         sol: lamports / LAMPORTS_PER_SOL,
         lamports: BigInt(lamports),
@@ -213,9 +240,10 @@ export class SolanaClient {
     }
 
     const result = await this.withRetry(async () => {
-      const tokenAccounts = await this.connection.getParsedTokenAccountsByOwner(owner, {
-        programId: TOKEN_PROGRAM_ID,
-      });
+      const tokenAccounts = await this.executeRpcOperation(
+        (conn) => conn.getParsedTokenAccountsByOwner(owner, { programId: TOKEN_PROGRAM_ID }),
+        `getTokenBalances(${owner.toBase58()})`
+      );
 
       return tokenAccounts.value.map((account) => {
         const parsed = account.account.data.parsed;
@@ -325,11 +353,15 @@ export class SolanaClient {
           logger.info('Retrying transaction submission', { attempt, maxRetries: this.maxRetries });
         }
 
-        const signature = await this.connection.sendRawTransaction(transaction.serialize(), {
-          skipPreflight: false,
-          preflightCommitment: 'confirmed',
-          ...options,
-        });
+        const signature = await this.executeRpcOperation(
+          (conn) =>
+            conn.sendRawTransaction(transaction.serialize(), {
+              skipPreflight: false,
+              preflightCommitment: 'confirmed',
+              ...options,
+            }),
+          'sendRawTransaction'
+        );
 
         logger.info('Transaction submitted successfully', { signature, attempt });
 
@@ -406,15 +438,22 @@ export class SolanaClient {
     signature: TransactionSignature
   ): Promise<Result<{ slot: number }, Error>> {
     const result = await this.withRetry(async () => {
-      const latestBlockhash = await this.connection.getLatestBlockhash();
+      const latestBlockhash = await this.executeRpcOperation(
+        (conn) => conn.getLatestBlockhash(),
+        'getLatestBlockhash'
+      );
 
-      const confirmation = await this.connection.confirmTransaction(
-        {
-          signature,
-          blockhash: latestBlockhash.blockhash,
-          lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
-        },
-        'confirmed'
+      const confirmation = await this.executeRpcOperation(
+        (conn) =>
+          conn.confirmTransaction(
+            {
+              signature,
+              blockhash: latestBlockhash.blockhash,
+              lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
+            },
+            'confirmed'
+          ),
+        'confirmTransaction'
       );
 
       if (confirmation.value.err) {
@@ -444,7 +483,10 @@ export class SolanaClient {
     full?: true
   ): Promise<Result<string | { blockhash: string; lastValidBlockHeight: number }, Error>> {
     const result = await this.withRetry(async () => {
-      const { blockhash, lastValidBlockHeight } = await this.connection.getLatestBlockhash();
+      const { blockhash, lastValidBlockHeight } = await this.executeRpcOperation(
+        (conn) => conn.getLatestBlockhash(),
+        'getLatestBlockhash'
+      );
       if (full) {
         return { blockhash, lastValidBlockHeight };
       }
@@ -459,7 +501,10 @@ export class SolanaClient {
    */
   async getMinimumBalanceForRentExemption(dataSize: number): Promise<Result<number, Error>> {
     const result = await this.withRetry(async () => {
-      const lamports = await this.connection.getMinimumBalanceForRentExemption(dataSize);
+      const lamports = await this.executeRpcOperation(
+        (conn) => conn.getMinimumBalanceForRentExemption(dataSize),
+        'getMinimumBalanceForRentExemption'
+      );
       return lamports;
     }, 'getMinimumBalanceForRentExemption');
 
