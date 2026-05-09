@@ -362,6 +362,21 @@ export class IntentRouter {
       );
     }
 
+    // ── 2b. Enforce verification for BYOA agents ─────────
+    const verificationMethods = agent.verificationMethods ?? [];
+    if (
+      verificationMethods.includes('challenge-response') &&
+      agent.challengeVerified !== true
+    ) {
+      return this.reject(
+        intentId,
+        agent.id,
+        externalIntent,
+        'Agent verification required: complete challenge-response before submitting intents',
+        createdAt
+      );
+    }
+
     // ── 3. Check wallet binding ────────────
     if (!agent.walletId) {
       return this.reject(

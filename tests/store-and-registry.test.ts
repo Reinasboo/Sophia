@@ -34,6 +34,7 @@ vi.mock('../src/utils/config.js', () => ({
 }));
 
 import { AgentRegistry } from '../src/integration/agentRegistry.js';
+import { IntentRouter } from '../src/integration/intentRouter.js';
 
 describe('AgentRegistry', () => {
   let registry: AgentRegistry;
@@ -155,6 +156,83 @@ describe('AgentRegistry', () => {
       const info = registry.getAgent(agentId);
       expect(info.ok).toBe(true);
       if (info.ok) expect(info.value.status).toBe('inactive');
+    });
+  });
+
+  describe('verification', () => {
+    it('sets and verifies a challenge response', () => {
+      const regResult = registry.register({
+        agentName: 'verify-test',
+        agentType: 'local',
+        supportedIntents: ['AUTONOMOUS'],
+        verificationMethods: ['challenge-response'],
+      });
+      expect(regResult.ok).toBe(true);
+      if (!regResult.ok) return;
+
+      const challenge = 'challenge-abc123';
+      const setResult = registry.setChallenge(regResult.value.agentId, challenge);
+      expect(setResult.ok).toBe(true);
+
+      const verifyResult = registry.verifyChallengeResponse(regResult.value.agentId, challenge);
+      expect(verifyResult.ok).toBe(true);
+
+      const infoResult = registry.getAgent(regResult.value.agentId);
+      expect(infoResult.ok).toBe(true);
+      if (!infoResult.ok) return;
+      expect(infoResult.value.challengeVerified).toBe(true);
+    });
+
+    it('rejects an invalid challenge response', () => {
+      const regResult = registry.register({
+        agentName: 'verify-fail-test',
+        agentType: 'local',
+        supportedIntents: ['AUTONOMOUS'],
+        verificationMethods: ['challenge-response'],
+      });
+      expect(regResult.ok).toBe(true);
+      if (!regResult.ok) return;
+
+      const setResult = registry.setChallenge(regResult.value.agentId, 'expected');
+      expect(setResult.ok).toBe(true);
+
+      const verifyResult = registry.verifyChallengeResponse(regResult.value.agentId, 'wrong');
+      expect(verifyResult.ok).toBe(false);
+      expect(verifyResult.error?.message).toMatch(/does not match/i);
+    });
+
+    it('blocks intent submission for unverified challenge-response agents', async () => {
+      const router = new IntentRouter();
+      const rejectSpy = vi.spyOn(router as any, 'reject');
+
+      const fakeAgent = {
+        id: 'agent-verify-block',
+        name: 'verify-block',
+        type: 'local',
+        supportedIntents: ['AUTONOMOUS'],
+        status: 'active',
+        walletId: 'wallet-1',
+        walletPublicKey: '11111111111111111111111111111111',
+        controlTokenHash: 'hash',
+        createdAt: new Date(),
+        verificationMethods: ['challenge-response'],
+        challengeVerified: false,
+      } as any;
+
+      (router as any).registry = {
+        authenticateToken: vi.fn().mockReturnValue({ ok: true, value: fakeAgent }),
+      };
+
+      const result = await router.submitIntent('token', {
+        type: 'AUTONOMOUS',
+        params: { action: 'execute_instructions', instructions: [] },
+      });
+
+      expect(result.ok).toBe(true);
+      expect(rejectSpy).toHaveBeenCalled();
+      if (!result.ok) return;
+      expect(result.value.status).toBe('rejected');
+      expect(result.value.error).toMatch(/verification required/i);
     });
   });
 });

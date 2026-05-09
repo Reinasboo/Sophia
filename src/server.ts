@@ -1443,63 +1443,18 @@ const RegisterAgentSchema = z.object({
   agentType: z.enum(['local', 'remote']),
   agentEndpoint: z.string().url().optional(),
   supportedIntents: z
-    .array(
-      z.enum([
-        'REQUEST_AIRDROP',
-        'TRANSFER_SOL',
-        'TRANSFER_TOKEN',
-        'QUERY_BALANCE',
-        'AUTONOMOUS',
-        'SERVICE_PAYMENT',
-        'swap',
-        'stake',
-        'unstake',
-        'liquid_stake',
-        'provide_liquidity',
-        'remove_liquidity',
-        'deposit_lending',
-        'withdraw_lending',
-        'borrow_lending',
-        'repay_lending',
-        'farm_deposit',
-        'farm_harvest',
-        'wrap_token',
-        'unwrap_token',
-        'composite_strategy',
-      ])
-    )
-    .min(1),
+    .array(z.enum(['AUTONOMOUS']))
+    .min(1)
+    .default(['AUTONOMOUS']),
   metadata: safeRecord.optional(),
   verificationMethods: z
-    .array(z.enum(['none', 'challenge-response', 'hmac-signature']))
-    .default(['none']),
+    .array(z.enum(['challenge-response']))
+    .default(['challenge-response']),
 });
 
 const SubmitIntentSchema = z
   .object({
-    type: z.enum([
-      'REQUEST_AIRDROP',
-      'TRANSFER_SOL',
-      'TRANSFER_TOKEN',
-      'QUERY_BALANCE',
-      'AUTONOMOUS',
-      'SERVICE_PAYMENT',
-      'swap',
-      'stake',
-      'unstake',
-      'liquid_stake',
-      'provide_liquidity',
-      'remove_liquidity',
-      'deposit_lending',
-      'withdraw_lending',
-      'borrow_lending',
-      'repay_lending',
-      'farm_deposit',
-      'farm_harvest',
-      'wrap_token',
-      'unwrap_token',
-      'composite_strategy',
-    ]),
+    type: z.enum(['AUTONOMOUS']),
     params: safeRecord.default({}),
   })
   .refine(
@@ -1553,16 +1508,6 @@ app.post(
 
     const data = validation.data;
 
-    if (isProductionMainnet && data.supportedIntents.includes('REQUEST_AIRDROP')) {
-      sendError(
-        res,
-        'REQUEST_AIRDROP is disabled in mainnet production.',
-        HTTP_STATUS.BAD_REQUEST,
-        ERROR_CODE.VALIDATION_FAILED
-      );
-      return;
-    }
-
     const registry = getAgentRegistry();
     const binder = getWalletBinder();
 
@@ -1573,6 +1518,7 @@ app.post(
       agentEndpoint: data.agentEndpoint,
       supportedIntents: data.supportedIntents as SupportedIntentType[],
       metadata: data.metadata,
+      verificationMethods: data.verificationMethods,
       tenantId, // MULTI-TENANT: Populate from auth context
     });
 
@@ -1620,6 +1566,7 @@ app.post(
         walletId,
         walletPublicKey,
         supportedIntents: data.supportedIntents,
+        verificationMethods: data.verificationMethods,
         message: 'Store the controlToken securely. It will NOT be shown again.',
       },
       HTTP_STATUS.CREATED
@@ -1823,6 +1770,18 @@ app.post(
   '/api/byoa/verify/challenge-submit',
   byoaRouteRateLimit,
   asyncHandler(async (req: Request, res: Response) => {
+    const authHeader = req.headers['authorization'];
+    const bearerValidation = validateBearerToken(authHeader as string | undefined);
+    if (!bearerValidation.valid || !bearerValidation.token) {
+      sendError(
+        res,
+        bearerValidation.error || 'Invalid authorization',
+        HTTP_STATUS.UNAUTHORIZED,
+        ERROR_CODE.INVALID_TOKEN
+      );
+      return;
+    }
+
     const { agentId, challengeResponse } = req.body;
     if (
       !agentId ||
@@ -1840,6 +1799,22 @@ app.post(
     }
 
     const registry = getAgentRegistry();
+    const authResult = registry.authenticateToken(bearerValidation.token);
+    if (!authResult.ok) {
+      sendError(res, authResult.error.message, HTTP_STATUS.UNAUTHORIZED, ERROR_CODE.INVALID_TOKEN);
+      return;
+    }
+
+    if (authResult.value.id !== agentId) {
+      sendError(
+        res,
+        'Control token does not match requested agent',
+        HTTP_STATUS.FORBIDDEN,
+        ERROR_CODE.VERIFICATION_FAILED
+      );
+      return;
+    }
+
     const result = registry.verifyChallengeResponse(agentId, challengeResponse);
 
     if (!result.ok) {
@@ -1882,16 +1857,6 @@ app.post(
       sendError(
         res,
         validation.error.message,
-        HTTP_STATUS.BAD_REQUEST,
-        ERROR_CODE.VALIDATION_FAILED
-      );
-      return;
-    }
-
-    if (isProductionMainnet && validation.data.type === 'REQUEST_AIRDROP') {
-      sendError(
-        res,
-        'REQUEST_AIRDROP is disabled in mainnet production.',
         HTTP_STATUS.BAD_REQUEST,
         ERROR_CODE.VALIDATION_FAILED
       );
