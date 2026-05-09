@@ -7,6 +7,8 @@
 
 import { getDataTracker } from './tracker.js';
 import { createLogger } from '../utils/logger.js';
+import { getWalletManager } from '../wallet/index.js';
+import { getOrchestrator } from '../orchestrator/index.js';
 
 const logger = createLogger('DATA_BRIDGE');
 
@@ -17,6 +19,9 @@ const logger = createLogger('DATA_BRIDGE');
 export function attachDataTracker(eventBus: {
   subscribe: (handler: (event: any) => void) => () => void;
 }): void {
+  const walletManager = getWalletManager();
+  const orchestrator = getOrchestrator();
+
   eventBus.subscribe(async (event: any) => {
     try {
       const tracker = getDataTracker();
@@ -34,9 +39,23 @@ export function attachDataTracker(eventBus: {
       }
 
       if (event?.type === 'agent_status_changed') {
+        let tenantId = event.agent?.tenantId;
+        if (!tenantId && typeof event.agentId === 'string') {
+          const agentResult = orchestrator.getAgent(event.agentId);
+          if (agentResult.ok) {
+            tenantId = agentResult.value.tenantId;
+          }
+        }
+
+        const newStatus = String(event.newStatus ?? '');
+        const eventType =
+          newStatus === 'idle' || newStatus === 'thinking' || newStatus === 'executing'
+            ? 'agent_activated'
+            : 'agent_deactivated';
+
         await tracker.recordEvent({
-          tenantId: event.agent?.tenantId ?? 'unknown',
-          eventType: event.newStatus === 'active' ? 'agent_activated' : 'agent_deactivated',
+          tenantId: tenantId ?? 'unknown',
+          eventType,
           entityId: event.agentId,
           entityType: 'agent',
           data: {
@@ -49,8 +68,12 @@ export function attachDataTracker(eventBus: {
       }
 
       if (event?.type === 'transaction') {
+        const walletId = event.transaction?.walletId;
+        const tenantFromWallet =
+          typeof walletId === 'string' ? walletManager.getTenantIdForWalletId(walletId) : null;
+
         await tracker.recordEvent({
-          tenantId: event.transaction?.tenantId ?? 'unknown',
+          tenantId: event.transaction?.tenantId ?? tenantFromWallet ?? 'unknown',
           eventType: 'transaction_indexed',
           entityId: event.transaction?.signature ?? event.id ?? 'unknown',
           entityType: 'transaction',

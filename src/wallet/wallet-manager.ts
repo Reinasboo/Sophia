@@ -42,6 +42,7 @@ const logger = createLogger('WALLET');
  */
 export class WalletManager {
   private walletsByTenant: Map<string, Map<string, InternalWallet>> = new Map();
+  private walletTenantIndex: Map<string, string> = new Map();
   private policies: Map<string, Policy> = new Map();
   private dailyTransfers: Map<string, number> = new Map();
   private encryptionSecret: string;
@@ -114,6 +115,7 @@ export class WalletManager {
         this.walletsByTenant.set(effectiveTenantId, new Map());
       }
       this.walletsByTenant.get(effectiveTenantId)!.set(walletId, wallet);
+      this.walletTenantIndex.set(walletId, effectiveTenantId);
 
       this.policies.set(walletId, { ...DEFAULT_POLICY });
       this.dailyTransfers.set(walletId, 0);
@@ -140,13 +142,9 @@ export class WalletManager {
    * Returns the wallet if found, null otherwise
    */
   private findWallet(walletId: string): InternalWallet | null {
-    for (const tenantBucket of this.walletsByTenant.values()) {
-      const wallet = tenantBucket.get(walletId);
-      if (wallet) {
-        return wallet;
-      }
-    }
-    return null;
+    const tenantId = this.walletTenantIndex.get(walletId);
+    if (!tenantId) return null;
+    return this.walletsByTenant.get(tenantId)?.get(walletId) ?? null;
   }
 
   /**
@@ -172,6 +170,13 @@ export class WalletManager {
     }
 
     return null;
+  }
+
+  /**
+   * Resolve the tenant that owns a wallet ID.
+   */
+  getTenantIdForWalletId(walletId: string): string | null {
+    return this.walletTenantIndex.get(walletId) ?? null;
   }
 
   /**
@@ -439,6 +444,7 @@ export class WalletManager {
     }
 
     tenantBucket.delete(walletId);
+    this.walletTenantIndex.delete(walletId);
     this.policies.delete(walletId);
     this.dailyTransfers.delete(walletId);
 
@@ -499,6 +505,7 @@ export class WalletManager {
         this.walletsByTenant.set(tenantId, new Map());
       }
       this.walletsByTenant.get(tenantId)!.set(wallet.id, wallet);
+      this.walletTenantIndex.set(wallet.id, tenantId);
       this.policies.set(wallet.id, saved.policies[wallet.id] ?? { ...DEFAULT_POLICY });
       this.dailyTransfers.set(wallet.id, 0);
       loaded++;

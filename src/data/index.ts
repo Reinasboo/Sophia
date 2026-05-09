@@ -12,7 +12,7 @@
  * - indexing_state: Tracks last processed slot for backfill
  */
 
-export { getDataTracker, resetDataTracker, DataTracker } from './tracker.js';
+export { getDataTracker, resetDataTracker, closeDataTracker, DataTracker } from './tracker.js';
 export { attachDataTracker } from './event-bridge.js';
 export { handleHeliusWebhook, verifyHeliusSignature } from './helius-webhook.js';
 export type {

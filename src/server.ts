@@ -47,6 +47,7 @@ import {
   attachDataTracker,
   handleHeliusWebhook,
   verifyHeliusSignature,
+  closeDataTracker,
 } from './data/index.js';
 import { getDeFiRegistry } from './defi/index.js';
 import { verifyPrivyAccessToken } from './utils/privy-auth.js';
@@ -2820,6 +2821,15 @@ async function gracefulShutdown(signal: string): Promise<void> {
     await closeBearerTokenStore();
   } catch (err) {
     logger.error('Error closing bearer token store', {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+
+  // Close data tracker resources (DB pool, adapters)
+  try {
+    await closeDataTracker();
+  } catch (err) {
+    logger.error('Error closing data tracker', {
       error: err instanceof Error ? err.message : String(err),
     });
   }

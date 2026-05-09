@@ -21,6 +21,51 @@ function pass(message: string): void {
   console.log(`PASS: ${message}`);
 }
 
+function isForbiddenRpcTarget(url: string): boolean {
+  const lower = url.toLowerCase();
+  return (
+    lower.includes('devnet') ||
+    lower.includes('localhost') ||
+    lower.includes('127.0.0.1')
+  );
+}
+
+function checkRpcFailoverConfiguration(primaryRpc: string, rpcListRaw?: string): void {
+  if (!rpcListRaw) {
+    warn('SOLANA_RPC_URLS is not set. Multi-RPC failover is recommended for production.');
+    return;
+  }
+
+  const rpcList = rpcListRaw
+    .split(',')
+    .map((u) => u.trim())
+    .filter(Boolean);
+
+  if (rpcList.length === 0) {
+    fail('SOLANA_RPC_URLS is set but contains no valid endpoints.');
+  }
+
+  if (rpcList[0] !== primaryRpc) {
+    fail('SOLANA_RPC_URLS[0] must match SOLANA_RPC_URL to ensure deterministic primary routing.');
+  }
+
+  if (!primaryRpc.toLowerCase().includes('helius')) {
+    fail('SOLANA_RPC_URL must point to Helius for primary routing in this infrastructure.');
+  }
+
+  for (const endpoint of rpcList) {
+    if (isForbiddenRpcTarget(endpoint)) {
+      fail(`SOLANA_RPC_URLS contains non-mainnet endpoint: ${endpoint}`);
+    }
+  }
+
+  if (rpcList.length < 2) {
+    warn('Only one RPC endpoint configured. Add at least one fallback endpoint in SOLANA_RPC_URLS.');
+  } else {
+    pass(`SOLANA_RPC_URLS configured with ${rpcList.length} endpoints (primary + fallback).`);
+  }
+}
+
 function checkStoredAgentsForDevnetStrategies(): void {
   const agentsPath = join(process.cwd(), 'data', 'agents.json');
   if (!existsSync(agentsPath)) {
@@ -56,10 +101,12 @@ function run(): void {
   pass('SOLANA_NETWORK=mainnet-beta');
 
   const rpc = cfg.SOLANA_RPC_URL;
-  if (rpc.includes('devnet') || rpc.includes('localhost') || rpc.includes('127.0.0.1')) {
+  if (isForbiddenRpcTarget(rpc)) {
     fail(`SOLANA_RPC_URL must point to mainnet provider. Found: ${rpc}`);
   }
   pass('SOLANA_RPC_URL points to a non-devnet endpoint');
+
+  checkRpcFailoverConfiguration(rpc, cfg.SOLANA_RPC_URLS);
 
   if (!cfg.DATABASE_URL) {
     fail('DATABASE_URL is required for production.');

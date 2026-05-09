@@ -548,26 +548,15 @@ export class DataTracker {
   async queryTransactions(filter: TransactionFilter): Promise<Result<IndexedTransaction[], Error>> {
     try {
       await this.ensureReady();
-      let results = Array.from(this.transactions.values());
-
-      if (filter.tenantId) {
-        results = results.filter((t) => t.tenantId === filter.tenantId);
-      }
-      if (filter.walletAddress) {
-        results = results.filter((t) => t.walletAddress === filter.walletAddress);
-      }
-      if (filter.type) {
-        results = results.filter((t) => t.type === filter.type);
-      }
-      if (filter.status) {
-        results = results.filter((t) => t.status === filter.status);
-      }
-      if (filter.minBlockTime) {
-        results = results.filter((t) => t.blockTime >= filter.minBlockTime!);
-      }
-      if (filter.maxBlockTime) {
-        results = results.filter((t) => t.blockTime <= filter.maxBlockTime!);
-      }
+      const results = Array.from(this.transactions.values()).filter((t) => {
+        if (filter.tenantId && t.tenantId !== filter.tenantId) return false;
+        if (filter.walletAddress && t.walletAddress !== filter.walletAddress) return false;
+        if (filter.type && t.type !== filter.type) return false;
+        if (filter.status && t.status !== filter.status) return false;
+        if (filter.minBlockTime && t.blockTime < filter.minBlockTime) return false;
+        if (filter.maxBlockTime && t.blockTime > filter.maxBlockTime) return false;
+        return true;
+      });
 
       // Sort by block time descending
       results.sort((a, b) => b.blockTime - a.blockTime);
@@ -678,17 +667,12 @@ export class DataTracker {
   async queryIntents(filter: IntentFilter): Promise<Result<IndexedIntent[], Error>> {
     try {
       await this.ensureReady();
-      let results = Array.from(this.intents.values());
-
-      if (filter.tenantId) {
-        results = results.filter((i) => i.tenantId === filter.tenantId);
-      }
-      if (filter.agentId) {
-        results = results.filter((i) => i.agentId === filter.agentId);
-      }
-      if (filter.status) {
-        results = results.filter((i) => i.status === filter.status);
-      }
+      const results = Array.from(this.intents.values()).filter((i) => {
+        if (filter.tenantId && i.tenantId !== filter.tenantId) return false;
+        if (filter.agentId && i.agentId !== filter.agentId) return false;
+        if (filter.status && i.status !== filter.status) return false;
+        return true;
+      });
 
       // Sort by created time descending
       results.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
@@ -765,9 +749,13 @@ export class DataTracker {
     try {
       await this.ensureReady();
       const results = Array.from(this.events.values())
-        .filter((e) => e.tenantId === tenantId)
-        .filter((e) => e.data && (e.data as any).source === 'gmgn')
-        .filter((e) => (kind ? (e.data as any).kind === kind : true))
+        .filter((e) => {
+          if (e.tenantId !== tenantId) return false;
+          const data = e.data as any;
+          if (!data || data.source !== 'gmgn') return false;
+          if (kind && data.kind !== kind) return false;
+          return true;
+        })
         .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
         .slice(0, Math.min(limit, 1000))
         .map((e) => ((e.data as any).payload ?? (e.data as any)) as Record<string, unknown>);
@@ -876,6 +864,22 @@ export class DataTracker {
       events: state.events.length,
     });
   }
+
+  /**
+   * Release tracker resources (DB pool and adapters).
+   */
+  async shutdown(): Promise<void> {
+    this.gmgnAdapter?.stop();
+
+    if (this.storageMode === 'file') {
+      this.saveToStore();
+    }
+
+    if (this.dbPool) {
+      await this.dbPool.end();
+      this.dbPool = null;
+    }
+  }
 }
 
 // Singleton instance
@@ -892,5 +896,17 @@ export function getDataTracker(): DataTracker {
  * Reset tracker instance (for testing only)
  */
 export function resetDataTracker(): void {
+  if (trackerInstance) {
+    void trackerInstance.shutdown().catch(() => undefined);
+  }
+  trackerInstance = null;
+}
+
+/**
+ * Close tracker resources on process shutdown.
+ */
+export async function closeDataTracker(): Promise<void> {
+  if (!trackerInstance) return;
+  await trackerInstance.shutdown();
   trackerInstance = null;
 }

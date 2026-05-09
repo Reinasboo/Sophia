@@ -105,6 +105,18 @@ describe('WalletManager', () => {
     it('returns null for an unknown public key', () => {
       expect(wm.getTenantIdForPublicKey('11111111111111111111111111111111')).toBeNull();
     });
+
+    it('resolves the tenant for a wallet id', () => {
+      const result = wm.createWallet('tenant-wallet-id', 'tenant-b');
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+
+      expect(wm.getTenantIdForWalletId(result.value.id)).toBe('tenant-b');
+    });
+
+    it('returns null for an unknown wallet id', () => {
+      expect(wm.getTenantIdForWalletId('wallet_missing')).toBeNull();
+    });
   });
 
   describe('signTransaction', () => {

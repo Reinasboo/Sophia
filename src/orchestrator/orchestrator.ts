@@ -10,7 +10,7 @@
  * This is the bridge between agents (decision makers) and wallets (executors).
  */
 
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, Transaction } from '@solana/web3.js';
 import { v4 as uuidv4 } from 'uuid';
 import {
   AgentInfo,
@@ -583,6 +583,145 @@ export class Orchestrator {
   }
 
   /**
+   * Append a transaction and maintain wallet index.
+   */
+  private appendTransaction(tx: TransactionRecord): void {
+    this.transactions.push(tx);
+    const walletTxs = this.transactionsByWalletId.get(tx.walletId) ?? [];
+    walletTxs.push(tx);
+    this.transactionsByWalletId.set(tx.walletId, walletTxs);
+  }
+
+  /**
+   * Replace a transaction in both primary storage and wallet index.
+   */
+  private replaceTransaction(updated: TransactionRecord): void {
+    const idx = this.transactions.findIndex((t) => t.id === updated.id);
+    if (idx >= 0) {
+      this.transactions[idx] = updated;
+    }
+
+    const walletTxs = this.transactionsByWalletId.get(updated.walletId);
+    if (!walletTxs) return;
+
+    const walletIdx = walletTxs.findIndex((t) => t.id === updated.id);
+    if (walletIdx >= 0) {
+      walletTxs[walletIdx] = updated;
+    }
+  }
+
+  /**
+   * Create and persist a failed transaction record for quick reuse.
+   */
+  private createFailedTransaction(params: {
+    walletId: string;
+    type: TransactionRecord['type'];
+    amount?: number;
+    recipient?: string;
+    mint?: string;
+    error: string;
+  }): void {
+    const tx: TransactionRecord = {
+      id: uuidv4(),
+      walletId: params.walletId,
+      type: params.type,
+      status: 'failed',
+      amount: params.amount,
+      recipient: params.recipient,
+      mint: params.mint,
+      error: params.error,
+      createdAt: new Date(),
+    };
+    this.appendTransaction(tx);
+    this.trimTransactions();
+    this.saveTransactions();
+  }
+
+  /**
+   * Create a pending transaction record and append it to the in-memory store.
+   * Caller is responsible for later replacing/updating the record.
+   */
+  private createPendingTransaction(params: {
+    walletId: string;
+    type: TransactionRecord['type'];
+    amount?: number;
+    recipient?: string;
+    mint?: string;
+  }): TransactionRecord {
+    const tx: TransactionRecord = {
+      id: uuidv4(),
+      walletId: params.walletId,
+      type: params.type,
+      status: 'pending',
+      amount: params.amount,
+      recipient: params.recipient,
+      mint: params.mint,
+      createdAt: new Date(),
+    };
+    this.appendTransaction(tx);
+    this.trimTransactions();
+    return tx;
+  }
+
+  /**
+   * Shared flow to sign, simulate, and send a built transaction.
+   * Updates transaction records, emits events, and persists state.
+   */
+  private async sendBuiltTransaction(
+    walletId: string,
+    txRecord: TransactionRecord,
+    builtTx: Transaction
+  ): Promise<Result<{ signature: string }, Error>> {
+    // Sign
+    const signResult = this.walletManager.signTransaction(walletId, builtTx);
+    if (!signResult.ok) {
+      this.updateTransactionFailed(txRecord.id, signResult.error.message);
+      return failure(signResult.error);
+    }
+
+    // Simulate
+    const simResult = await this.solanaClient.simulateTransaction(signResult.value);
+    if (!simResult.ok) {
+      this.updateTransactionFailed(txRecord.id, `Simulation failed: ${simResult.error.message}`);
+      return failure(simResult.error);
+    }
+
+    // Send
+    const sendResult = await this.solanaClient.sendTransaction(signResult.value);
+
+    if (sendResult.ok) {
+      this.walletManager.recordTransfer(walletId);
+
+      const updatedTx: TransactionRecord = {
+        ...txRecord,
+        signature: sendResult.value.signature,
+        status: 'confirmed',
+        confirmedAt: new Date(),
+      };
+      this.replaceTransaction(updatedTx);
+
+      eventBus.emit({
+        id: uuidv4(),
+        type: 'transaction',
+        timestamp: new Date(),
+        transaction: updatedTx,
+      });
+
+      logger.info('Transaction sent', {
+        walletId,
+        signature: sendResult.value.signature,
+      });
+
+      this.saveTransactions();
+
+      return success({ signature: sendResult.value.signature });
+    }
+
+    this.updateTransactionFailed(txRecord.id, sendResult.error.message);
+    return failure(sendResult.error);
+  }
+
+  /**
    * Execute a validated intent
    */
   private async executeIntent(
@@ -660,16 +799,12 @@ export class Orchestrator {
         agentId: agent.id,
         network: config.SOLANA_NETWORK,
       });
-      this.transactions.push({
-        id: uuidv4(),
+      this.createFailedTransaction({
         walletId: agent.getWalletId(),
         type: 'airdrop',
-        status: 'failed',
         amount,
         error: 'Airdrop execution is disabled outside devnet',
-        createdAt: new Date(),
       });
-      this.trimTransactions();
       return;
     }
 
@@ -682,29 +817,20 @@ export class Orchestrator {
         error: publicKeyResult.error.message,
       });
       // Push a failed transaction so the intent recorder can find it
-      this.transactions.push({
-        id: uuidv4(),
+      this.createFailedTransaction({
         walletId,
         type: 'airdrop',
-        status: 'failed',
         amount,
         error: publicKeyResult.error.message,
-        createdAt: new Date(),
       });
       return;
     }
 
-    const txRecord: TransactionRecord = {
-      id: uuidv4(),
+    const txRecord = this.createPendingTransaction({
       walletId,
       type: 'airdrop',
-      status: 'pending',
       amount,
-      createdAt: new Date(),
-    };
-
-    this.transactions.push(txRecord);
-    this.trimTransactions();
+    });
 
     const result = await this.solanaClient.requestAirdrop(publicKeyResult.value, amount);
 
@@ -712,19 +838,20 @@ export class Orchestrator {
       // Update transaction record
       const idx = this.transactions.findIndex((t) => t.id === txRecord.id);
       if (idx >= 0) {
-        this.transactions[idx] = {
+        const updatedTx: TransactionRecord = {
           ...txRecord,
           signature: result.value.signature,
           status: 'confirmed',
           confirmedAt: new Date(),
         };
+        this.replaceTransaction(updatedTx);
       }
 
       eventBus.emit({
         id: uuidv4(),
         type: 'transaction',
         timestamp: new Date(),
-        transaction: this.transactions[idx] ?? txRecord,
+        transaction: idx >= 0 ? this.transactions[idx]! : txRecord,
       });
 
       logger.info('Airdrop successful', {
@@ -735,17 +862,18 @@ export class Orchestrator {
     } else {
       const idx = this.transactions.findIndex((t) => t.id === txRecord.id);
       if (idx >= 0) {
-        this.transactions[idx] = {
+        const updatedTx: TransactionRecord = {
           ...txRecord,
           status: 'failed',
           error: result.error.message,
         };
+        this.replaceTransaction(updatedTx);
 
         eventBus.emit({
           id: uuidv4(),
           type: 'transaction',
           timestamp: new Date(),
-          transaction: this.transactions[idx]!,
+          transaction: updatedTx,
         });
       }
 
@@ -771,15 +899,12 @@ export class Orchestrator {
     const publicKeyResult = this.walletManager.getPublicKey(walletId);
     if (!publicKeyResult.ok) {
       logger.error('Failed to get public key for transfer', { walletId });
-      this.transactions.push({
-        id: uuidv4(),
+      this.createFailedTransaction({
         walletId,
         type: 'transfer_sol',
-        status: 'failed',
         amount,
         recipient,
         error: publicKeyResult.error.message,
-        createdAt: new Date(),
       });
       return;
     }
@@ -789,31 +914,22 @@ export class Orchestrator {
       recipientPubkey = new PublicKey(recipient);
     } catch {
       logger.error('Invalid recipient address', { recipient });
-      this.transactions.push({
-        id: uuidv4(),
+      this.createFailedTransaction({
         walletId,
         type: 'transfer_sol',
-        status: 'failed',
         amount,
         recipient,
         error: 'Invalid recipient address',
-        createdAt: new Date(),
       });
       return;
     }
 
-    const txRecord: TransactionRecord = {
-      id: uuidv4(),
+    const txRecord = this.createPendingTransaction({
       walletId,
       type: 'transfer_sol',
-      status: 'pending',
       amount,
       recipient,
-      createdAt: new Date(),
-    };
-
-    this.transactions.push(txRecord);
-    this.trimTransactions();
+    });
 
     // Build transaction (includes Memo Program interaction)
     const txResult = await buildSolTransfer(
@@ -828,54 +944,8 @@ export class Orchestrator {
       return;
     }
 
-    // Sign transaction
-    const signResult = this.walletManager.signTransaction(walletId, txResult.value);
-    if (!signResult.ok) {
-      this.updateTransactionFailed(txRecord.id, signResult.error.message);
-      return;
-    }
-
-    // Simulate before sending to catch errors pre-fee
-    const simResult = await this.solanaClient.simulateTransaction(signResult.value);
-    if (!simResult.ok) {
-      this.updateTransactionFailed(txRecord.id, `Simulation failed: ${simResult.error.message}`);
-      return;
-    }
-
-    // Send transaction
-    const sendResult = await this.solanaClient.sendTransaction(signResult.value);
-
-    if (sendResult.ok) {
-      this.walletManager.recordTransfer(walletId);
-
-      const idx = this.transactions.findIndex((t) => t.id === txRecord.id);
-      if (idx >= 0) {
-        this.transactions[idx] = {
-          ...txRecord,
-          signature: sendResult.value.signature,
-          status: 'confirmed',
-          confirmedAt: new Date(),
-        };
-
-        eventBus.emit({
-          id: uuidv4(),
-          type: 'transaction',
-          timestamp: new Date(),
-          transaction: this.transactions[idx]!,
-        });
-      }
-
-      logger.info('Transfer successful', {
-        agentId: agent.id,
-        recipient,
-        amount,
-        signature: sendResult.value.signature,
-      });
-    } else {
-      this.updateTransactionFailed(txRecord.id, sendResult.error.message);
-    }
-
-    this.saveTransactions();
+    // Sign, simulate, and send using shared helper
+    await this.sendBuiltTransaction(walletId, txRecord, txResult.value);
   }
 
   /**
@@ -892,16 +962,13 @@ export class Orchestrator {
     const publicKeyResult = this.walletManager.getPublicKey(walletId);
     if (!publicKeyResult.ok) {
       logger.error('Failed to get public key for token transfer', { walletId });
-      this.transactions.push({
-        id: uuidv4(),
+      this.createFailedTransaction({
         walletId,
         type: 'transfer_spl',
-        status: 'failed',
         amount,
         recipient,
         mint,
         error: publicKeyResult.error.message,
-        createdAt: new Date(),
       });
       return;
     }
@@ -913,33 +980,24 @@ export class Orchestrator {
       mintPubkey = new PublicKey(mint);
     } catch {
       logger.error('Invalid address for token transfer', { recipient, mint });
-      this.transactions.push({
-        id: uuidv4(),
+      this.createFailedTransaction({
         walletId,
         type: 'transfer_spl',
-        status: 'failed',
         amount,
         recipient,
         mint,
         error: 'Invalid address',
-        createdAt: new Date(),
       });
       return;
     }
 
-    const txRecord: TransactionRecord = {
-      id: uuidv4(),
+    const txRecord = this.createPendingTransaction({
       walletId,
       type: 'transfer_spl',
-      status: 'pending',
       amount,
       recipient,
       mint,
-      createdAt: new Date(),
-    };
-
-    this.transactions.push(txRecord);
-    this.trimTransactions();
+    });
 
     // Build token transfer via SPL Token Program
     // Query actual mint decimals on-chain instead of hardcoding
@@ -959,53 +1017,8 @@ export class Orchestrator {
       return;
     }
 
-    // Sign
-    const signResult = this.walletManager.signTransaction(walletId, txResult.value);
-    if (!signResult.ok) {
-      this.updateTransactionFailed(txRecord.id, signResult.error.message);
-      return;
-    }
-
-    // Simulate before sending to catch errors pre-fee
-    const simResult = await this.solanaClient.simulateTransaction(signResult.value);
-    if (!simResult.ok) {
-      this.updateTransactionFailed(txRecord.id, `Simulation failed: ${simResult.error.message}`);
-      return;
-    }
-
-    // Send
-    const sendResult = await this.solanaClient.sendTransaction(signResult.value);
-
-    if (sendResult.ok) {
-      this.walletManager.recordTransfer(walletId);
-
-      const idx = this.transactions.findIndex((t) => t.id === txRecord.id);
-      if (idx >= 0) {
-        this.transactions[idx] = {
-          ...txRecord,
-          signature: sendResult.value.signature,
-          status: 'confirmed',
-          confirmedAt: new Date(),
-        };
-
-        eventBus.emit({
-          id: uuidv4(),
-          type: 'transaction',
-          timestamp: new Date(),
-          transaction: this.transactions[idx]!,
-        });
-      }
-
-      logger.info('Token transfer successful', {
-        agentId: agent.id,
-        mint,
-        recipient,
-        amount,
-        signature: sendResult.value.signature,
-      });
-    } else {
-      this.updateTransactionFailed(txRecord.id, sendResult.error.message);
-    }
+    // Sign, simulate, and send using shared helper
+    await this.sendBuiltTransaction(walletId, txRecord, txResult.value);
   }
 
   /**
@@ -1081,18 +1094,19 @@ export class Orchestrator {
     if (idx >= 0) {
       const tx = this.transactions[idx];
       if (tx) {
-        this.transactions[idx] = {
+        const updatedTx: TransactionRecord = {
           ...tx,
           status: 'failed',
           error,
         };
+        this.replaceTransaction(updatedTx);
 
         // Emit so the frontend sees failed transactions in real-time
         eventBus.emit({
           id: uuidv4(),
           type: 'transaction',
           timestamp: new Date(),
-          transaction: this.transactions[idx]!,
+          transaction: updatedTx,
         });
       }
     }
@@ -1137,10 +1151,8 @@ export class Orchestrator {
         createdAt: new Date(tx.createdAt),
         confirmedAt: tx.confirmedAt ? new Date(tx.confirmedAt) : undefined,
       };
-      this.transactions.push(fullTx);
+      this.appendTransaction(fullTx);
     }
-    // Rebuild index after loading
-    this.rebuildTransactionIndex();
     logger.info('Transaction history restored from disk', { count: this.transactions.length });
   }
 
@@ -1246,7 +1258,7 @@ export class Orchestrator {
     if (!managed) return [];
 
     const walletId = managed.agent.getWalletId();
-    return this.transactions.filter((tx) => tx.walletId === walletId);
+    return [...(this.transactionsByWalletId.get(walletId) ?? [])];
   }
 
   /**
