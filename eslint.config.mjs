@@ -58,6 +58,23 @@ export default tseslint.config(
     },
   },
   {
-    ignores: ['dist/', 'build/', 'node_modules/', '.next/', 'apps/frontend/'],
+    // Relax rules for generated/third-party agent skills to reduce lint noise
+    files: ['.agents/**'],
+    rules: {
+      '@typescript-eslint/naming-convention': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+      'no-console': 'off',
+    },
+  },
+  {
+    // Allow console output in test files (tests use console for debugging output)
+    files: ['tests/**', 'test-*.mjs'],
+    rules: {
+      'no-console': 'off',
+    },
+  },
+  {
+    ignores: ['dist/', 'build/', 'node_modules/', '.next/', 'apps/frontend/', '.agents/**'],
   }
 );
+
