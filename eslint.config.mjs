@@ -74,6 +74,13 @@ export default tseslint.config(
     },
   },
   {
+    // Relax naming-convention for strategy registry which uses PascalCase type/const names
+    files: ['src/agent/strategy-registry.ts'],
+    rules: {
+      '@typescript-eslint/naming-convention': 'off',
+    },
+  },
+  {
     ignores: ['dist/', 'build/', 'node_modules/', '.next/', 'apps/frontend/', '.agents/**'],
   }
 );
