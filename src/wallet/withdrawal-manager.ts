@@ -209,9 +209,7 @@ export class WithdrawalManager {
       return success(pubkey);
     } catch (error) {
       return failure(
-        new Error(
-          `Invalid recipient address: "${recipient}". Must be valid Solana address.`
-        )
+        new Error(`Invalid recipient address: "${recipient}". Must be valid Solana address.`)
       );
     }
   }
@@ -285,9 +283,7 @@ export class WithdrawalManager {
       return success(withdrawableAmount);
     } catch (error) {
       return failure(
-        new Error(
-          `Balance check failed: ${error instanceof Error ? error.message : String(error)}`
-        )
+        new Error(`Balance check failed: ${error instanceof Error ? error.message : String(error)}`)
       );
     }
   }

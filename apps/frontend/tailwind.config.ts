@@ -106,13 +106,17 @@ const config: Config = {
         'gradient-brand-subtle':
           'linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(0, 217, 255, 0.08) 100%)',
         // Card surface - sophisticated dark with brand accent
-        'gradient-card': 'linear-gradient(135deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 217, 255, 0.05) 100%)',
+        'gradient-card':
+          'linear-gradient(135deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 217, 255, 0.05) 100%)',
         // Hover state - brighter version
-        'gradient-card-hover': 'linear-gradient(135deg, rgba(0, 0, 0, 0.3) 0%, rgba(0, 217, 255, 0.08) 100%)',
+        'gradient-card-hover':
+          'linear-gradient(135deg, rgba(0, 0, 0, 0.3) 0%, rgba(0, 217, 255, 0.08) 100%)',
         // Icon background - subtle blue tint
-        'gradient-icon-bg': 'linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%)',
+        'gradient-icon-bg':
+          'linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%)',
         // Focus/Active state - stronger brand presence
-        'gradient-focus': 'linear-gradient(135deg, rgba(37, 99, 235, 0.15) 0%, rgba(0, 217, 255, 0.15) 100%)',
+        'gradient-focus':
+          'linear-gradient(135deg, rgba(37, 99, 235, 0.15) 0%, rgba(0, 217, 255, 0.15) 100%)',
       },
       // ============================================
       // TYPOGRAPHY - Bold Modern: Syne + Space Mono

@@ -36,10 +36,7 @@ function parseCookieHeader(cookieHeader: string | undefined): Record<string, str
   }, {});
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse<SessionResponse>
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse<SessionResponse>) {
   if (req.method !== 'GET') {
     return res.status(405).json({
       success: false,

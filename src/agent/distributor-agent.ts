@@ -44,7 +44,16 @@ export class DistributorAgent extends BaseAgent {
     idOverride?: string,
     tenantId?: string
   ) {
-    super(name, 'distributor', walletId, walletPublicKey, params, executionSettings, idOverride, tenantId);
+    super(
+      name,
+      'distributor',
+      walletId,
+      walletPublicKey,
+      params,
+      executionSettings,
+      idOverride,
+      tenantId
+    );
     this.params = { ...DEFAULT_PARAMS, ...params };
   }
 

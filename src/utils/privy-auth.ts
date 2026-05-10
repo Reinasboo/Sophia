@@ -54,7 +54,9 @@ export async function verifyPrivyAccessToken(
 
   const verifier = await getVerificationKey();
   if (!verifier) {
-    console.warn('[Privy Auth] No verification key available (PRIVY_JWKS_URL or PRIVY_PUBLIC_KEY_PEM not set)');
+    console.warn(
+      '[Privy Auth] No verification key available (PRIVY_JWKS_URL or PRIVY_PUBLIC_KEY_PEM not set)'
+    );
     return null;
   }
 
@@ -101,7 +103,7 @@ export async function verifyPrivyAccessToken(
     userId,
     sessionId,
     appId: tokenAppId || appId || '',
-      issuer: String(verified.payload.iss ?? configuredIssuer ?? DEFAULT_PRIVY_ISSUER),
+    issuer: String(verified.payload.iss ?? configuredIssuer ?? DEFAULT_PRIVY_ISSUER),
     issuedAt: verified.payload.iat ?? 0,
     expiration: verified.payload.exp ?? 0,
     email: typeof payload.email === 'string' ? payload.email : undefined,

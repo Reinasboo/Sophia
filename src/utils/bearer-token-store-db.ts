@@ -34,12 +34,12 @@ async function initializeBackend(): Promise<void> {
   if (dbUrl && dbUrl !== 'PLACEHOLDER') {
     try {
       pool = new Pool({ connectionString: dbUrl });
-      
+
       // Test connection
       const client = await pool.connect();
       await client.query('SELECT 1');
       client.release();
-      
+
       // Create table if it doesn't exist
       await pool.query(`
         CREATE TABLE IF NOT EXISTS bearer_tokens (
@@ -53,7 +53,7 @@ async function initializeBackend(): Promise<void> {
         CREATE INDEX IF NOT EXISTS idx_privy_user_id ON bearer_tokens(privy_user_id);
         CREATE INDEX IF NOT EXISTS idx_bearer_token ON bearer_tokens(bearer_token);
       `);
-      
+
       logger.info('Connected to PostgreSQL bearer token store');
       return;
     } catch (err) {
@@ -104,7 +104,7 @@ export async function getBearerTokenByUser(privyUserId: string): Promise<BearerT
          FROM bearer_tokens WHERE privy_user_id = $1`,
         [privyUserId]
       );
-      
+
       if (result.rows.length > 0) {
         const row = result.rows[0];
         return {
@@ -129,7 +129,9 @@ export async function getBearerTokenByUser(privyUserId: string): Promise<BearerT
 /**
  * Retrieve a bearer token by token value.
  */
-export async function getBearerTokenByValue(bearerToken: string): Promise<BearerTokenRecord | null> {
+export async function getBearerTokenByValue(
+  bearerToken: string
+): Promise<BearerTokenRecord | null> {
   if (!fileBackendUsed && pool) {
     try {
       const result = await pool.query(
@@ -137,7 +139,7 @@ export async function getBearerTokenByValue(bearerToken: string): Promise<Bearer
          FROM bearer_tokens WHERE bearer_token = $1`,
         [bearerToken]
       );
-      
+
       if (result.rows.length > 0) {
         const row = result.rows[0];
         return {
@@ -173,7 +175,7 @@ export async function listAllBearerTokens(): Promise<BearerTokenRecord[]> {
         `SELECT privy_user_id, bearer_token, created_at, issued_at
          FROM bearer_tokens ORDER BY created_at DESC`
       );
-      
+
       return result.rows.map((row) => ({
         privyUserId: row.privy_user_id,
         bearerToken: row.bearer_token,
@@ -197,10 +199,7 @@ export async function listAllBearerTokens(): Promise<BearerTokenRecord[]> {
 export async function deleteBearerToken(privyUserId: string): Promise<void> {
   if (!fileBackendUsed && pool) {
     try {
-      await pool.query(
-        `DELETE FROM bearer_tokens WHERE privy_user_id = $1`,
-        [privyUserId]
-      );
+      await pool.query(`DELETE FROM bearer_tokens WHERE privy_user_id = $1`, [privyUserId]);
       return;
     } catch (err) {
       logger.error('Failed to delete token from DB', {
@@ -218,8 +217,8 @@ export async function deleteBearerToken(privyUserId: string): Promise<void> {
 // ============================================================================
 
 function getDataDir(): string {
-   if (process.env['LAMBDA_TASK_ROOT'] || process.env['RAILWAY_ENVIRONMENT']) {
-     return process.env['DATA_DIR'] || '/tmp/sophia';
+  if (process.env['LAMBDA_TASK_ROOT'] || process.env['RAILWAY_ENVIRONMENT']) {
+    return process.env['DATA_DIR'] || '/tmp/sophia';
   }
   return join(process.cwd(), 'data');
 }

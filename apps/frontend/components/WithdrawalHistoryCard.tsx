@@ -167,9 +167,7 @@ export function WithdrawalHistoryCard({ agentId }: WithdrawalHistoryCardProps) {
                     </a>
                   )}
                 </div>
-                <p className="text-xs text-slate-500">
-                  {formatTimestamp(withdrawal.requestedAt)}
-                </p>
+                <p className="text-xs text-slate-500">{formatTimestamp(withdrawal.requestedAt)}</p>
               </div>
               {getStatusBadge(withdrawal.status)}
             </div>
@@ -183,9 +181,7 @@ export function WithdrawalHistoryCard({ agentId }: WithdrawalHistoryCardProps) {
               )}
             </div>
 
-            {withdrawal.error && (
-              <p className="text-xs text-red-300 mt-2">{withdrawal.error}</p>
-            )}
+            {withdrawal.error && <p className="text-xs text-red-300 mt-2">{withdrawal.error}</p>}
           </div>
         ))}
       </div>

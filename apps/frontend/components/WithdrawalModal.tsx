@@ -150,7 +150,8 @@ export function WithdrawalModal({
               {/* Amount */}
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Amount (SOL) <span className="text-slate-500">(optional - defaults to full balance)</span>
+                  Amount (SOL){' '}
+                  <span className="text-slate-500">(optional - defaults to full balance)</span>
                 </label>
                 <div className="flex gap-2">
                   <input

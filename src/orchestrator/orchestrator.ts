@@ -143,10 +143,13 @@ export class Orchestrator {
     // MULTI-TENANT: Require tenantId for agent creation
     const tenantId = config.tenantId;
     if (!tenantId) {
-      logger.error('[Orchestrator.createAgent] SECURITY: Missing tenantId - agent would be unscoped!', {
-        agentName: config.name,
-        strategy: config.strategy,
-      });
+      logger.error(
+        '[Orchestrator.createAgent] SECURITY: Missing tenantId - agent would be unscoped!',
+        {
+          agentName: config.name,
+          strategy: config.strategy,
+        }
+      );
       return failure(new Error('tenantId is required for agent creation'));
     }
 
@@ -1223,19 +1226,18 @@ export class Orchestrator {
    * Returns only agents that belong to the specified tenant
    */
   getAgentsByTenant(tenantId: string): AgentInfo[] {
-    const allAgents = Array.from(this.agents.values())
-      .map((m) => m.agent.getInfo());
-    
+    const allAgents = Array.from(this.agents.values()).map((m) => m.agent.getInfo());
+
     const filtered = allAgents.filter((agent) => agent.tenantId === tenantId);
-    
+
     logger.info('[Orchestrator] getAgentsByTenant', {
       tenantId,
       totalAgents: allAgents.length,
       filteredCount: filtered.length,
-      agentsWithMissingTenantId: allAgents.filter(a => !a.tenantId).length,
-      agentTenantIds: allAgents.map(a => ({ id: a.id, tenantId: a.tenantId })),
+      agentsWithMissingTenantId: allAgents.filter((a) => !a.tenantId).length,
+      agentTenantIds: allAgents.map((a) => ({ id: a.id, tenantId: a.tenantId })),
     });
-    
+
     return filtered;
   }
 

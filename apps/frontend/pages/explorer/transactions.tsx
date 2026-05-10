@@ -79,7 +79,8 @@ export default function TransactionExplorer() {
   const fetchTransactionDetail = async (signature: string) => {
     try {
       const res = await api.getTransaction(signature);
-      if (!res.success || !res.data) throw new Error(res.error || 'Failed to fetch transaction details');
+      if (!res.success || !res.data)
+        throw new Error(res.error || 'Failed to fetch transaction details');
       setSelected(res.data as TransactionDetail);
     } catch (err) {
       console.error('Failed to fetch transaction details:', err);
@@ -310,9 +311,7 @@ export default function TransactionExplorer() {
                         {selected.amount && (
                           <div className="bg-gray-800/30 border border-gray-700 rounded p-3">
                             <p className="text-sm text-gray-400 font-semibold mb-2">Amount</p>
-                            <p className="text-sm font-mono text-primary">
-                              {selected.amount} SOL
-                            </p>
+                            <p className="text-sm font-mono text-primary">{selected.amount} SOL</p>
                           </div>
                         )}
                       </div>

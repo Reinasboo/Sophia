@@ -51,9 +51,9 @@ export function extract<T, E>(result: Result<T, E>): T | E {
  * if (!all.ok) return failure(all.error);
  * const [v1, v2, v3] = all.value;
  */
-export function resultAll<
-  T extends readonly Result<unknown, unknown>[]
->(results: T): Result<{ [K in keyof T]: T[K] extends Result<infer V, unknown> ? V : never }, unknown> {
+export function resultAll<T extends readonly Result<unknown, unknown>[]>(
+  results: T
+): Result<{ [K in keyof T]: T[K] extends Result<infer V, unknown> ? V : never }, unknown> {
   for (const result of results) {
     if (!result.ok) {
       return result;

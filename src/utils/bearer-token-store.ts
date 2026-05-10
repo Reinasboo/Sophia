@@ -29,8 +29,8 @@ const bearerTokensByPrivyUserId: Map<string, BearerTokenRecord> | null = null;
  */
 function getDataDir(): string {
   // Check if we're in Lambda environment (Railway/AWS Lambda)
-   if (process.env['LAMBDA_TASK_ROOT'] || process.env['RAILWAY_ENVIRONMENT']) {
-     return process.env['DATA_DIR'] || '/tmp/sophia';
+  if (process.env['LAMBDA_TASK_ROOT'] || process.env['RAILWAY_ENVIRONMENT']) {
+    return process.env['DATA_DIR'] || '/tmp/sophia';
   }
   return join(process.cwd(), 'data');
 }

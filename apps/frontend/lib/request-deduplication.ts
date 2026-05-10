@@ -1,12 +1,12 @@
 /**
  * Request Deduplication & Response Caching Layer
- * 
+ *
  * Reduces duplicate API requests by:
  * 1. Merging simultaneous requests to the same endpoint
  * 2. Caching responses with configurable TTL
  * 3. Serving stale responses while revalidating in background
  * 4. Deduplicating requests that happen within a short time window
- * 
+ *
  * Expected impact: 30-50% reduction in actual backend API calls
  */
 
@@ -37,10 +37,10 @@ class RequestDeduplicator {
       }
     }
   }
-  
+
   /**
    * Execute a request with automatic deduplication
-   * 
+   *
    * If a request with the same key is in-flight, return that promise instead of duplicating.
    * If a cached response exists and is fresh, return it immediately.
    * If a cached response exists but is stale, return it and revalidate in background.
@@ -169,16 +169,16 @@ export const requestDeduplicator = new RequestDeduplicator();
 
 /**
  * Wrapper for fetch-based API calls with automatic deduplication
- * 
+ *
  * Usage:
  *   const data = await cachedFetch('/api/agents', { ttl: 5000 });
  */
 export async function cachedFetch<T = any>(
   url: string,
-  options?: { 
-    method?: string; 
-    body?: any; 
-    ttl?: number; 
+  options?: {
+    method?: string;
+    body?: any;
+    ttl?: number;
     staleTtl?: number;
     headers?: Record<string, string>;
   }
@@ -217,9 +217,9 @@ export async function cachedFetch<T = any>(
   return requestDeduplicator.execute(
     cacheKey,
     async () => {
-      const response = await fetch(resolvedUrl.toString(), { 
+      const response = await fetch(resolvedUrl.toString(), {
         method,
-        headers: { 'Content-Type': 'application/json', ...headers }
+        headers: { 'Content-Type': 'application/json', ...headers },
       });
 
       if (!response.ok) {
@@ -234,7 +234,7 @@ export async function cachedFetch<T = any>(
 
 /**
  * React hook for cached API requests with deduplication
- * 
+ *
  * Usage in components:
  *   const { data, isLoading, error } = useCachedQuery(
  *     '/api/agents',

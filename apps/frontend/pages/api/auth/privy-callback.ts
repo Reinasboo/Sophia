@@ -154,10 +154,7 @@ export default async function handler(
       let backendJson = await backendRes.json().catch(() => ({}));
 
       // Backward compatibility for older backend deployments that still require apiKey.
-      if (
-        backendRes.status === 400 &&
-        backendJson?.error === 'Missing accessToken or apiKey'
-      ) {
+      if (backendRes.status === 400 && backendJson?.error === 'Missing accessToken or apiKey') {
         const fallbackApiKey = `bearer_fallback_${randomBytes(24).toString('hex')}`;
         backendRes = await fetch(endpoint, {
           method: 'POST',
@@ -168,8 +165,13 @@ export default async function handler(
       }
 
       if (!backendRes.ok || !backendJson || !backendJson.success) {
-        logger.warn('Backend register-bearer failed', { status: backendRes.status, body: backendJson });
-        return res.status(500).json({ success: false, error: 'Failed to register tenant with backend' });
+        logger.warn('Backend register-bearer failed', {
+          status: backendRes.status,
+          body: backendJson,
+        });
+        return res
+          .status(500)
+          .json({ success: false, error: 'Failed to register tenant with backend' });
       }
 
       const tenantId = backendJson.tenantId;
@@ -180,7 +182,9 @@ export default async function handler(
       logger.info('Privy auth proxied to backend and successful', { tenantId });
       return res.status(200).json({ success: true, tenantId, apiKey });
     } catch (err) {
-      logger.error('Privy auth proxy error', { error: err instanceof Error ? err.message : String(err) });
+      logger.error('Privy auth proxy error', {
+        error: err instanceof Error ? err.message : String(err),
+      });
       return res.status(500).json({ success: false, error: 'Authentication failed' });
     }
   } catch (error) {

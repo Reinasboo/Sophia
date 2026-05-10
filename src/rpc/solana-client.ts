@@ -43,7 +43,7 @@ interface TransactionResult {
 
 /**
  * SolanaClient - Handles all blockchain interactions
- * 
+ *
  * Supports multi-RPC failover if SOLANA_RPC_URLS is configured (comma-separated list)
  * Falls back to SOLANA_RPC_URL / HELIUS_RPC_URL if multi-RPC is not configured
  */
@@ -55,7 +55,7 @@ export class SolanaClient {
 
   constructor() {
     const config = getConfig();
-    
+
     // Check if multi-RPC failover is configured
     if (config.SOLANA_RPC_URLS) {
       const rpcUrls = config.SOLANA_RPC_URLS.split(',').filter(Boolean);
@@ -71,7 +71,7 @@ export class SolanaClient {
         }
       }
     }
-    
+
     const rpcUrl = config.HELIUS_RPC_URL ?? config.SOLANA_RPC_URL;
     const wsEndpoint = config.HELIUS_WS_URL;
 

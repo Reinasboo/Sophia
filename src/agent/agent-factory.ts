@@ -77,22 +77,54 @@ export function createAgent(options: CreateAgentOptions): Result<BaseAgent, Erro
       // Legacy agents (maintained for backward compatibility)
       case 'accumulator': {
         const params: Partial<AccumulatorParams> = validatedParams;
-        agent = new AccumulatorAgent(config.name, walletId, walletPublicKey, params, undefined, undefined, config.tenantId);
+        agent = new AccumulatorAgent(
+          config.name,
+          walletId,
+          walletPublicKey,
+          params,
+          undefined,
+          undefined,
+          config.tenantId
+        );
         break;
       }
       case 'distributor': {
         const params: Partial<DistributorParams> = validatedParams;
-        agent = new DistributorAgent(config.name, walletId, walletPublicKey, params, undefined, undefined, config.tenantId);
+        agent = new DistributorAgent(
+          config.name,
+          walletId,
+          walletPublicKey,
+          params,
+          undefined,
+          undefined,
+          config.tenantId
+        );
         break;
       }
       case 'balance_guard': {
         const params: Partial<BalanceGuardParams> = validatedParams;
-        agent = new BalanceGuardAgent(config.name, walletId, walletPublicKey, params, undefined, undefined, config.tenantId);
+        agent = new BalanceGuardAgent(
+          config.name,
+          walletId,
+          walletPublicKey,
+          params,
+          undefined,
+          undefined,
+          config.tenantId
+        );
         break;
       }
       case 'scheduled_payer': {
         const params: Partial<ScheduledPayerParams> = validatedParams;
-        agent = new ScheduledPayerAgent(config.name, walletId, walletPublicKey, params, undefined, undefined, config.tenantId);
+        agent = new ScheduledPayerAgent(
+          config.name,
+          walletId,
+          walletPublicKey,
+          params,
+          undefined,
+          undefined,
+          config.tenantId
+        );
         break;
       }
 
@@ -127,7 +159,7 @@ export function createAgent(options: CreateAgentOptions): Result<BaseAgent, Erro
         return failure(
           new Error(
             `Strategy "${config.strategy}" has no agent implementation. ` +
-            `Known strategies: ${registry.list().join(', ')}`
+              `Known strategies: ${registry.list().join(', ')}`
           )
         );
     }

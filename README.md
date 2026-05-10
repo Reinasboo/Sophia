@@ -25,11 +25,11 @@ Secure orchestration framework for autonomous wallet management, agent coordinat
 
 All production-critical features are live and battle-tested:
 
-| Phase | Status | Features |
-|-------|--------|----------|
-| **P0** | ✅ Complete | Pre-flight simulation, rate limiting, E2E tests, deployment procedures |
-| **P1** | ✅ Complete | WebSocket heartbeat, agent caching (30-50% RPC savings), performance dashboard, API docs |
-| **P2** | 🔄 In Progress | Multi-wallet agents, scheduling, load testing, advanced monitoring |
+| Phase  | Status         | Features                                                                                 |
+| ------ | -------------- | ---------------------------------------------------------------------------------------- |
+| **P0** | ✅ Complete    | Pre-flight simulation, rate limiting, E2E tests, deployment procedures                   |
+| **P1** | ✅ Complete    | WebSocket heartbeat, agent caching (30-50% RPC savings), performance dashboard, API docs |
+| **P2** | 🔄 In Progress | Multi-wallet agents, scheduling, load testing, advanced monitoring                       |
 
 **See [PRODUCTION_ROADMAP.md](PRODUCTION_ROADMAP.md)** for detailed timeline and upcoming features.
 
@@ -40,13 +40,14 @@ All production-critical features are live and battle-tested:
 Agentic Wallet is a **production-grade framework** for running autonomous agents on Solana without exposing private keys. It sits between your agents and your wallets, enforcing security policies, validating intentions, and providing auditable transaction execution.
 
 **Perfect for:**
+
 - 🤖 AI agents that need on-chain capabilities
 - 💼 Treasury automation and DeFi operations
 - 🔌 Integration with external AI systems (ChatGPT, Claude, etc.)
 - 📊 Multi-strategy agent coordination
 - 🛡️ Enterprise wallet management with audit trails
 
-**Key insight:** Instead of giving agents access to private keys, they submit *intents*. The orchestrator validates the intent against policies, simulates the transaction, and executes it — all without the agent ever touching the key.
+**Key insight:** Instead of giving agents access to private keys, they submit _intents_. The orchestrator validates the intent against policies, simulates the transaction, and executes it — all without the agent ever touching the key.
 
 ---
 
@@ -70,13 +71,17 @@ Agentic Wallet is a **production-grade framework** for running autonomous agents
 ## Core Concepts
 
 ### Agents
+
 Autonomous programs that need wallet capabilities. Can be:
+
 - **Built-in**: 4 pre-configured strategies (Accumulator, Distributor, Balance Guard, Scheduled Payer)
 - **Custom**: Register your own strategy at runtime via Zod schema validation
 - **External**: Bring any AI system via BYOA integration with bearer tokens
 
 ### Intents
+
 High-level requests from agents (e.g., "transfer 0.5 SOL to address ABC"). The orchestrator:
+
 1. **Validates** against agent policies
 2. **Simulates** the transaction for safety
 3. **Signs** with the isolated wallet layer
@@ -84,7 +89,9 @@ High-level requests from agents (e.g., "transfer 0.5 SOL to address ABC"). The o
 5. **Monitors** for confirmation
 
 ### Policies
+
 Rules that govern agent behavior:
+
 - Daily spending limits
 - Transaction size caps
 - Allowed recipient addresses
@@ -92,7 +99,9 @@ Rules that govern agent behavior:
 - Time windows
 
 ### Wallets
+
 Agent wallets are isolated and cryptographically secured:
+
 - Private keys **encrypted at rest** (AES-256-GCM)
 - **Only** accessible to the wallet manager layer
 - Policy enforcement **before** any signing operation
@@ -148,15 +157,15 @@ External Agent / AI System
 
 ### Tech Stack
 
-| Component        | Technology          | Purpose                                  |
-|------------------|---------------------|------------------------------------------|
-| **Frontend**     | Next.js 14 + React  | Real-time dashboard, agent management UI |
-| **API Server**   | Express.js          | REST + WebSocket endpoints               |
-| **Database**     | PostgreSQL          | Persistent state, audit logs             |
-| **Blockchain**   | @solana/web3.js     | Transaction building & RPC communication |
-| **Encryption**   | Node.js crypto      | AES-256-GCM key storage                  |
-| **Auth**         | Privy + JWT         | User & agent authentication              |
-| **Deployment**   | Railway + Vercel    | Production infrastructure                |
+| Component      | Technology         | Purpose                                  |
+| -------------- | ------------------ | ---------------------------------------- |
+| **Frontend**   | Next.js 14 + React | Real-time dashboard, agent management UI |
+| **API Server** | Express.js         | REST + WebSocket endpoints               |
+| **Database**   | PostgreSQL         | Persistent state, audit logs             |
+| **Blockchain** | @solana/web3.js    | Transaction building & RPC communication |
+| **Encryption** | Node.js crypto     | AES-256-GCM key storage                  |
+| **Auth**       | Privy + JWT        | User & agent authentication              |
+| **Deployment** | Railway + Vercel   | Production infrastructure                |
 
 ---
 
@@ -214,44 +223,44 @@ External Agent / AI System
 
 ### 📖 Getting Started
 
-| Guide | Purpose |
-|-------|---------|
-| **[This README](#getting-started)** | 5-minute quick start |
-| **[CONTRIBUTING.md](CONTRIBUTING.md)** | Development environment setup |
+| Guide                                   | Purpose                            |
+| --------------------------------------- | ---------------------------------- |
+| **[This README](#getting-started)**     | 5-minute quick start               |
+| **[CONTRIBUTING.md](CONTRIBUTING.md)**  | Development environment setup      |
 | **[INSTALLATION.md](#getting-started)** | Detailed installation instructions |
 
 ### 🏗️ Architecture & Design
 
-| Guide | Purpose |
-|-------|---------|
-| **[ARCHITECTURE.md](ARCHITECTURE.md)** | Project structure and design patterns |
+| Guide                                           | Purpose                                 |
+| ----------------------------------------------- | --------------------------------------- |
+| **[ARCHITECTURE.md](ARCHITECTURE.md)**          | Project structure and design patterns   |
 | **[INFRASTRUCTURE.md](docs/INFRASTRUCTURE.md)** | System topology, tech stack, deployment |
-| **[DEEP_DIVE.md](DEEP_DIVE.md)** | Technical deep-dive into core systems |
+| **[DEEP_DIVE.md](DEEP_DIVE.md)**                | Technical deep-dive into core systems   |
 
 ### 📡 API & Integration
 
-| Guide | Purpose |
-|-------|---------|
-| **[API_REFERENCE.md](docs/API_REFERENCE.md)** | Complete REST API documentation with examples |
-| **[BYOA_INTEGRATION_GUIDE.md](docs/BYOA_INTEGRATION_GUIDE.md)** | External agent integration (Python, Node.js) |
-| **[OpenAPI Spec](http://localhost:3001/api/openapi.json)** | Auto-generated API spec (Swagger) |
+| Guide                                                           | Purpose                                       |
+| --------------------------------------------------------------- | --------------------------------------------- |
+| **[API_REFERENCE.md](docs/API_REFERENCE.md)**                   | Complete REST API documentation with examples |
+| **[BYOA_INTEGRATION_GUIDE.md](docs/BYOA_INTEGRATION_GUIDE.md)** | External agent integration (Python, Node.js)  |
+| **[OpenAPI Spec](http://localhost:3001/api/openapi.json)**      | Auto-generated API spec (Swagger)             |
 
 ### 🚀 Production & Operations
 
-| Guide | Purpose |
-|-------|---------|
-| **[DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md)** | Step-by-step production deployment |
-| **[OPERATIONS_GUIDE.md](docs/OPERATIONS_GUIDE.md)** | Day-2 operations, monitoring, troubleshooting |
+| Guide                                                         | Purpose                                        |
+| ------------------------------------------------------------- | ---------------------------------------------- |
+| **[DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md)**           | Step-by-step production deployment             |
+| **[OPERATIONS_GUIDE.md](docs/OPERATIONS_GUIDE.md)**           | Day-2 operations, monitoring, troubleshooting  |
 | **[SECURITY_ARCHITECTURE.md](docs/SECURITY_ARCHITECTURE.md)** | Encryption, auth flows, threat model, key mgmt |
-| **[PRODUCTION_ROADMAP.md](PRODUCTION_ROADMAP.md)** | Feature roadmap and release timeline |
+| **[PRODUCTION_ROADMAP.md](PRODUCTION_ROADMAP.md)**            | Feature roadmap and release timeline           |
 
 ### 📋 Project Management
 
-| Guide | Purpose |
-|-------|---------|
+| Guide                                  | Purpose                               |
+| -------------------------------------- | ------------------------------------- |
 | **[CONTRIBUTING.md](CONTRIBUTING.md)** | PR process, code standards, branching |
-| **[CHANGELOG.md](CHANGELOG.md)** | Release history and breaking changes |
-| **[SECURITY.md](SECURITY.md)** | Vulnerability disclosure policy |
+| **[CHANGELOG.md](CHANGELOG.md)**       | Release history and breaking changes  |
+| **[SECURITY.md](SECURITY.md)**         | Vulnerability disclosure policy       |
 
 ---
 
@@ -259,11 +268,11 @@ External Agent / AI System
 
 ### Prerequisites
 
-| Requirement | Version       | Why          |
-|-------------|---------------|--------------|
-| Node.js     | ≥ 18 (20+)    | Runtime      |
-| npm         | ≥ 9           | Dependencies |
-| Git         | Latest        | Version control |
+| Requirement | Version    | Why             |
+| ----------- | ---------- | --------------- |
+| Node.js     | ≥ 18 (20+) | Runtime         |
+| npm         | ≥ 9        | Dependencies    |
+| Git         | Latest     | Version control |
 
 ### Installation (5 minutes)
 
@@ -285,6 +294,7 @@ npm run dev
 ```
 
 **Services will start on:**
+
 - Frontend Dashboard: http://localhost:3000
 - API Server: http://localhost:3001
 - WebSocket: ws://localhost:3002
@@ -368,15 +378,16 @@ vercel deploy --prod          # Frontend
 
 ### Authentication Methods
 
-| Method | Purpose | Example |
-|--------|---------|---------|
-| **X-Admin-Key** | Server operations (create agent, etc.) | `curl -H "X-Admin-Key: sk_live_..."` |
-| **Bearer Token** | BYOA agent operations (submit intent) | `curl -H "Authorization: Bearer <jwt>"` |
-| **Session Cookie** | Frontend user operations (Privy) | Automatic via browser |
+| Method             | Purpose                                | Example                                 |
+| ------------------ | -------------------------------------- | --------------------------------------- |
+| **X-Admin-Key**    | Server operations (create agent, etc.) | `curl -H "X-Admin-Key: sk_live_..."`    |
+| **Bearer Token**   | BYOA agent operations (submit intent)  | `curl -H "Authorization: Bearer <jwt>"` |
+| **Session Cookie** | Frontend user operations (Privy)       | Automatic via browser                   |
 
 ### Core Endpoints
 
 **Health & Status:**
+
 ```bash
 GET /api/health                    # System health
 GET /api/stats                     # System statistics
@@ -384,6 +395,7 @@ GET /api/openapi.json              # OpenAPI specification
 ```
 
 **Agent Management:**
+
 ```bash
 POST /api/agents                   # Create agent (requires X-Admin-Key)
 GET /api/agents/:id                # Get agent details
@@ -392,6 +404,7 @@ DELETE /api/agents/:id             # Delete agent
 ```
 
 **BYOA Integration:**
+
 ```bash
 POST /api/byoa/register            # Register external agent (requires Bearer token)
 POST /api/byoa/intents             # Submit intent (requires Bearer token)
@@ -399,6 +412,7 @@ GET /api/byoa/intents/:id          # Get intent status
 ```
 
 **Monitoring:**
+
 ```bash
 GET /api/monitoring/rate-limits    # Rate limiting status
 GET /api/monitoring/cache          # Cache performance metrics
@@ -430,6 +444,7 @@ curl -X POST http://localhost:3001/api/agents \
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -461,12 +476,12 @@ curl -X POST http://localhost:3001/api/byoa/register \
 
 ### Quick Reference
 
-| Aspect | Setup | Responsibility |
-|--------|-------|-----------------|
-| **Backend** | Railway | Deployment, scaling, monitoring |
-| **Frontend** | Vercel | CDN, edge functions, auto-scaling |
-| **Database** | Railway PostgreSQL | Backups, connections, tuning |
-| **DNS** | CloudFlare (optional) | DDoS protection, caching |
+| Aspect       | Setup                 | Responsibility                    |
+| ------------ | --------------------- | --------------------------------- |
+| **Backend**  | Railway               | Deployment, scaling, monitoring   |
+| **Frontend** | Vercel                | CDN, edge functions, auto-scaling |
+| **Database** | Railway PostgreSQL    | Backups, connections, tuning      |
+| **DNS**      | CloudFlare (optional) | DDoS protection, caching          |
 
 ### Deployment Steps
 
@@ -558,6 +573,7 @@ npm audit
 ### Test Coverage
 
 Current coverage:
+
 - ✅ Agent factory (100%)
 - ✅ Policy engine (100%)
 - ✅ Encryption/decryption (100%)
@@ -604,6 +620,7 @@ Current coverage:
 ### Vulnerability Disclosure
 
 Found a security vulnerability? Please report to [security@agentic-wallet.dev](mailto:security@agentic-wallet.dev) with:
+
 - Description of vulnerability
 - Steps to reproduce
 - Potential impact
@@ -627,6 +644,7 @@ Found a security vulnerability? Please report to [security@agentic-wallet.dev](m
 ### Common Issues
 
 **Problem**: `ECONNREFUSED` when connecting to RPC
+
 ```bash
 # Solution: Verify RPC URL and network connectivity
 curl https://api.mainnet-beta.solana.com -X POST \
@@ -635,6 +653,7 @@ curl https://api.mainnet-beta.solana.com -X POST \
 ```
 
 **Problem**: `rate_limit_exceeded` errors
+
 ```bash
 # Solution: Reduce transaction submission rate or increase RPC provider
 # Check current limits:
@@ -642,6 +661,7 @@ curl http://localhost:3001/api/monitoring/rate-limits
 ```
 
 **Problem**: Private key decryption failures
+
 ```bash
 # Solution: Verify KEY_ENCRYPTION_SECRET matches original value
 # Re-set if lost (requires agent recreation)
@@ -733,9 +753,9 @@ MIT License — See [LICENSE](LICENSE) for details.
 
 ## Maintainers
 
-| Role | Contact |
-|------|---------|
-| Lead Maintainer | [@Reinasboo](https://github.com/Reinasboo) |
+| Role             | Contact                                                           |
+| ---------------- | ----------------------------------------------------------------- |
+| Lead Maintainer  | [@Reinasboo](https://github.com/Reinasboo)                        |
 | Security Contact | [security@agentic-wallet.dev](mailto:security@agentic-wallet.dev) |
 
 ---

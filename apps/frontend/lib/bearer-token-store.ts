@@ -55,9 +55,7 @@ export function initializeBearerTokenStore(): void {
       for (const record of records) {
         bearerTokensByPrivyUserId.set(record.privyUserId, record);
       }
-      console.log(
-        `[Bearer Token Store] Initialized from disk with ${records.length} tokens`
-      );
+      console.log(`[Bearer Token Store] Initialized from disk with ${records.length} tokens`);
     } else {
       console.log('[Bearer Token Store] Initialized (empty)');
     }

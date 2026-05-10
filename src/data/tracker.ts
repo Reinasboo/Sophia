@@ -380,7 +380,7 @@ export class DataTracker {
     const client = await this.dbPool.connect();
     try {
       await client.query('BEGIN');
-      
+
       // DO NOT TRUNCATE - this is why data was being wiped on deploy!
       // Instead, upsert only changed records.
       // For now: write transactions/intents (idempotent by signature/id)

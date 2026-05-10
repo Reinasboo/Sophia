@@ -113,47 +113,47 @@
 
 ### Core Runtime
 
-| Component          | Technology      | Version | Purpose                            |
-| ------------------ | --------------- | ------- | ---------------------------------- |
-| **Backend**        | Node.js + TypeScript | 20+     | Server runtime & business logic    |
-| **Web Framework**   | Express.js      | 4.18    | HTTP/WebSocket API server          |
-| **Frontend**       | Next.js 14      | 14.1    | React server-side rendering        |
-| **Blockchain SDK** | @solana/web3.js | 1.91    | Solana RPC client & utilities      |
+| Component          | Technology           | Version | Purpose                         |
+| ------------------ | -------------------- | ------- | ------------------------------- |
+| **Backend**        | Node.js + TypeScript | 20+     | Server runtime & business logic |
+| **Web Framework**  | Express.js           | 4.18    | HTTP/WebSocket API server       |
+| **Frontend**       | Next.js 14           | 14.1    | React server-side rendering     |
+| **Blockchain SDK** | @solana/web3.js      | 1.91    | Solana RPC client & utilities   |
 
 ### Security & Validation
 
-| Component          | Technology      | Version | Purpose                            |
-| ------------------ | --------------- | ------- | ---------------------------------- |
-| **Encryption**     | Node.js crypto  | builtin | AES-256-GCM, scrypt key derivation |
+| Component           | Technology     | Version | Purpose                            |
+| ------------------- | -------------- | ------- | ---------------------------------- |
+| **Encryption**      | Node.js crypto | builtin | AES-256-GCM, scrypt key derivation |
 | **Data Validation** | Zod            | 3.22    | Runtime schema validation          |
-| **Token Auth**     | jose            | 5.10    | JWT verification for BYOA          |
-| **Authentication** | Privy           | latest  | OAuth2 user login & session mgmt   |
+| **Token Auth**      | jose           | 5.10    | JWT verification for BYOA          |
+| **Authentication**  | Privy          | latest  | OAuth2 user login & session mgmt   |
 
 ### Database & Storage
 
-| Component          | Technology      | Version | Purpose                            |
-| ------------------ | --------------- | ------- | ---------------------------------- |
-| **Primary DB**     | PostgreSQL      | 14+     | Persistent state & audit logs      |
-| **Connection Pool**| pg              | 8.20    | Database connection management     |
-| **Real-Time Sync** | Helius Webhooks | -       | On-chain transaction indexing      |
+| Component           | Technology      | Version | Purpose                        |
+| ------------------- | --------------- | ------- | ------------------------------ |
+| **Primary DB**      | PostgreSQL      | 14+     | Persistent state & audit logs  |
+| **Connection Pool** | pg              | 8.20    | Database connection management |
+| **Real-Time Sync**  | Helius Webhooks | -       | On-chain transaction indexing  |
 
 ### Development & Testing
 
-| Component          | Technology      | Version | Purpose                            |
-| ------------------ | --------------- | ------- | ---------------------------------- |
-| **Testing**        | Vitest          | 1.2     | Unit, integration, e2e tests       |
-| **Linting**        | ESLint          | 8.57    | Code quality & standards           |
-| **Formatting**     | Prettier        | 3.8     | Code formatting consistency        |
-| **Module Loading** | tsx             | 4.7     | TypeScript module transpilation    |
+| Component          | Technology | Version | Purpose                         |
+| ------------------ | ---------- | ------- | ------------------------------- |
+| **Testing**        | Vitest     | 1.2     | Unit, integration, e2e tests    |
+| **Linting**        | ESLint     | 8.57    | Code quality & standards        |
+| **Formatting**     | Prettier   | 3.8     | Code formatting consistency     |
+| **Module Loading** | tsx        | 4.7     | TypeScript module transpilation |
 
 ### Deployment & Infrastructure
 
-| Component          | Technology      | Version | Purpose                            |
-| ------------------ | --------------- | ------- | ---------------------------------- |
-| **Backend Deploy** | Railway         | latest  | Container orchestration & hosting  |
-| **Frontend Deploy**| Vercel          | latest  | Edge-optimized frontend hosting    |
-| **CI/CD**          | GitHub Actions  | -       | Automated testing & deployment     |
-| **VCS**            | GitHub          | -       | Version control & collaboration    |
+| Component           | Technology     | Version | Purpose                           |
+| ------------------- | -------------- | ------- | --------------------------------- |
+| **Backend Deploy**  | Railway        | latest  | Container orchestration & hosting |
+| **Frontend Deploy** | Vercel         | latest  | Edge-optimized frontend hosting   |
+| **CI/CD**           | GitHub Actions | -       | Automated testing & deployment    |
+| **VCS**             | GitHub         | -       | Version control & collaboration   |
 
 ---
 
@@ -165,6 +165,7 @@
 **Frontend**: Next.js 14 with React 18.2 + TypeScript
 
 **Responsibilities**:
+
 - Server-side rendering of pages (dashboard, agents, explorer)
 - Real-time WebSocket connections to backend
 - Agent creation and configuration UI
@@ -172,6 +173,7 @@
 - Performance metrics & monitoring visualization
 
 **Environment Variables**:
+
 ```
 NEXT_PUBLIC_API_URL=https://sophia-production-1a83.up.railway.app
 NEXT_PUBLIC_WS_URL=wss://sophia-production-1a83.up.railway.app
@@ -190,6 +192,7 @@ PRIVY_JWKS_URL=https://auth.privy.io/api/v1/apps/<app-id>/jwks.json
 **Network**: Mainnet production
 
 **Responsibilities**:
+
 - REST API endpoint serving all business logic
 - WebSocket server for real-time updates
 - Request validation & rate limiting
@@ -198,6 +201,7 @@ PRIVY_JWKS_URL=https://auth.privy.io/api/v1/apps/<app-id>/jwks.json
 - BYOA integration & intent routing
 
 **Environment Variables** (production):
+
 ```
 NODE_ENV=production
 SOLANA_NETWORK=mainnet-beta
@@ -220,6 +224,7 @@ CORS_ORIGINS=https://sophia-production-1a83.up.railway.app
 **Backup**: Railway automatic daily backups
 
 **Schema Highlights**:
+
 - `agents` — Agent configurations & state
 - `wallets` — Wallet encryption metadata
 - `transactions` — On-chain transaction history
@@ -229,6 +234,7 @@ CORS_ORIGINS=https://sophia-production-1a83.up.railway.app
 - `events` — System event stream
 
 **Maintenance**:
+
 - Automated backups (Railway default: 7-day retention)
 - Connection pooling via `pg` (default: 10-30 connections)
 - Indexes on high-query columns (agent_id, wallet_id, signature)
@@ -239,6 +245,7 @@ CORS_ORIGINS=https://sophia-production-1a83.up.railway.app
 **Webhook Integration**: Helius for transaction indexing
 
 **Rate Limits**:
+
 - Global: 1200 RPC calls/minute (system-wide)
 - Per-wallet: 30 transactions/minute
 - Overflow protection: Requests queued to next 60-second window
@@ -248,11 +255,13 @@ CORS_ORIGINS=https://sophia-production-1a83.up.railway.app
 ### 5. External Services
 
 **Privy (OAuth)**:
+
 - User authentication via email, wallet, or social login
 - JWT token verification via JWKS endpoint
 - Rate-limited auth callback (`/api/auth/privy-callback`)
 
 **Helius (Webhooks)**:
+
 - Real-time transaction confirmation indexing
 - Webhook signature verification
 - Automatic retries with exponential backoff
@@ -471,6 +480,7 @@ Request arrives at Backend
 6. **Auto-Restart** → If unhealthy for 5 minutes, restart container
 
 **Scaling Config** (Railway):
+
 - CPU limit: 1 core
 - Memory limit: 512 MB
 - Auto-scaling: Triggered on CPU > 80% or memory > 90%
@@ -491,6 +501,7 @@ Request arrives at Backend
 5. **Environment Sync** → Pulls from Vercel project settings
 
 **Optimization**:
+
 - ISR (Incremental Static Regeneration) on pages
 - Image optimization via `next/image`
 - Edge middleware for request routing
@@ -498,12 +509,14 @@ Request arrives at Backend
 ### Environment Promotion
 
 **Mainnet Readiness Script**:
+
 ```bash
 npm run mainnet:check      # Validate production config
 npm run mainnet:migrate-env # Generate .env.mainnet
 ```
 
 **Pre-Deployment Validation**:
+
 - ✅ All required env vars set
 - ✅ Solana network = mainnet-beta
 - ✅ Database connection OK
@@ -517,23 +530,27 @@ npm run mainnet:migrate-env # Generate .env.mainnet
 ### Health Checks
 
 **Backend Health Endpoint**:
+
 ```
 GET /api/health
 Response: { success: true, data: { status: "healthy" } }
 ```
 
 **Frontend Health**:
+
 - Vercel built-in uptime monitoring
 - CloudFlare CDN health checks
 
 ### Logging
 
 **Backend Logs** (Railway console):
+
 - Startup: `Starting Agentic Wallet System`
 - Errors: Formatted with context (request ID, stack trace)
 - DB: Connection pool events
 
 **Frontend Logs** (Browser DevTools):
+
 - API calls (fetch/axios)
 - WebSocket connection events
 - React component errors (ErrorBoundary)
@@ -541,6 +558,7 @@ Response: { success: true, data: { status: "healthy" } }
 ### Metrics to Monitor
 
 **System Level**:
+
 - API response time (p50, p95, p99)
 - Error rate (500s, 4xx)
 - Database query time (slow query log)
@@ -548,12 +566,14 @@ Response: { success: true, data: { status: "healthy" } }
 - WebSocket connection count
 
 **Business Level**:
+
 - Agents active (count)
 - Transactions submitted (per hour)
 - Transaction success rate
 - BYOA intents processed (per day)
 
 **Infrastructure Level** (Railway):
+
 - CPU usage
 - Memory usage
 - Network I/O
@@ -562,18 +582,21 @@ Response: { success: true, data: { status: "healthy" } }
 ### Alerting Strategy
 
 **Critical**:
+
 - Backend offline (health endpoint fails)
 - Database connection fails
 - RPC provider down (circuit breaker triggered)
 - Helius webhook failures
 
 **High**:
+
 - Error rate > 5%
 - Transaction success rate < 95%
 - RPC latency > 5 seconds
 - WebSocket disconnections > 10/min
 
 **Medium**:
+
 - Database slow queries
 - API response time degradation
 - Memory usage > 80%
@@ -585,10 +608,12 @@ Response: { success: true, data: { status: "healthy" } }
 ### Backup Strategy
 
 **Database Backups** (Railway):
+
 - Automatic daily snapshots (7-day retention)
 - Manual backup before major changes
 
 **Configuration Backups**:
+
 - GitHub source control (all code & config)
 - Vercel environment variables (encrypted)
 - Railway environment variables (encrypted)
@@ -596,33 +621,37 @@ Response: { success: true, data: { status: "healthy" } }
 ### Failover Procedures
 
 **Backend Container Failure**:
+
 1. Railway auto-restarts unhealthy container
 2. If persistent, scale up (add replica)
 3. Manual intervention: Check logs, redeploy
 
 **Database Connection Loss**:
+
 1. Automatic retry with exponential backoff
 2. Requests queued to in-memory buffer (max 5 min)
 3. Manual: Connect to Railway PostgreSQL console
 
 **RPC Provider Down**:
+
 1. Circuit breaker activates
 2. Requests queue to next available minute window
 3. Manual: Verify Solana network status, switch RPC if needed
 
 ### Recovery Time Objectives (RTO)
 
-| Failure Scenario                | Target RTO | Procedure                          |
-| ------------------------------- | ---------- | ---------------------------------- |
-| Container restart               | 30 seconds | Auto-restart via Railway health    |
-| Database failover               | 5 minutes  | Connect to backup, restore state   |
-| RPC provider degradation        | 1 minute   | Circuit breaker routes to backoff  |
-| Complete system outage          | 1 hour     | Manual deployment from GitHub      |
-| Data loss (database corruption) | 4 hours    | Restore from latest backup snap    |
+| Failure Scenario                | Target RTO | Procedure                         |
+| ------------------------------- | ---------- | --------------------------------- |
+| Container restart               | 30 seconds | Auto-restart via Railway health   |
+| Database failover               | 5 minutes  | Connect to backup, restore state  |
+| RPC provider degradation        | 1 minute   | Circuit breaker routes to backoff |
+| Complete system outage          | 1 hour     | Manual deployment from GitHub     |
+| Data loss (database corruption) | 4 hours    | Restore from latest backup snap   |
 
 ### Testing Disaster Recovery
 
 **Monthly DR Drills**:
+
 ```bash
 # 1. Verify backup integrity
 railway db backup list

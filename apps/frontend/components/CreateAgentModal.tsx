@@ -356,7 +356,15 @@ export function CreateAgentModal({ isOpen, onClose, onCreated }: CreateAgentModa
             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
             className="fixed left-1/2 top-[3vh] -translate-x-1/2 z-50 w-full max-w-lg px-4"
           >
-            <div className="bg-gradient-card border border-slate-700/50 rounded-2xl shadow-2xl flex flex-col max-h-[94vh] backdrop-blur-md" style={{background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.6) 0%, rgba(0, 217, 255, 0.04) 100%)'}}>              {/* Header */}
+            <div
+              className="bg-gradient-card border border-slate-700/50 rounded-2xl shadow-2xl flex flex-col max-h-[94vh] backdrop-blur-md"
+              style={{
+                background:
+                  'linear-gradient(135deg, rgba(0, 0, 0, 0.6) 0%, rgba(0, 217, 255, 0.04) 100%)',
+              }}
+            >
+              {' '}
+              {/* Header */}
               <div className="flex items-center justify-between px-6 py-5 border-b border-slate-700/50 shrink-0">
                 <div>
                   <h2 className="text-lg font-semibold text-slate-50">
@@ -374,7 +382,6 @@ export function CreateAgentModal({ isOpen, onClose, onCreated }: CreateAgentModa
                   <X className="w-5 h-5 text-slate-400 hover:text-slate-300" />
                 </button>
               </div>
-
               {/* Body */}
               <div className="px-6 py-5 min-h-0 flex-1 overflow-y-auto">
                 <AnimatePresence mode="wait">
@@ -676,7 +683,6 @@ export function CreateAgentModal({ isOpen, onClose, onCreated }: CreateAgentModa
                   </div>
                 )}
               </div>
-
               {/* Actions — always pinned at bottom */}
               <div className="flex items-center gap-3 px-6 py-4 border-t border-slate-700/50 bg-slate-800/20 rounded-b-2xl shrink-0">
                 {step > 1 ? (

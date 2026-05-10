@@ -36,17 +36,17 @@ User Request
 
 ### Key Security Properties
 
-| Property | Implementation |
-|----------|-----------------|
-| **Multi-tenant Isolation** | All withdrawals scoped to authenticated tenant; no cross-tenant leakage |
-| **Agent Ownership** | User can only withdraw from agents they created (via agentRegistry) |
-| **BYOA Exclusion** | External BYOA agents cannot be withdrawn from; their funds belong to external developers |
-| **Rate Limiting** | Maximum 1 withdrawal per agent per 24 hours prevents fee exploitation |
-| **Balance Protection** | Minimum 0.001 SOL retained as fee buffer; prevents wallet becoming unusable |
-| **Recipient Validation** | All addresses validated via PublicKey constructor before creating transaction |
-| **Atomic Operations** | Either succeeds completely or fails completely; no partial state changes |
-| **Audit Trail** | All withdrawals logged with timestamp, amounts, recipient, and signature |
-| **Reversibility** | Withdrawal records persisted; can be reviewed and correlated with on-chain transactions |
+| Property                   | Implementation                                                                           |
+| -------------------------- | ---------------------------------------------------------------------------------------- |
+| **Multi-tenant Isolation** | All withdrawals scoped to authenticated tenant; no cross-tenant leakage                  |
+| **Agent Ownership**        | User can only withdraw from agents they created (via agentRegistry)                      |
+| **BYOA Exclusion**         | External BYOA agents cannot be withdrawn from; their funds belong to external developers |
+| **Rate Limiting**          | Maximum 1 withdrawal per agent per 24 hours prevents fee exploitation                    |
+| **Balance Protection**     | Minimum 0.001 SOL retained as fee buffer; prevents wallet becoming unusable              |
+| **Recipient Validation**   | All addresses validated via PublicKey constructor before creating transaction            |
+| **Atomic Operations**      | Either succeeds completely or fails completely; no partial state changes                 |
+| **Audit Trail**            | All withdrawals logged with timestamp, amounts, recipient, and signature                 |
+| **Reversibility**          | Withdrawal records persisted; can be reviewed and correlated with on-chain transactions  |
 
 ## API Endpoints
 
@@ -57,6 +57,7 @@ User Request
 **Authentication:** Bearer token (tenant scoped)
 
 **Request Body:**
+
 ```json
 {
   "recipient": "6VT1RL9LXXJbC2HZXZ...",
@@ -66,6 +67,7 @@ User Request
 ```
 
 **Response (201 Created):**
+
 ```json
 {
   "success": true,
@@ -88,12 +90,12 @@ User Request
 
 **Error Responses:**
 
-| Status | Condition |
-|--------|-----------|
-| 404 | Agent not found or doesn't belong to tenant |
-| 400 | Invalid recipient address, insufficient balance, or BYOA agent |
-| 429 | Rate limit exceeded (withdrawal already requested in last 24h) |
-| 409 | Agent is currently running |
+| Status | Condition                                                      |
+| ------ | -------------------------------------------------------------- |
+| 404    | Agent not found or doesn't belong to tenant                    |
+| 400    | Invalid recipient address, insufficient balance, or BYOA agent |
+| 429    | Rate limit exceeded (withdrawal already requested in last 24h) |
+| 409    | Agent is currently running                                     |
 
 ### 2. Execute Withdrawal
 
@@ -104,6 +106,7 @@ User Request
 **Request Body:** (empty)
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -124,10 +127,10 @@ User Request
 
 **Error Responses:**
 
-| Status | Condition |
-|--------|-----------|
-| 404 | Withdrawal not found or doesn't belong to tenant |
-| 400 | Withdrawal already executed/failed, or broadcast error |
+| Status | Condition                                              |
+| ------ | ------------------------------------------------------ |
+| 404    | Withdrawal not found or doesn't belong to tenant       |
+| 400    | Withdrawal already executed/failed, or broadcast error |
 
 ### 3. Get Withdrawal History (Tenant)
 
@@ -136,9 +139,11 @@ User Request
 **Authentication:** Bearer token (tenant scoped)
 
 **Query Parameters:**
+
 - `limit` (optional): Max 500, default 100
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -174,6 +179,7 @@ User Request
 **Authentication:** Bearer token (tenant scoped)
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -198,6 +204,7 @@ User Request
 ### Scenario: User withdraws 0.5 SOL from agent
 
 1. **Request Phase**
+
    ```
    POST /api/agents/agent_123/withdraw
    {
@@ -206,7 +213,7 @@ User Request
      "description": "Monthly dividend"
    }
    ```
-   
+
    System performs all 6 security checks:
    - ✓ Agent exists
    - ✓ Not a BYOA agent
@@ -224,6 +231,7 @@ User Request
    - Total out of wallet: 0.50005 SOL
 
 3. **User Confirms**
+
    ```
    POST /api/withdrawals/withdrawal_f7a3c2e1/execute
    ```
@@ -239,6 +247,7 @@ User Request
    **Returns:** Updated withdrawal with signature
 
 4. **Verification**
+
    ```
    User can:
    - View transaction on Solana explorer: https://solscan.io/tx/3vZY2u5cK7mL8pQ...
@@ -320,17 +329,19 @@ private dailyWithdrawals: Map<string, number[]> = new Map();
 5. **API Boundary**: Maintains strict separation between platform and external integrations
 
 **Check 1 - Agent Existence:**
+
 ```typescript
 const agentResult = this.agentRegistry.getAgent(agentId);
 // Fails if agent not registered
 ```
 
 **Check 2 - BYOA Blocking:**
+
 ```typescript
 const byoaAgentId = this.walletBinder.getAgentForWallet(agentId);
 if (byoaAgentId) {
   // Reject: this is a BYOA agent
-  return failure("Cannot withdraw from external agent");
+  return failure('Cannot withdraw from external agent');
 }
 ```
 
@@ -343,17 +354,17 @@ All errors are caught and recorded:
 ```typescript
 catch (error) {
   const err = error instanceof Error ? error : new Error(String(error));
-  
+
   // Create failed record
   const updatedRecord: WithdrawalRecord = {
     ...record,
     status: 'failed',
     error: err.message,
   };
-  
+
   this.records[recordIndex] = updatedRecord;
   this.saveToStore();
-  
+
   logger.error('Withdrawal execution failed', { ... });
   return failure(err);
 }
@@ -363,14 +374,14 @@ Withdrawal records with `status: 'failed'` are preserved for audit purposes.
 
 ### Common Errors
 
-| Error | Cause | Resolution |
-|-------|-------|------------|
-| "Agent not found" | Agent doesn't exist | Verify agent ID |
-| "External agent... cannot be withdrawn from" | BYOA agent | Create a regular agent instead |
-| "Invalid recipient address" | Bad Solana address | Verify recipient's public key |
-| "Rate limit exceeded" | Already withdrew in last 24h | Wait 24 hours from first withdrawal |
-| "Insufficient balance" | Wallet has < requested + 0.001 SOL | Request smaller amount |
-| "Agent must be stopped" | Agent is running (future check) | Stop agent before withdrawing |
+| Error                                        | Cause                              | Resolution                          |
+| -------------------------------------------- | ---------------------------------- | ----------------------------------- |
+| "Agent not found"                            | Agent doesn't exist                | Verify agent ID                     |
+| "External agent... cannot be withdrawn from" | BYOA agent                         | Create a regular agent instead      |
+| "Invalid recipient address"                  | Bad Solana address                 | Verify recipient's public key       |
+| "Rate limit exceeded"                        | Already withdrew in last 24h       | Wait 24 hours from first withdrawal |
+| "Insufficient balance"                       | Wallet has < requested + 0.001 SOL | Request smaller amount              |
+| "Agent must be stopped"                      | Agent is running (future check)    | Stop agent before withdrawing       |
 
 ## Logging & Monitoring
 

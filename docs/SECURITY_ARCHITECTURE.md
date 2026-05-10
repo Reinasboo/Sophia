@@ -22,12 +22,14 @@ Deep-dive into security model, encryption, authentication flows, and threat miti
 ### Threat Model
 
 **Assets**:
+
 - Private keys (highest value)
 - User funds (high value)
 - User data / transaction history (medium value)
 - System availability (medium value)
 
 **Threat Actors**:
+
 1. **Unauthenticated External Attacker** — No system access
 2. **Authenticated User (Normal)** — Can only affect own agents/wallets
 3. **Compromised Frontend** — XSS/CSRF attacks, malicious scripts
@@ -90,18 +92,19 @@ Deep-dive into security model, encryption, authentication flows, and threat miti
 
 ### Data Classification
 
-| Classification | Examples                 | Encryption | Location        |
-| -------------- | ------------------------ | ---------- | --------------- |
-| **Public**     | Agent ID, transaction sig | None       | Database, CDN   |
-| **Sensitive**  | Wallet address           | ✓ Encrypted| Database        |
-| **Confidential**| Private keys             | ✓ Encrypted| Memory (temp)   |
-| **Secret**     | Admin API key            | ✓ Hashed   | Vault only      |
+| Classification   | Examples                  | Encryption  | Location      |
+| ---------------- | ------------------------- | ----------- | ------------- |
+| **Public**       | Agent ID, transaction sig | None        | Database, CDN |
+| **Sensitive**    | Wallet address            | ✓ Encrypted | Database      |
+| **Confidential** | Private keys              | ✓ Encrypted | Memory (temp) |
+| **Secret**       | Admin API key             | ✓ Hashed    | Vault only    |
 
 ### Private Key Encryption
 
 **Algorithm**: AES-256-GCM (Galois/Counter Mode)
 
 **Key Derivation**:
+
 ```
 KEY_ENCRYPTION_SECRET (256-bit, stored in vault)
          │
@@ -115,27 +118,26 @@ Derived Key (for AES-256-GCM)
 ```
 
 **Encryption Flow**:
+
 ```typescript
 // At agent creation
-const plaintext = privateKeyBuffer;  // 64 bytes
-const iv = crypto.randomBytes(12);   // 96 bits for GCM
-const aad = agentId;                 // Additional authenticated data
+const plaintext = privateKeyBuffer; // 64 bytes
+const iv = crypto.randomBytes(12); // 96 bits for GCM
+const aad = agentId; // Additional authenticated data
 
 const cipher = crypto.createCipheriv('aes-256-gcm', derivedKey, iv);
 cipher.setAAD(Buffer.from(aad));
 
-const encrypted = Buffer.concat([
-  cipher.update(plaintext),
-  cipher.final()
-]);
+const encrypted = Buffer.concat([cipher.update(plaintext), cipher.final()]);
 
-const authTag = cipher.getAuthTag();  // 128 bits
+const authTag = cipher.getAuthTag(); // 128 bits
 
 // Stored format: [iv (12) | authTag (16) | encrypted (64)]
 const ciphertext = Buffer.concat([iv, authTag, encrypted]);
 ```
 
 **Decryption Flow**:
+
 ```typescript
 // At transaction signing
 const [iv, authTag, encrypted] = splitCiphertext(storedEncrypted);
@@ -144,15 +146,13 @@ const decipher = crypto.createDecipheriv('aes-256-gcm', derivedKey, iv);
 decipher.setAAD(Buffer.from(agentId));
 decipher.setAuthTag(authTag);
 
-const plaintext = Buffer.concat([
-  decipher.update(encrypted),
-  decipher.final()
-]);
+const plaintext = Buffer.concat([decipher.update(encrypted), decipher.final()]);
 
 // plaintext is now the private key
 ```
 
 **Security Properties**:
+
 - **Confidentiality**: Only holder of KEY_ENCRYPTION_SECRET can decrypt
 - **Authenticity**: AuthTag ensures tampering detected
 - **IV Uniqueness**: Random IV prevents identical plaintexts producing identical ciphertexts
@@ -161,16 +161,18 @@ const plaintext = Buffer.concat([
 ### Database Encryption at Rest
 
 **Sensitive Fields** (encrypted in database):
+
 - `wallets.encrypted_private_key` — AES-256-GCM encrypted
 - `wallets.metadata.phone` — (if stored)
 - `agents.configuration` — Encrypted if contains secrets
 
 **Encryption Process**:
+
 ```sql
 -- Before insert
-UPDATE agents 
+UPDATE agents
 SET configuration = pgcrypto.pgp_sym_encrypt(
-  configuration::text, 
+  configuration::text,
   'KEY_ENCRYPTION_SECRET'
 )
 WHERE id = 'agent_123';
@@ -182,6 +184,7 @@ WHERE id = 'agent_123';
 ### Transit Encryption (TLS 1.3)
 
 **All traffic** is encrypted with TLS 1.3:
+
 - Frontend → Backend: HTTPS
 - Frontend → WebSocket: WSS
 - Backend → RPC: HTTPS
@@ -189,6 +192,7 @@ WHERE id = 'agent_123';
 - Database → Backups: Encrypted during transfer
 
 **Certificate Pinning** (optional, for high-security):
+
 ```typescript
 // Client-side
 import https from 'https';
@@ -202,22 +206,17 @@ const agent = new https.Agent({ ca: [cert] });
 ### API Key Hashing
 
 **Admin API Key Storage**:
+
 ```typescript
 // Generation
-const apiKey = crypto.randomBytes(32).toString('hex');  // Displayed once
+const apiKey = crypto.randomBytes(32).toString('hex'); // Displayed once
 
 // Storage (hashed)
-const hash = crypto
-  .createHash('sha256')
-  .update(apiKey)
-  .digest('hex');
+const hash = crypto.createHash('sha256').update(apiKey).digest('hex');
 
 // Verification
 const incomingKey = req.headers['x-admin-key'];
-const incomingHash = crypto
-  .createHash('sha256')
-  .update(incomingKey)
-  .digest('hex');
+const incomingHash = crypto.createHash('sha256').update(incomingKey).digest('hex');
 
 if (incomingHash !== storedHash) {
   throw new UnauthorizedException();
@@ -270,6 +269,7 @@ Frontend
 ```
 
 **JWT Verification** (Privy):
+
 ```typescript
 // src/integration/agentAdapter.ts
 import { jwtVerify } from 'jose';
@@ -279,20 +279,20 @@ const jwksUrl = process.env.PRIVY_JWKS_URL;
 async function verifyPrivyToken(token: string) {
   // Fetch JWKS (cached, refreshed daily)
   const keyset = await fetchJWKS(jwksUrl);
-  
+
   // Verify token
   const { payload } = await jwtVerify(token, keyset);
-  
+
   // Validate claims
   if (payload.aud !== process.env.PRIVY_APP_ID) {
     throw new Error('Invalid audience');
   }
-  
-  if (Date.now() > (payload.exp! * 1000)) {
+
+  if (Date.now() > payload.exp! * 1000) {
     throw new Error('Token expired');
   }
-  
-  return payload.sub;  // User ID
+
+  return payload.sub; // User ID
 }
 ```
 
@@ -366,67 +366,61 @@ Operation Complete
 ### Policy-Based Access Control
 
 **Per-Agent Policies**:
+
 ```json
 {
   "agentId": "agent_123",
   "policies": {
-    "dailyLimit": 10000000,        // 10 SOL/day
+    "dailyLimit": 10000000, // 10 SOL/day
     "maxTransactionSize": 1000000, // 1 SOL/tx
     "allowedOperations": ["transfer", "swap"],
-    "allowedRecipients": [
-      "recipient1.sol",
-      "recipient2.sol"
-    ],
-    "timeWindowStart": "09:00",    // UTC
-    "timeWindowEnd": "17:00"       // UTC
+    "allowedRecipients": ["recipient1.sol", "recipient2.sol"],
+    "timeWindowStart": "09:00", // UTC
+    "timeWindowEnd": "17:00" // UTC
   }
 }
 ```
 
 **Policy Evaluation**:
+
 ```typescript
-function evaluatePolicy(
-  agent: Agent,
-  intent: Intent
-): { allowed: boolean; reason?: string } {
+function evaluatePolicy(agent: Agent, intent: Intent): { allowed: boolean; reason?: string } {
   const policy = agent.policies;
-  
+
   // Check operation allowed
   if (!policy.allowedOperations.includes(intent.type)) {
     return { allowed: false, reason: 'Operation not allowed' };
   }
-  
+
   // Check daily limit
   const today = new Date().toDateString();
   const todaySpent = agent.transactions
-    .filter(t => new Date(t.createdAt).toDateString() === today)
+    .filter((t) => new Date(t.createdAt).toDateString() === today)
     .reduce((sum, t) => sum + t.amount, 0);
-  
+
   if (todaySpent + intent.amount > policy.dailyLimit) {
     return { allowed: false, reason: 'Daily limit exceeded' };
   }
-  
+
   // Check transaction size
   if (intent.amount > policy.maxTransactionSize) {
     return { allowed: false, reason: 'Transaction too large' };
   }
-  
+
   // Check recipient allowed
-  if (policy.allowedRecipients && 
-      !policy.allowedRecipients.includes(intent.recipient)) {
+  if (policy.allowedRecipients && !policy.allowedRecipients.includes(intent.recipient)) {
     return { allowed: false, reason: 'Recipient not allowed' };
   }
-  
+
   // Check time window
   const currentHour = new Date().getUTCHours();
   const [startHour, startMin] = policy.timeWindowStart.split(':');
   const [endHour, endMin] = policy.timeWindowEnd.split(':');
-  
-  if (currentHour < parseInt(startHour) || 
-      currentHour >= parseInt(endHour)) {
+
+  if (currentHour < parseInt(startHour) || currentHour >= parseInt(endHour)) {
     return { allowed: false, reason: 'Outside allowed time window' };
   }
-  
+
   return { allowed: true };
 }
 ```
@@ -440,6 +434,7 @@ function evaluatePolicy(
 **Scenario**: Attacker gains access to private key (database breach, memory dump, etc.)
 
 **Mitigations**:
+
 - ✓ Private keys encrypted at rest (AES-256-GCM)
 - ✓ Encryption key stored in vault, not in code
 - ✓ Keys only decrypted in isolated wallet manager
@@ -458,6 +453,7 @@ function evaluatePolicy(
 **Scenario**: Attacker submits transaction without proper authorization
 
 **Mitigations**:
+
 - ✓ JWT signature verification (BYOA agents)
 - ✓ Admin API key verification (server operations)
 - ✓ Per-agent policy enforcement
@@ -476,6 +472,7 @@ function evaluatePolicy(
 **Scenario**: Attacker injects malicious script, steals user session
 
 **Mitigations**:
+
 - ✓ Session cookies httpOnly (not accessible to JavaScript)
 - ✓ Session cookies secure (only over HTTPS)
 - ✓ SameSite=Strict (no cross-site request forgery)
@@ -494,6 +491,7 @@ function evaluatePolicy(
 **Scenario**: Admin with API key abuses access, submits unauthorized transactions
 
 **Mitigations**:
+
 - ✓ Admin key logged on every use (audit trail)
 - ✓ Rate limiting applies to admin too
 - ✓ All operations require policy enforcement
@@ -512,6 +510,7 @@ function evaluatePolicy(
 **Scenario**: Attacker gains access to PostgreSQL database
 
 **Mitigations**:
+
 - ✓ Database behind Railway firewall (no public access)
 - ✓ Connection via TLS
 - ✓ Private keys encrypted (useless without KEY_ENCRYPTION_SECRET)
@@ -530,6 +529,7 @@ function evaluatePolicy(
 **Scenario**: RPC provider manipulated, returns false transaction confirmations
 
 **Mitigations**:
+
 - ✓ Transaction simulation before submission
 - ✓ On-chain confirmation verification
 - ✓ Helius webhook verification (signature check)
@@ -547,6 +547,7 @@ function evaluatePolicy(
 **Scenario**: Operator with infrastructure access steals keys or modifies code
 
 **Mitigations**:
+
 - ✓ Encryption keys in separate vault (not even DevOps has)
 - ✓ Audit logs of all SSH access
 - ✓ Code reviewed before deployment (GitHub)
@@ -565,6 +566,7 @@ function evaluatePolicy(
 ### Encryption Key Lifecycle
 
 **Generation**:
+
 ```bash
 # Create strong 256-bit key
 openssl rand -base64 32
@@ -572,12 +574,14 @@ openssl rand -base64 32
 ```
 
 **Storage** (Vault):
+
 - Store in 1Password, AWS Secrets Manager, or similar
 - Never commit to Git
 - Never log or display
 - Access via environment variable only
 
 **Rotation** (Quarterly):
+
 ```bash
 # Create new key
 NEW_KEY=$(openssl rand -base64 32)
@@ -593,6 +597,7 @@ npm run scripts/rotate-encryption-key.ts
 ```
 
 **Destruction** (When no longer needed):
+
 - Securely delete from vault
 - Update rotation log
 - Notify team
@@ -601,6 +606,7 @@ npm run scripts/rotate-encryption-key.ts
 ### Admin API Key Rotation
 
 **Quarterly Rotation**:
+
 ```bash
 # Generate new key
 NEW_KEY=$(openssl rand -hex 32)
@@ -622,6 +628,7 @@ railway service restart sophia
 ### Database Credentials
 
 **Initial Setup**:
+
 ```bash
 # Generate password
 DB_PASSWORD=$(openssl rand -base64 32)
@@ -634,6 +641,7 @@ railway env set DATABASE_URL "postgres://user:$DB_PASSWORD@host/db"
 ```
 
 **Rotation** (If compromised):
+
 ```bash
 # Create new database user
 psql -c "ALTER ROLE sophia_prod WITH PASSWORD '$NEW_PASSWORD';"
@@ -655,6 +663,7 @@ psql "$DATABASE_URL" -c "SELECT 1;"
 ### Audit Logging
 
 **Events Logged**:
+
 - User authentication (success/failure)
 - Agent creation / modification / deletion
 - Transaction submission / execution
@@ -664,6 +673,7 @@ psql "$DATABASE_URL" -c "SELECT 1;"
 - Database backups
 
 **Audit Log Format**:
+
 ```json
 {
   "timestamp": "2026-05-05T10:30:00Z",
@@ -683,6 +693,7 @@ psql "$DATABASE_URL" -c "SELECT 1;"
 ```
 
 **Storage** (PostgreSQL):
+
 ```sql
 CREATE TABLE audit_logs (
   id SERIAL PRIMARY KEY,
@@ -708,29 +719,31 @@ CREATE INDEX idx_audit_logs_agent_id ON audit_logs(agent_id);
 ### Access Control Audit
 
 **Quarterly Review**:
+
 ```bash
 # Who has accessed the system?
-SELECT user_id, COUNT(*) as event_count 
-FROM audit_logs 
+SELECT user_id, COUNT(*) as event_count
+FROM audit_logs
 WHERE created_at > NOW() - INTERVAL '90 days'
-GROUP BY user_id 
+GROUP BY user_id
 ORDER BY event_count DESC;
 
 # What operations were performed?
-SELECT event_type, COUNT(*) 
-FROM audit_logs 
+SELECT event_type, COUNT(*)
+FROM audit_logs
 WHERE created_at > NOW() - INTERVAL '90 days'
 GROUP BY event_type;
 
 # Any failed authorization attempts?
-SELECT COUNT(*) FROM audit_logs 
-WHERE result = 'failure' 
+SELECT COUNT(*) FROM audit_logs
+WHERE result = 'failure'
 AND event_type IN ('auth_failed', 'authorization_failed');
 ```
 
 ### Compliance Standards
 
 **Security Standards Met**:
+
 - [x] OWASP Top 10 (2021) — All items addressed
 - [x] NIST Cybersecurity Framework — Identify, Protect, Detect, Respond, Recover
 - [x] SOC 2 Type II ready — Audit trail, access controls, encryption
@@ -743,12 +756,12 @@ AND event_type IN ('auth_failed', 'authorization_failed');
 
 ### Security Incident Classification
 
-| Severity | Examples                                    | Response |
-| -------- | ------------------------------------------- | -------- |
-| **CRIT** | Private key leaked, funds stolen            | Immediate |
-| **HIGH** | Unauthorized admin API key access           | 1 hour   |
-| **MED**  | Unauthorized transaction attempted (blocked)| 4 hours  |
-| **LOW**  | Failed login attempt, minor misconfiguration| 1 day    |
+| Severity | Examples                                     | Response  |
+| -------- | -------------------------------------------- | --------- |
+| **CRIT** | Private key leaked, funds stolen             | Immediate |
+| **HIGH** | Unauthorized admin API key access            | 1 hour    |
+| **MED**  | Unauthorized transaction attempted (blocked) | 4 hours   |
+| **LOW**  | Failed login attempt, minor misconfiguration | 1 day     |
 
 ### Incident Response Template
 
@@ -836,12 +849,14 @@ FOLLOW-UP:
 ### Secure Communication
 
 **For Sensitive Topics**:
+
 - Use Signal or encrypted messaging
 - Never email passwords or keys
 - Conference calls only (no chat records)
 - Document discussion in secure Notion
 
 **For Incident Updates**:
+
 - Use dedicated Slack channel (#security-incidents)
 - Avoid mentioning specific amounts/addresses
 - Redact sensitive information in logs before sharing

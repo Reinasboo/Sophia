@@ -1,11 +1,11 @@
 /**
  * Multi-RPC Failover Client
- * 
+ *
  * Rotates between multiple Solana RPC endpoints to:
  * 1. Avoid single-provider rate limiting
  * 2. Distribute load across providers
  * 3. Automatically failover if one provider is down/rate-limited
- * 
+ *
  * Configuration: Set comma-separated RPC URLs in SOLANA_RPC_URLS environment variable
  * Example: "https://api.mainnet-beta.solana.com,https://solana-mainnet.g.alchemy.com/v2/KEY,..."
  */
@@ -34,7 +34,9 @@ export class MultiRpcClient {
     const urls = rpcUrls || envUrls.split(',').filter(Boolean);
 
     if (!urls.length) {
-      throw new Error('No Solana RPC URLs configured. Set SOLANA_RPC_URLS env var with comma-separated URLs.');
+      throw new Error(
+        'No Solana RPC URLs configured. Set SOLANA_RPC_URLS env var with comma-separated URLs.'
+      );
     }
 
     this.endpoints = urls.map((url) => ({
@@ -46,7 +48,10 @@ export class MultiRpcClient {
 
     logger.info('Multi-RPC client initialized', {
       endpointCount: this.endpoints.length,
-      endpoints: this.endpoints.map((e) => ({ url: e.url.substring(0, 50) + '...', healthy: e.isHealthy })),
+      endpoints: this.endpoints.map((e) => ({
+        url: e.url.substring(0, 50) + '...',
+        healthy: e.isHealthy,
+      })),
     });
   }
 
@@ -110,7 +115,10 @@ export class MultiRpcClient {
   /**
    * Execute RPC call with automatic failover
    */
-  async execute<T>(operation: (connection: Connection) => Promise<T>, operationName: string): Promise<T> {
+  async execute<T>(
+    operation: (connection: Connection) => Promise<T>,
+    operationName: string
+  ): Promise<T> {
     const startTime = Date.now();
     let lastError: Error | null = null;
 
@@ -181,7 +189,10 @@ export class MultiRpcClient {
    * Get account balance
    */
   async getBalance(publicKey: PublicKey): Promise<number> {
-    return this.execute((conn) => conn.getBalance(publicKey), `getBalance(${publicKey.toBase58().substring(0, 8)}...)`);
+    return this.execute(
+      (conn) => conn.getBalance(publicKey),
+      `getBalance(${publicKey.toBase58().substring(0, 8)}...)`
+    );
   }
 
   /**
@@ -189,7 +200,10 @@ export class MultiRpcClient {
    */
   async getTokenBalances(owner: PublicKey, _mint?: PublicKey): Promise<unknown> {
     return this.execute(
-      (conn) => conn.getTokenAccountsByOwner(owner, { programId: new PublicKey('TokenkegQfeZyiNwAJsyFbPVwwQQnmLYEMud6pNvitLSg') }),
+      (conn) =>
+        conn.getTokenAccountsByOwner(owner, {
+          programId: new PublicKey('TokenkegQfeZyiNwAJsyFbPVwwQQnmLYEMud6pNvitLSg'),
+        }),
       `getTokenBalances(${owner.toBase58().substring(0, 8)}...)`
     );
   }
@@ -208,14 +222,20 @@ export class MultiRpcClient {
    * Send transaction
    */
   async sendTransaction(tx: unknown): Promise<string> {
-    return this.execute((conn) => conn.sendRawTransaction(tx as Buffer | Uint8Array), 'sendTransaction');
+    return this.execute(
+      (conn) => conn.sendRawTransaction(tx as Buffer | Uint8Array),
+      'sendTransaction'
+    );
   }
 
   /**
    * Get transaction details
    */
   async getTransaction(signature: string): Promise<unknown> {
-    return this.execute((conn) => conn.getTransaction(signature), `getTransaction(${signature.substring(0, 8)}...)`);
+    return this.execute(
+      (conn) => conn.getTransaction(signature),
+      `getTransaction(${signature.substring(0, 8)}...)`
+    );
   }
 
   /**
@@ -227,7 +247,10 @@ export class MultiRpcClient {
       healthy: ep.isHealthy,
       successCount: ep.successCount,
       failureCount: ep.failureCount,
-      successRate: ep.successCount + ep.failureCount > 0 ? (ep.successCount / (ep.successCount + ep.failureCount) * 100).toFixed(1) + '%' : 'N/A',
+      successRate:
+        ep.successCount + ep.failureCount > 0
+          ? ((ep.successCount / (ep.successCount + ep.failureCount)) * 100).toFixed(1) + '%'
+          : 'N/A',
       lastError: ep.lastError,
     }));
   }

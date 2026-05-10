@@ -66,7 +66,8 @@ export function tenantContextMiddleware() {
       // Fallback: check HttpOnly session cookie set by frontend
       if (!apiKey && req.headers.cookie) {
         const cookies = parseCookieHeader(req.headers.cookie);
-        const sessionKey = cookies['sophia_session'] || cookies['sophia_session'.replace(/_/g, '%5F')];
+        const sessionKey =
+          cookies['sophia_session'] || cookies['sophia_session'.replace(/_/g, '%5F')];
         if (sessionKey) {
           apiKey = sessionKey;
           logger.debug('Using session cookie for tenant auth', { path: req.path });
@@ -94,13 +95,13 @@ export function tenantContextMiddleware() {
         const tokenRecord = await getBearerTokenByValue(apiKey);
         if (tokenRecord) {
           req.tenantContext = {
-             tenantId: tokenRecord.privyUserId,
-             userId: tokenRecord.privyUserId,
+            tenantId: tokenRecord.privyUserId,
+            userId: tokenRecord.privyUserId,
             apiKey,
           };
           logger.info('[TenantAuth] Server-issued bearer token authenticated', {
-             tenantId: tokenRecord.privyUserId,
-             apiKeyPrefix: apiKey.substring(0, 20) + '...',
+            tenantId: tokenRecord.privyUserId,
+            apiKeyPrefix: apiKey.substring(0, 20) + '...',
           });
           return next();
         }
@@ -121,10 +122,13 @@ export function tenantContextMiddleware() {
             return next();
           }
         } catch (error) {
-          logger.debug('Privy JWT verification failed (this is expected for server-issued tokens)', {
-            path: req.path,
-            ip: req.ip,
-          });
+          logger.debug(
+            'Privy JWT verification failed (this is expected for server-issued tokens)',
+            {
+              path: req.path,
+              ip: req.ip,
+            }
+          );
         }
 
         if (!allowInsecureTenantTokens) {

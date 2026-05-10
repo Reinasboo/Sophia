@@ -50,9 +50,7 @@ describe('tenant middleware', () => {
     protectedRoute()(req, res as any, next);
 
     expect(res.status).toHaveBeenCalledWith(401);
-    expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ success: false })
-    );
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: false }));
     expect(next).not.toHaveBeenCalled();
   });
 

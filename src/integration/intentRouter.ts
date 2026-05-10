@@ -417,10 +417,7 @@ export class IntentRouter {
 
     // ── 2b. Enforce verification for BYOA agents ─────────
     const verificationMethods = agent.verificationMethods ?? [];
-    if (
-      verificationMethods.includes('challenge-response') &&
-      agent.challengeVerified !== true
-    ) {
+    if (verificationMethods.includes('challenge-response') && agent.challengeVerified !== true) {
       return this.reject(
         intentId,
         agent.id,

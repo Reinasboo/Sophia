@@ -39,8 +39,8 @@ railway logs --service sophia --since 8h | grep "ERROR\|CRITICAL\|ALERT"
 
 # 3. Database connections
 railway db shell <<EOF
-SELECT datname, count(*) 
-FROM pg_stat_activity 
+SELECT datname, count(*)
+FROM pg_stat_activity
 GROUP BY datname;
 EOF
 
@@ -61,6 +61,7 @@ railway logs --service sophia --since 1h | grep "transaction_success_rate"
 ```
 
 **Checklist**:
+
 - [ ] All services reporting healthy
 - [ ] No critical errors in logs
 - [ ] Database connections within limits
@@ -103,6 +104,7 @@ exit 0
 ```
 
 **Setup cron**:
+
 ```bash
 # Every hour, at minute 0
 0 * * * * /usr/local/bin/agentic-wallet-health-check.sh
@@ -133,8 +135,8 @@ railway logs --service sophia --since 24h | grep "ERROR\|CRITICAL" | wc -l >> da
 echo "" >> daily-report.txt
 echo "## Transactions (last 24h)" >> daily-report.txt
 railway db shell <<EOF >> daily-report.txt
-SELECT DATE(created_at), COUNT(*) FROM transactions 
-WHERE created_at > NOW() - INTERVAL '24 hours' 
+SELECT DATE(created_at), COUNT(*) FROM transactions
+WHERE created_at > NOW() - INTERVAL '24 hours'
 GROUP BY DATE(created_at);
 EOF
 
@@ -219,19 +221,20 @@ npm outdated --long
 
 ### Key Metrics to Monitor
 
-| Metric                   | Threshold | Action                   |
-| ------------------------ | ---------- | ------------------------ |
-| **Availability**         | < 99.5%    | Page on-call engineer    |
-| **Error Rate**           | > 1%       | Check logs, investigate  |
-| **Response Time (p95)**  | > 2s       | Check database, scale if needed |
-| **Database Connections** | > 40/50    | Increase pool or optimize queries |
-| **Memory Usage**         | > 80%      | Investigate leak, restart if needed |
-| **Disk Usage**           | > 90%      | Clean old logs, archive DB |
-| **RPC Rate Limit**       | > 80%      | Batch requests, optimize |
+| Metric                   | Threshold | Action                              |
+| ------------------------ | --------- | ----------------------------------- |
+| **Availability**         | < 99.5%   | Page on-call engineer               |
+| **Error Rate**           | > 1%      | Check logs, investigate             |
+| **Response Time (p95)**  | > 2s      | Check database, scale if needed     |
+| **Database Connections** | > 40/50   | Increase pool or optimize queries   |
+| **Memory Usage**         | > 80%     | Investigate leak, restart if needed |
+| **Disk Usage**           | > 90%     | Clean old logs, archive DB          |
+| **RPC Rate Limit**       | > 80%     | Batch requests, optimize            |
 
 ### Setting Up Monitoring (Railway)
 
 **Via Railway Dashboard**:
+
 1. Go to Project → Monitoring
 2. Enable metrics:
    - [ ] CPU usage
@@ -250,7 +253,7 @@ import { StatsD } from 'node-statsd';
 const client = new StatsD({
   host: 'datadog.example.com',
   port: 8125,
-  prefix: 'agentic_wallet.'
+  prefix: 'agentic_wallet.',
 });
 
 export function recordMetric(name: string, value: number, tags: string[] = []) {
@@ -269,24 +272,28 @@ recordMetric('db.connections', connectionCount, ['pool:main']);
 ### Alert Routing
 
 **Critical Alerts** (page on-call):
+
 - Backend offline (health check fails)
 - Database unavailable
 - Transaction success rate < 90%
 - Memory leak detected (growing > 5%/min)
 
 **High Priority** (send to Slack #alerts):
+
 - Error rate > 5%
 - Response time p95 > 5s
 - Database query time > 10s
 - Rate limit triggered
 
 **Medium Priority** (daily digest):
+
 - Disk usage growing
 - Minor dependency updates available
 - Cost trending up
 - Non-critical warnings
 
 **Setup Slack Integration**:
+
 ```bash
 # Create Slack webhook
 # Post to #alerts channel
@@ -305,6 +312,7 @@ curl -X POST -H 'Content-type: application/json' \
 **Symptom**: `curl https://sophia-production-1a83.up.railway.app/api/health` times out
 
 **Investigation**:
+
 ```bash
 # Check service status
 railway status
@@ -320,6 +328,7 @@ railway logs --service sophia | grep "Connected to PostgreSQL"
 ```
 
 **Resolution**:
+
 ```bash
 # Option 1: Service is crashing (quick restart)
 railway service restart sophia
@@ -340,6 +349,7 @@ git push origin main
 ```
 
 **Root Cause Check**:
+
 ```bash
 # View recent commits
 git log --oneline -5
@@ -357,6 +367,7 @@ npm test
 **Symptom**: Database errors like `connect ECONNREFUSED` or `connection pool exhausted`
 
 **Investigation**:
+
 ```bash
 # Check current connections
 psql "$DATABASE_URL" -c "
@@ -365,8 +376,8 @@ psql "$DATABASE_URL" -c "
 
 # Find long-running queries
 psql "$DATABASE_URL" -c "
-  SELECT pid, usename, state, query, query_start 
-  FROM pg_stat_activity 
+  SELECT pid, usename, state, query, query_start
+  FROM pg_stat_activity
   WHERE query_start < now() - INTERVAL '5 minutes'
   ORDER BY query_start;"
 
@@ -375,11 +386,12 @@ railway logs --service sophia | grep "pool\|connection" | tail -20
 ```
 
 **Resolution**:
+
 ```bash
 # Option 1: Kill idle connections (temporary)
 psql "$DATABASE_URL" -c "
-  SELECT pg_terminate_backend(pid) 
-  FROM pg_stat_activity 
+  SELECT pg_terminate_backend(pid)
+  FROM pg_stat_activity
   WHERE state = 'idle' AND query_start < now() - INTERVAL '1 hour';"
 
 # Option 2: Increase connection pool size
@@ -401,6 +413,7 @@ railway service restart sophia
 **Symptom**: Memory usage grows from 100MB to 400MB over hours; service slows down
 
 **Investigation**:
+
 ```bash
 # Check memory trend
 railway logs --service sophia --since 24h | grep "memory" | tail -20
@@ -417,6 +430,7 @@ grep -r "\.on\(" src/ --include="*.ts" | grep -v "\.once\("
 ```
 
 **Resolution**:
+
 ```bash
 # Immediate: Restart service (clears memory)
 railway service restart sophia
@@ -441,6 +455,7 @@ railway env set NODE_OPTIONS "--max-old-space-size=384"
 **Symptom**: Transaction success rate dropped from 98% to 75%; users reporting failed transactions
 
 **Investigation**:
+
 ```bash
 # Check recent transaction errors
 railway logs --service sophia | grep "transaction.*error\|simulation failed" | tail -20
@@ -455,13 +470,14 @@ railway logs --service sophia | grep "rate limit\|429" | wc -l
 
 # Review transaction details
 psql "$DATABASE_URL" -c "
-  SELECT status, error, COUNT(*) 
-  FROM transactions 
-  WHERE created_at > NOW() - INTERVAL '1 hour' 
+  SELECT status, error, COUNT(*)
+  FROM transactions
+  WHERE created_at > NOW() - INTERVAL '1 hour'
   GROUP BY status, error;"
 ```
 
 **Resolution**:
+
 ```bash
 # Option 1: RPC provider is degraded - switch RPC
 railway env set SOLANA_RPC_URL "https://api.solana.com"
@@ -474,7 +490,7 @@ railway service restart sophia
 
 # Option 3: Wallet balance insufficient - check
 psql "$DATABASE_URL" -c "
-  SELECT agent_id, wallet_address FROM agents 
+  SELECT agent_id, wallet_address FROM agents
   WHERE status = 'active' LIMIT 10;"
 # Check wallet balances on explorer
 
@@ -489,6 +505,7 @@ railway service restart sophia
 **Symptom**: API requests taking 5-10s; users experiencing slow dashboard loads
 
 **Investigation**:
+
 ```bash
 # Check database query time
 railway logs --service sophia | grep "duration" | sort -t= -k2 -rn | head -10
@@ -498,17 +515,18 @@ railway logs --service sophia | grep "GET\|POST" | awk '{print $1 " " $4 " " $NF
 
 # Check database indexes
 psql "$DATABASE_URL" -c "
-  SELECT schemaname, tablename, indexname 
-  FROM pg_indexes 
+  SELECT schemaname, tablename, indexname
+  FROM pg_indexes
   WHERE tablename IN ('agents', 'transactions', 'intents');"
 
 # Analyze query plan
 psql "$DATABASE_URL" -c "
-  EXPLAIN ANALYZE 
+  EXPLAIN ANALYZE
   SELECT * FROM agents WHERE agent_id = 'some-id';"
 ```
 
 **Resolution**:
+
 ```bash
 # Option 1: Add missing index
 psql "$DATABASE_URL" -c "
@@ -540,6 +558,7 @@ railway service restart sophia
 ### Database Query Optimization
 
 **Find Slow Queries**:
+
 ```bash
 # Enable slow query log
 railway db shell <<EOF
@@ -552,6 +571,7 @@ railway logs --service Postgres | grep "log_min_duration"
 ```
 
 **Add Indexes**:
+
 ```bash
 # Analyze query plans
 EXPLAIN ANALYZE SELECT * FROM agents WHERE user_id = '123' AND status = 'active';
@@ -566,6 +586,7 @@ EXPLAIN SELECT * FROM agents WHERE user_id = '123' AND status = 'active';
 ```
 
 **Optimize Connection Pooling**:
+
 ```bash
 # Current pool config
 psql "$DATABASE_URL" -c "SHOW max_connections;"
@@ -580,6 +601,7 @@ railway service restart sophia
 ### API Response Caching
 
 **Add Response Caching**:
+
 ```typescript
 // src/middleware/cache.ts
 import redis from 'redis';
@@ -589,20 +611,20 @@ const client = redis.createClient();
 export function cacheResponse(ttl: number = 300) {
   return async (req, res, next) => {
     const key = `cache:${req.method}:${req.url}`;
-    
+
     // Check cache
     const cached = await client.get(key);
     if (cached) {
       return res.json(JSON.parse(cached));
     }
-    
+
     // Capture response
     const originalJson = res.json.bind(res);
     res.json = (data) => {
       client.setEx(key, ttl, JSON.stringify(data));
       return originalJson(data);
     };
-    
+
     next();
   };
 }
@@ -614,19 +636,21 @@ router.get('/api/agents/:id', cacheResponse(60), getAgentHandler);
 ### Frontend Performance
 
 **Enable ISR (Incremental Static Regeneration)**:
+
 ```typescript
 // pages/agents/index.tsx
 export async function getStaticProps() {
   const agents = await fetchAgents();
-  
+
   return {
     props: { agents },
-    revalidate: 60,  // Revalidate every 60 seconds
+    revalidate: 60, // Revalidate every 60 seconds
   };
 }
 ```
 
 **Optimize Images**:
+
 ```typescript
 import Image from 'next/image';
 
@@ -634,9 +658,9 @@ import Image from 'next/image';
 <img src="/dashboard-chart.png" width="800" height="600" />
 
 // After (optimized)
-<Image 
-  src="/dashboard-chart.png" 
-  width={800} 
+<Image
+  src="/dashboard-chart.png"
+  width={800}
   height={600}
   quality={75}
   placeholder="blur"
@@ -650,6 +674,7 @@ import Image from 'next/image';
 ### Database Backup Strategy
 
 **Automatic Backups** (Railway):
+
 ```bash
 # Check backup schedule
 railway database backups list
@@ -663,6 +688,7 @@ railway database backups list
 ```
 
 **Manual Backup** (before major changes):
+
 ```bash
 # Create backup
 railway database backup
@@ -672,6 +698,7 @@ railway database backups list | head -1
 ```
 
 **Restore from Backup**:
+
 ```bash
 # List available backups
 railway database backups list
@@ -686,6 +713,7 @@ psql "$DATABASE_URL" -c "SELECT COUNT(*) FROM agents;"
 ### Transaction History Archive
 
 **Monthly Archive**:
+
 ```bash
 # Export transactions older than 30 days
 psql "$DATABASE_URL" -c "
@@ -702,6 +730,7 @@ aws s3 cp transactions-archive-*.csv s3://backups/transactions/
 ### Code Backup Strategy
 
 **Git Backup** (automatic):
+
 ```bash
 # Verify remote backup
 git remote -v
@@ -719,6 +748,7 @@ git push backup main
 ### When to Scale
 
 **Scale Backend (Replicas)** when:
+
 - CPU usage consistently > 70%
 - Memory usage > 80%
 - Response time p95 > 3s
@@ -736,6 +766,7 @@ railway logs --service sophia --follow
 ```
 
 **Scale Database** when:
+
 - Connection pool exhausted
 - Query time degrading
 - Disk usage > 80%
@@ -748,6 +779,7 @@ railway service update Postgres --memory 2Gi  # From 1GB to 2GB
 ```
 
 **Scale Frontend** when:
+
 - CDN cache hit rate < 90%
 - Build time > 5 minutes
 
@@ -764,6 +796,7 @@ railway service update Postgres --memory 2Gi  # From 1GB to 2GB
 ### Capacity Planning (6-month forecast)
 
 **Data Points to Track**:
+
 - Transactions per day (trend)
 - Agents created per week (trend)
 - Database size growth (MB/week)
@@ -771,6 +804,7 @@ railway service update Postgres --memory 2Gi  # From 1GB to 2GB
 - API request volume (requests/sec)
 
 **Planning Template**:
+
 ```
 Current State (May 2026):
 - Transactions/day: 1,000
@@ -802,16 +836,17 @@ Timeline:
 
 ### Incident Severity Levels
 
-| Level    | Response Time | Examples                          | On-Call |
-| -------- | ------------- | --------------------------------- | ------- |
-| **SEV-1** | Immediate     | Backend offline, data loss         | Page    |
-| **SEV-2** | 15 minutes    | Error rate > 10%, major slowdown  | Notify  |
-| **SEV-3** | 1 hour        | Error rate 1-5%, minor slowdown   | Ticket  |
-| **SEV-4** | Next business day | Documentation, optimization | Backlog |
+| Level     | Response Time     | Examples                         | On-Call |
+| --------- | ----------------- | -------------------------------- | ------- |
+| **SEV-1** | Immediate         | Backend offline, data loss       | Page    |
+| **SEV-2** | 15 minutes        | Error rate > 10%, major slowdown | Notify  |
+| **SEV-3** | 1 hour            | Error rate 1-5%, minor slowdown  | Ticket  |
+| **SEV-4** | Next business day | Documentation, optimization      | Backlog |
 
 ### Incident Response Playbook
 
 **Step 1: Detect & Alert** (0-2 min)
+
 ```bash
 # Automated alert triggers
 # or manual: "I noticed something wrong"
@@ -821,6 +856,7 @@ Timeline:
 ```
 
 **Step 2: Initial Response** (2-5 min)
+
 ```bash
 # Commander: Check service status
 railway status
@@ -833,6 +869,7 @@ railway logs --service sophia -n 100
 ```
 
 **Step 3: Stabilize** (5-30 min)
+
 ```bash
 # Implement workaround or fix
 # - Restart service
@@ -847,6 +884,7 @@ curl -s https://sophia-production-1a83.up.railway.app/api/health
 ```
 
 **Step 4: Communicate** (Continuous)
+
 ```bash
 # Update Slack channel every 5 minutes
 # Notify affected customers if needed
@@ -854,6 +892,7 @@ curl -s https://sophia-production-1a83.up.railway.app/api/health
 ```
 
 **Step 5: Full Resolution** (0.5-4 hours)
+
 ```bash
 # Confirm issue is resolved
 # Monitor metrics (error rate, latency) for 30 min
@@ -861,6 +900,7 @@ curl -s https://sophia-production-1a83.up.railway.app/api/health
 ```
 
 **Step 6: Post-Mortem** (24-48 hours)
+
 ```bash
 # Team meeting to discuss:
 # - What happened?
@@ -903,11 +943,13 @@ Questions? [contact]
 ### Planned Maintenance Schedule
 
 **Monthly** (First Sunday, 2-3 AM UTC):
+
 - Database maintenance (VACUUM, REINDEX)
 - Security patches (npm audit fix)
 - Backup verification
 
 **Quarterly** (First day of quarter, 3-4 AM UTC):
+
 - Major dependency updates
 - Infrastructure optimization
 - Disaster recovery drill
@@ -915,6 +957,7 @@ Questions? [contact]
 ### Maintenance Procedures
 
 **Before Maintenance** (24 hours):
+
 ```bash
 # 1. Announce to users
 # Message in Discord/Twitter: "Scheduled maintenance..."
@@ -928,6 +971,7 @@ railway database backup
 ```
 
 **During Maintenance** (2 AM UTC):
+
 ```bash
 # 1. Stop accepting requests (optional)
 # Set maintenance mode banner
@@ -950,6 +994,7 @@ curl -s https://sophia-production-1a83.up.railway.app/api/health
 ```
 
 **After Maintenance**:
+
 ```bash
 # 1. Monitor for 30 minutes
 railway logs --service sophia --follow

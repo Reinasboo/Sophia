@@ -104,6 +104,7 @@ npm run mainnet:check
 ```
 
 **Expected Output**:
+
 ```
 ✅ Tests: All passed
 ✅ Linting: No errors
@@ -197,6 +198,7 @@ git push origin main:staging
 ```
 
 **Sign-off Template**:
+
 ```
 [ ] Code review passed
 [ ] All tests passing
@@ -267,6 +269,7 @@ railway env list
 ### Step 3: Configure Vercel Frontend
 
 **Via Vercel Dashboard**:
+
 1. Go to Vercel Project → Settings → Environment Variables
 2. Add for Production:
    - `NEXT_PUBLIC_API_URL`: `https://sophia-production-1a83.up.railway.app`
@@ -275,6 +278,7 @@ railway env list
    - `NEXT_PUBLIC_PRIVY_APP_ID`: `<privy-app-id>`
 
 **Via Vercel CLI**:
+
 ```bash
 # Install Vercel CLI
 npm i -g vercel
@@ -721,7 +725,7 @@ railway status --service Postgres
 railway logs --service Postgres -n 50
 
 # 3. Connect to database directly
-psql "$DATABASE_URL" -c "SELECT pg_database.datname, 
+psql "$DATABASE_URL" -c "SELECT pg_database.datname,
   pg_size_pretty(pg_database_bloat_size(datname))
   FROM pg_database;"
 
@@ -852,8 +856,8 @@ railway env set KEY_ENCRYPTION_SECRET "$NEW_SECRET"
 
 # 3. Audit recent activity
 psql "$DATABASE_URL" -c "
-  SELECT created_at, agent_id, intent_type 
-  FROM intents 
+  SELECT created_at, agent_id, intent_type
+  FROM intents
   WHERE created_at > NOW() - INTERVAL '1 hour'
   ORDER BY created_at DESC;"
 

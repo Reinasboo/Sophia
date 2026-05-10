@@ -23,11 +23,7 @@ function pass(message: string): void {
 
 function isForbiddenRpcTarget(url: string): boolean {
   const lower = url.toLowerCase();
-  return (
-    lower.includes('devnet') ||
-    lower.includes('localhost') ||
-    lower.includes('127.0.0.1')
-  );
+  return lower.includes('devnet') || lower.includes('localhost') || lower.includes('127.0.0.1');
 }
 
 function checkRpcFailoverConfiguration(primaryRpc: string, rpcListRaw?: string): void {
@@ -60,7 +56,9 @@ function checkRpcFailoverConfiguration(primaryRpc: string, rpcListRaw?: string):
   }
 
   if (rpcList.length < 2) {
-    warn('Only one RPC endpoint configured. Add at least one fallback endpoint in SOLANA_RPC_URLS.');
+    warn(
+      'Only one RPC endpoint configured. Add at least one fallback endpoint in SOLANA_RPC_URLS.'
+    );
   } else {
     pass(`SOLANA_RPC_URLS configured with ${rpcList.length} endpoints (primary + fallback).`);
   }

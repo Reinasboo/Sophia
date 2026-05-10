@@ -124,32 +124,56 @@ async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<Api
 // Health check
 export async function checkHealth(): Promise<ApiResponse<{ status: string }>> {
   // Health is read-only, cache for 30 seconds, serve stale for up to 60 seconds
-  return cachedFetch(readProxyUrl('/api/health'), { ttl: 30000, staleTtl: 60000, headers: authHeaders() });
+  return cachedFetch(readProxyUrl('/api/health'), {
+    ttl: 30000,
+    staleTtl: 60000,
+    headers: authHeaders(),
+  });
 }
 
 // Stats - high traffic endpoint, cache aggressively
 export async function getStats(): Promise<ApiResponse<SystemStats>> {
   // Cache for 5 seconds, serve stale for 15 seconds
-  return cachedFetch(readProxyUrl('/api/stats'), { ttl: 5000, staleTtl: 15000, headers: authHeaders() });
+  return cachedFetch(readProxyUrl('/api/stats'), {
+    ttl: 5000,
+    staleTtl: 15000,
+    headers: authHeaders(),
+  });
 }
 
 export async function getMonitoringCache(): Promise<ApiResponse<any>> {
-  return cachedFetch(readProxyUrl('/api/monitoring/cache'), { ttl: 10000, staleTtl: 30000, headers: authHeaders() });
+  return cachedFetch(readProxyUrl('/api/monitoring/cache'), {
+    ttl: 10000,
+    staleTtl: 30000,
+    headers: authHeaders(),
+  });
 }
 
 export async function getRateLimitStats(): Promise<ApiResponse<any>> {
-  return cachedFetch(readProxyUrl('/api/monitoring/rate-limits'), { ttl: 10000, staleTtl: 30000, headers: authHeaders() });
+  return cachedFetch(readProxyUrl('/api/monitoring/rate-limits'), {
+    ttl: 10000,
+    staleTtl: 30000,
+    headers: authHeaders(),
+  });
 }
 
 // Agents - high traffic endpoint, cache with moderate TTL
 export async function getAgents(): Promise<ApiResponse<Agent[]>> {
   // Cache for 5 seconds, serve stale for 15 seconds
-  return cachedFetch(readProxyUrl('/api/agents'), { ttl: 5000, staleTtl: 15000, headers: authHeaders() });
+  return cachedFetch(readProxyUrl('/api/agents'), {
+    ttl: 5000,
+    staleTtl: 15000,
+    headers: authHeaders(),
+  });
 }
 
 export async function getAgent(id: string): Promise<ApiResponse<AgentDetail>> {
   // Cache individual agent for 3 seconds (more frequently accessed)
-  return cachedFetch(readProxyUrl(`/api/agents/${id}`), { ttl: 3000, staleTtl: 10000, headers: authHeaders() });
+  return cachedFetch(readProxyUrl(`/api/agents/${id}`), {
+    ttl: 3000,
+    staleTtl: 10000,
+    headers: authHeaders(),
+  });
 }
 
 export async function createAgent(data: {
@@ -250,35 +274,58 @@ export async function getAgentWithdrawals(
   if (limit) params.append('limit', limit.toString());
   if (offset) params.append('offset', offset.toString());
   const queryString = params.toString();
-  return cachedFetch(readProxyUrl(`/api/agents/${agentId}/withdrawals${queryString ? `?${queryString}` : ''}`), {
+  return cachedFetch(
+    readProxyUrl(`/api/agents/${agentId}/withdrawals${queryString ? `?${queryString}` : ''}`),
+    {
+      ttl: 5000,
+      staleTtl: 15000,
+      headers: authHeaders(),
+    }
+  );
+}
+
+export async function getWithdrawal(withdrawalId: string): Promise<ApiResponse<WithdrawalRecord>> {
+  return cachedFetch(readProxyUrl(`/api/withdrawals/${withdrawalId}`), {
+    ttl: 10000,
+    staleTtl: 30000,
+    headers: authHeaders(),
+  });
+}
+
+// Transactions
+export async function getTransactions(): Promise<ApiResponse<Transaction[]>> {
+  return cachedFetch(readProxyUrl('/api/transactions'), {
     ttl: 5000,
     staleTtl: 15000,
     headers: authHeaders(),
   });
 }
 
-export async function getWithdrawal(withdrawalId: string): Promise<ApiResponse<WithdrawalRecord>> {
-  return cachedFetch(readProxyUrl(`/api/withdrawals/${withdrawalId}`), { ttl: 10000, staleTtl: 30000, headers: authHeaders() });
-}
-
-// Transactions
-export async function getTransactions(): Promise<ApiResponse<Transaction[]>> {
-  return cachedFetch(readProxyUrl('/api/transactions'), { ttl: 5000, staleTtl: 15000, headers: authHeaders() });
-}
-
 export async function getTransaction(signature: string): Promise<ApiResponse<any>> {
-  return cachedFetch(readProxyUrl(`/api/data/transactions/${signature}`), { ttl: 30000, staleTtl: 60000, headers: authHeaders() });
+  return cachedFetch(readProxyUrl(`/api/data/transactions/${signature}`), {
+    ttl: 30000,
+    staleTtl: 60000,
+    headers: authHeaders(),
+  });
 }
 
 // Events
 export async function getEvents(count?: number): Promise<ApiResponse<SystemEvent[]>> {
   const params = count ? `?count=${count}` : '';
-  return cachedFetch(readProxyUrl(`/api/events${params}`), { ttl: 5000, staleTtl: 15000, headers: authHeaders() });
+  return cachedFetch(readProxyUrl(`/api/events${params}`), {
+    ttl: 5000,
+    staleTtl: 15000,
+    headers: authHeaders(),
+  });
 }
 
 // Explorer URL
 export async function getExplorerUrl(signature: string): Promise<ApiResponse<{ url: string }>> {
-  return cachedFetch(readProxyUrl(`/api/explorer/${signature}`), { ttl: 60000, staleTtl: 120000, headers: authHeaders() });
+  return cachedFetch(readProxyUrl(`/api/explorer/${signature}`), {
+    ttl: 60000,
+    staleTtl: 120000,
+    headers: authHeaders(),
+  });
 }
 
 /**
@@ -367,11 +414,19 @@ export function createWebSocket(
 // ============================================\n// Strategy API\n// ============================================
 
 export async function getStrategies(): Promise<ApiResponse<StrategyDefinition[]>> {
-  return cachedFetch(readProxyUrl('/api/strategies'), { ttl: 60000, staleTtl: 120000, headers: authHeaders() });
+  return cachedFetch(readProxyUrl('/api/strategies'), {
+    ttl: 60000,
+    staleTtl: 120000,
+    headers: authHeaders(),
+  });
 }
 
 export async function getStrategy(name: string): Promise<ApiResponse<StrategyDefinition>> {
-  return cachedFetch(readProxyUrl(`/api/strategies/${name}`), { ttl: 60000, staleTtl: 120000, headers: authHeaders() });
+  return cachedFetch(readProxyUrl(`/api/strategies/${name}`), {
+    ttl: 60000,
+    staleTtl: 120000,
+    headers: authHeaders(),
+  });
 }
 
 // ============================================
@@ -394,11 +449,19 @@ export async function registerExternalAgent(data: {
 }
 
 export async function getExternalAgents(): Promise<ApiResponse<ExternalAgent[]>> {
-  return cachedFetch(readProxyUrl('/api/byoa/agents'), { ttl: 5000, staleTtl: 15000, headers: authHeaders() });
+  return cachedFetch(readProxyUrl('/api/byoa/agents'), {
+    ttl: 5000,
+    staleTtl: 15000,
+    headers: authHeaders(),
+  });
 }
 
 export async function getExternalAgent(id: string): Promise<ApiResponse<ExternalAgentDetail>> {
-  return cachedFetch(readProxyUrl(`/api/byoa/agents/${id}`), { ttl: 5000, staleTtl: 15000, headers: authHeaders() });
+  return cachedFetch(readProxyUrl(`/api/byoa/agents/${id}`), {
+    ttl: 5000,
+    staleTtl: 15000,
+    headers: authHeaders(),
+  });
 }
 
 export async function getExternalIntents(
@@ -414,7 +477,11 @@ export async function getExternalIntents(
     });
   }
   const params = limit ? `?limit=${limit}` : '';
-  return cachedFetch(readProxyUrl(`/api/byoa/intents${params}`), { ttl: 5000, staleTtl: 15000, headers: authHeaders() });
+  return cachedFetch(readProxyUrl(`/api/byoa/intents${params}`), {
+    ttl: 5000,
+    staleTtl: 15000,
+    headers: authHeaders(),
+  });
 }
 
 /**
@@ -424,7 +491,11 @@ export async function getAllIntentHistory(
   limit?: number
 ): Promise<ApiResponse<IntentHistoryRecord[]>> {
   const params = limit ? `?limit=${limit}` : '';
-  return cachedFetch(readProxyUrl(`/api/intents${params}`), { ttl: 5000, staleTtl: 15000, headers: authHeaders() });
+  return cachedFetch(readProxyUrl(`/api/intents${params}`), {
+    ttl: 5000,
+    staleTtl: 15000,
+    headers: authHeaders(),
+  });
 }
 
 export async function deactivateExternalAgent(id: string): Promise<ApiResponse<void>> {

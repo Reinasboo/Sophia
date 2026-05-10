@@ -28,7 +28,16 @@ export class StrategyDrivenAgent extends BaseAgent {
     idOverride?: string,
     tenantId?: string // MULTI-TENANT: Pass tenant context to parent
   ) {
-    super(name, strategy, walletId, walletPublicKey, strategyParams, executionSettings, idOverride, tenantId);
+    super(
+      name,
+      strategy,
+      walletId,
+      walletPublicKey,
+      strategyParams,
+      executionSettings,
+      idOverride,
+      tenantId
+    );
     this.supportedIntents = [...supportedIntents];
   }
 
@@ -88,7 +97,8 @@ export class StrategyDrivenAgent extends BaseAgent {
   }
 
   private getStrategyIntervalMs(params: Record<string, unknown>): number {
-    const hours = this.toNumber(params['frequencyHours']) ?? this.toNumber(params['rebalanceIntervalHours']);
+    const hours =
+      this.toNumber(params['frequencyHours']) ?? this.toNumber(params['rebalanceIntervalHours']);
     if (hours && hours > 0) {
       return hours * HOUR_MS;
     }

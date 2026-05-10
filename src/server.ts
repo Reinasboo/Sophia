@@ -279,19 +279,15 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
 
 // Middleware to skip rate limiting for read-only polling endpoints
 function bypassRateLimitForReadOnly(req: Request, res: Response, next: NextFunction): void {
-  const readOnlyPaths = [
-    '/api/health',
-    '/api/stats',
-    '/api/strategies',
-  ];
-  
+  const readOnlyPaths = ['/api/health', '/api/stats', '/api/strategies'];
+
   // GET requests to read-only paths skip rate limiting
-  const isReadOnly = req.method === 'GET' && readOnlyPaths.some(p => req.path.startsWith(p));
+  const isReadOnly = req.method === 'GET' && readOnlyPaths.some((p) => req.path.startsWith(p));
   if (isReadOnly) {
     // Skip rate limiter, go straight to next middleware
     return next();
   }
-  
+
   // Everything else goes through rate limiting
   authRouteRateLimit(req, res, next);
 }
@@ -516,15 +512,15 @@ app.post(
   '/internal/register-bearer',
   authRouteRateLimit,
   asyncHandler(async (req: Request, res: Response) => {
-      const { accessToken, apiKey: providedApiKey } = req.body as {
-        accessToken?: string;
-        apiKey?: string;
-      };
+    const { accessToken, apiKey: providedApiKey } = req.body as {
+      accessToken?: string;
+      apiKey?: string;
+    };
 
-      if (!accessToken) {
-        res.status(400).json({ success: false, error: 'Missing accessToken' });
-        return;
-      }
+    if (!accessToken) {
+      res.status(400).json({ success: false, error: 'Missing accessToken' });
+      return;
+    }
 
     // Verify Privy access token (will throw if misconfigured)
     let verified;
@@ -603,19 +599,19 @@ app.post(
     }
 
     try {
-       // Prefer bearer token store (server-issued), fallback to privy JWT verification
-       let tenantId: string | null = null;
-       const tokenRecord = await getBearerTokenByValue(apiKey);
-       if (tokenRecord) {
-         tenantId = tokenRecord.privyUserId;
-       } else {
-         try {
-           const verified = await verifyPrivyAccessToken(apiKey);
-           if (verified) tenantId = verified.userId;
-         } catch {
-           tenantId = null;
-         }
-       }
+      // Prefer bearer token store (server-issued), fallback to privy JWT verification
+      let tenantId: string | null = null;
+      const tokenRecord = await getBearerTokenByValue(apiKey);
+      if (tokenRecord) {
+        tenantId = tokenRecord.privyUserId;
+      } else {
+        try {
+          const verified = await verifyPrivyAccessToken(apiKey);
+          if (verified) tenantId = verified.userId;
+        } catch {
+          tenantId = null;
+        }
+      }
 
       if (!tenantId) {
         res.status(401).json({ success: false, error: 'Invalid apiKey' });
@@ -996,24 +992,14 @@ app.post(
     // Verify withdrawal belongs to tenant (multi-tenant check)
     const record = withdrawalManager.getWithdrawalRecord(withdrawalId);
     if (!record || record.tenantId !== tenantId) {
-      sendError(
-        res,
-        'Withdrawal not found',
-        HTTP_STATUS.NOT_FOUND,
-        ERROR_CODE.NOT_FOUND
-      );
+      sendError(res, 'Withdrawal not found', HTTP_STATUS.NOT_FOUND, ERROR_CODE.NOT_FOUND);
       return;
     }
 
     const result = await withdrawalManager.executeWithdrawal(withdrawalId);
 
     if (!result.ok) {
-      sendError(
-        res,
-        result.error.message,
-        HTTP_STATUS.BAD_REQUEST,
-        ERROR_CODE.OPERATION_FAILED
-      );
+      sendError(res, result.error.message, HTTP_STATUS.BAD_REQUEST, ERROR_CODE.OPERATION_FAILED);
       return;
     }
 
@@ -1059,12 +1045,7 @@ app.get(
     // Verify agent exists and belongs to tenant
     const agentResult = orchestrator.getAgent(agentId);
     if (!agentResult.ok) {
-      sendError(
-        res,
-        'Agent not found',
-        HTTP_STATUS.NOT_FOUND,
-        ERROR_CODE.AGENT_NOT_FOUND
-      );
+      sendError(res, 'Agent not found', HTTP_STATUS.NOT_FOUND, ERROR_CODE.AGENT_NOT_FOUND);
       return;
     }
 
@@ -1093,12 +1074,7 @@ app.get(
     const record = withdrawalManager.getWithdrawalRecord(withdrawalId);
 
     if (!record || record.tenantId !== tenantId) {
-      sendError(
-        res,
-        'Withdrawal not found',
-        HTTP_STATUS.NOT_FOUND,
-        ERROR_CODE.NOT_FOUND
-      );
+      sendError(res, 'Withdrawal not found', HTTP_STATUS.NOT_FOUND, ERROR_CODE.NOT_FOUND);
       return;
     }
 
@@ -1463,9 +1439,7 @@ const RegisterAgentSchema = z.object({
     .min(1)
     .default(['AUTONOMOUS']),
   metadata: safeRecord.optional(),
-  verificationMethods: z
-    .array(z.enum(['challenge-response']))
-    .default(['challenge-response']),
+  verificationMethods: z.array(z.enum(['challenge-response'])).default(['challenge-response']),
 });
 
 const SubmitIntentSchema = z

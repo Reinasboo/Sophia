@@ -31,6 +31,7 @@ curl -X POST https://sophia-production-1a83.up.railway.app/api/agents \
 ```
 
 **Where to set**:
+
 - Railway environment variable: `ADMIN_API_KEY`
 - Backend validates all mutations against this key
 - Rotate quarterly for security
@@ -49,6 +50,7 @@ curl -X POST https://sophia-production-1a83.up.railway.app/api/byoa/intents \
 ```
 
 **Token structure**:
+
 - Issued by: Privy OAuth provider
 - Signature: RS256 (RSA)
 - JWKS URL: `https://auth.privy.io/api/v1/apps/<app-id>/jwks.json`
@@ -75,6 +77,7 @@ Automatically handled by Privy SDK on frontend. Backend validates via callback e
 **Limit**: 30 transactions per minute
 
 **Response when exceeded**:
+
 ```http
 HTTP/1.1 429 Too Many Requests
 Content-Type: application/json
@@ -91,6 +94,7 @@ Content-Type: application/json
 ```
 
 **Calculation**:
+
 - Wallet ID + Current minute = Rate limit bucket
 - Counter incremented on each request
 - Counter reset every 60 seconds
@@ -101,6 +105,7 @@ Content-Type: application/json
 **Limit**: 1200 RPC calls per minute
 
 **Behavior when exceeded**:
+
 - Requests are queued
 - Queued requests execute in next 60-second window
 - Response returns immediately with `queued: true`
@@ -188,15 +193,15 @@ For list endpoints:
 
 ### Error Codes
 
-| Code                    | HTTP | Meaning                                   |
-| ----------------------- | ---- | ----------------------------------------- |
-| `validation_error`      | 400  | Request body validation failed            |
-| `unauthorized`          | 401  | Missing or invalid auth token             |
-| `forbidden`             | 403  | Auth token valid but lacks permission     |
-| `not_found`             | 404  | Resource does not exist                   |
-| `rate_limit_exceeded`   | 429  | Rate limit exceeded                       |
-| `internal_server_error` | 500  | Unexpected server error                   |
-| `service_unavailable`   | 503  | Server overloaded or maintenance mode     |
+| Code                    | HTTP | Meaning                               |
+| ----------------------- | ---- | ------------------------------------- |
+| `validation_error`      | 400  | Request body validation failed        |
+| `unauthorized`          | 401  | Missing or invalid auth token         |
+| `forbidden`             | 403  | Auth token valid but lacks permission |
+| `not_found`             | 404  | Resource does not exist               |
+| `rate_limit_exceeded`   | 429  | Rate limit exceeded                   |
+| `internal_server_error` | 500  | Unexpected server error               |
+| `service_unavailable`   | 503  | Server overloaded or maintenance mode |
 
 ### Retry Logic
 
@@ -207,14 +212,14 @@ async function makeRequest(url: string, options: any, maxRetries: number = 3) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       const response = await fetch(url, options);
-      
+
       if (response.status === 429) {
         const retryAfter = response.headers.get('Retry-After') || 60;
         console.log(`Rate limited. Retrying in ${retryAfter}s...`);
         await sleep(retryAfter * 1000);
         continue;
       }
-      
+
       if (!response.ok && response.status >= 500) {
         if (attempt < maxRetries) {
           const backoff = Math.pow(2, attempt) * 1000; // Exponential backoff
@@ -223,7 +228,7 @@ async function makeRequest(url: string, options: any, maxRetries: number = 3) {
           continue;
         }
       }
-      
+
       return response.json();
     } catch (error) {
       if (attempt === maxRetries) throw error;
@@ -246,6 +251,7 @@ async function makeRequest(url: string, options: any, maxRetries: number = 3) {
 **Description**: System health status. Used for monitoring and load balancer health checks.
 
 **Response**:
+
 ```json
 {
   "success": true,
@@ -269,6 +275,7 @@ async function makeRequest(url: string, options: any, maxRetries: number = 3) {
 **Authentication**: `X-Admin-Key`
 
 **Request Body**:
+
 ```json
 {
   "name": "Treasury Agent",
@@ -277,9 +284,7 @@ async function makeRequest(url: string, options: any, maxRetries: number = 3) {
   "encryptedPrivateKey": "base64-encoded-aes-256-gcm-encrypted-key",
   "strategy": "scheduled-payer",
   "configuration": {
-    "recipients": [
-      { "address": "ABC...123", "amount": 1000000 }
-    ],
+    "recipients": [{ "address": "ABC...123", "amount": 1000000 }],
     "interval": "daily"
   },
   "policies": {
@@ -291,6 +296,7 @@ async function makeRequest(url: string, options: any, maxRetries: number = 3) {
 ```
 
 **Response** (201 Created):
+
 ```json
 {
   "success": true,
@@ -306,6 +312,7 @@ async function makeRequest(url: string, options: any, maxRetries: number = 3) {
 ```
 
 **Errors**:
+
 - `400 Bad Request` — Invalid configuration
 - `403 Forbidden` — Invalid admin key
 - `409 Conflict` — Wallet address already registered
@@ -319,6 +326,7 @@ async function makeRequest(url: string, options: any, maxRetries: number = 3) {
 **Authentication**: `X-Admin-Key`
 
 **Response**:
+
 ```json
 {
   "success": true,
@@ -347,12 +355,14 @@ async function makeRequest(url: string, options: any, maxRetries: number = 3) {
 **Authentication**: `X-Admin-Key`
 
 **Query Parameters**:
+
 - `page` (default: 1)
 - `pageSize` (default: 20, max: 100)
 - `status` (filter: active | paused | inactive)
 - `strategy` (filter by strategy type)
 
 **Response**:
+
 ```json
 {
   "success": true,
@@ -378,6 +388,7 @@ async function makeRequest(url: string, options: any, maxRetries: number = 3) {
 **Authentication**: `X-Admin-Key`
 
 **Request Body** (all fields optional):
+
 ```json
 {
   "name": "Updated Agent Name",
@@ -388,6 +399,7 @@ async function makeRequest(url: string, options: any, maxRetries: number = 3) {
 ```
 
 **Response** (200 OK):
+
 ```json
 {
   "success": true,
@@ -408,6 +420,7 @@ async function makeRequest(url: string, options: any, maxRetries: number = 3) {
 **Authentication**: `X-Admin-Key`
 
 **Response** (200 OK):
+
 ```json
 {
   "success": true,
@@ -430,6 +443,7 @@ async function makeRequest(url: string, options: any, maxRetries: number = 3) {
 **Authentication**: `X-Admin-Key`
 
 **Request Body**:
+
 ```json
 {
   "agentId": "agent_e8f5b9a2",
@@ -443,6 +457,7 @@ async function makeRequest(url: string, options: any, maxRetries: number = 3) {
 ```
 
 **Response** (202 Accepted):
+
 ```json
 {
   "success": true,
@@ -458,6 +473,7 @@ async function makeRequest(url: string, options: any, maxRetries: number = 3) {
 ```
 
 **Errors**:
+
 - `400 Bad Request` — Invalid parameters
 - `403 Forbidden` — Agent policy violation
 - `429 Too Many Requests` — Rate limit exceeded
@@ -471,6 +487,7 @@ async function makeRequest(url: string, options: any, maxRetries: number = 3) {
 **Authentication**: `X-Admin-Key`
 
 **Response**:
+
 ```json
 {
   "success": true,
@@ -500,6 +517,7 @@ async function makeRequest(url: string, options: any, maxRetries: number = 3) {
 **Authentication**: `X-Admin-Key`
 
 **Query Parameters**:
+
 - `page` (default: 1)
 - `pageSize` (default: 50, max: 500)
 - `agentId` (filter)
@@ -508,6 +526,7 @@ async function makeRequest(url: string, options: any, maxRetries: number = 3) {
 - `until` (RFC3339 timestamp)
 
 **Response**:
+
 ```json
 {
   "success": true,
@@ -535,6 +554,7 @@ async function makeRequest(url: string, options: any, maxRetries: number = 3) {
 **Authentication**: `Authorization: Bearer <jwt>`
 
 **Request Body**:
+
 ```json
 {
   "agentName": "External AI Agent",
@@ -545,13 +565,14 @@ async function makeRequest(url: string, options: any, maxRetries: number = 3) {
 ```
 
 **Response** (201 Created):
+
 ```json
 {
   "success": true,
   "data": {
     "byoaAgentId": "byoa_8f3e5c2a",
     "status": "active",
-    "apiKey": "sk_live_...",  // Use in future requests
+    "apiKey": "sk_live_...", // Use in future requests
     "supportedIntents": ["transfer", "swap"],
     "registeredAt": "2026-05-05T10:30:00Z"
   }
@@ -567,6 +588,7 @@ async function makeRequest(url: string, options: any, maxRetries: number = 3) {
 **Authentication**: `Authorization: Bearer <jwt>`
 
 **Request Body**:
+
 ```json
 {
   "intentType": "transfer",
@@ -579,6 +601,7 @@ async function makeRequest(url: string, options: any, maxRetries: number = 3) {
 ```
 
 **Response** (202 Accepted):
+
 ```json
 {
   "success": true,
@@ -601,6 +624,7 @@ async function makeRequest(url: string, options: any, maxRetries: number = 3) {
 **Authentication**: `Authorization: Bearer <jwt>`
 
 **Response**:
+
 ```json
 {
   "success": true,
@@ -629,6 +653,7 @@ async function makeRequest(url: string, options: any, maxRetries: number = 3) {
 **Endpoint**: `wss://sophia-production-1a83.up.railway.app`
 
 **Connection Headers**:
+
 ```
 Authorization: Bearer <privy-jwt>
 X-Client-ID: <unique-client-identifier>
@@ -637,6 +662,7 @@ X-Client-ID: <unique-client-identifier>
 ### Message Format
 
 **Server → Client**:
+
 ```json
 {
   "type": "agent_update",
@@ -784,7 +810,7 @@ const newAgent = await apiClient.post('/api/agents', {
 // WebSocket connection
 const ws = new WebSocket('wss://sophia-production-1a83.up.railway.app', {
   headers: {
-    'Authorization': `Bearer ${jwtToken}`,
+    Authorization: `Bearer ${jwtToken}`,
   },
 });
 
