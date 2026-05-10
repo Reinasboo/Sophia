@@ -35,6 +35,7 @@ import {
 } from '@/components';
 import { useAgent } from '@/lib/hooks';
 import { useAuthProtected } from '@/lib/useAuthProtected';
+import { useTenantSession } from '@/lib/privy-provider';
 import * as api from '@/lib/api';
 import { WithdrawalRecord } from '@/lib/types';
 import {
@@ -52,10 +53,11 @@ export default function AgentDetailPage() {
   const router = useRouter();
   const { id } = router.query;
   const { isLoading, isAuthenticated } = useAuthProtected();
+  const { tenantSession, loading: sessionLoading } = useTenantSession();
   const network = process.env.NEXT_PUBLIC_SOLANA_NETWORK || 'mainnet-beta';
   const explorerCluster = network === 'mainnet-beta' ? '' : `?cluster=${network}`;
   const { data, loading, error, refetch } = useAgent(id as string | null, {
-    enabled: isAuthenticated && !isLoading,
+    enabled: isAuthenticated && !isLoading && !sessionLoading && !!tenantSession,
   });
   const [actionLoading, setActionLoading] = useState(false);
   const [copied, setCopied] = useState(false);

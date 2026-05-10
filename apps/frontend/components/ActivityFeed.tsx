@@ -19,6 +19,7 @@ import {
   Circle,
 } from 'lucide-react';
 import { useWebSocket, useEvents } from '@/lib/hooks';
+import { useTenantSession } from '@/lib/privy-provider';
 import type { SystemEvent } from '@/lib/types';
 import { cn, formatRelativeTime, formatSol } from '@/lib/utils';
 
@@ -93,7 +94,13 @@ export function ActivityFeed({
   title = 'Recent Activity',
 }: ActivityFeedProps) {
   const { events: wsEvents, connected } = useWebSocket();
-  const { events: restEvents } = useEvents(50, 10000);
+  const { tenantSession, loading: sessionLoading } = useTenantSession();
+  const shouldPollRestEvents =
+    !propEvents && wsEvents.length === 0 && !sessionLoading && !!tenantSession;
+  const { events: restEvents } = useEvents(50, {
+    pollInterval: 10000,
+    enabled: shouldPollRestEvents,
+  });
 
   // Use prop events first, then WebSocket events, fall back to REST polling
   const events = propEvents ?? (wsEvents.length > 0 ? wsEvents : restEvents);

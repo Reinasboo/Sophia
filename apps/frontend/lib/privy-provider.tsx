@@ -51,6 +51,9 @@ export function persistTenantSession(tenantSession: TenantSession): void {
 
   localStorage.setItem(TENANT_SESSION_KEYS.tenantId, tenantSession.tenantId);
   localStorage.setItem(TENANT_SESSION_KEYS.legacyTenantId, tenantSession.tenantId);
+  // Persist API key so session survives page reloads and gating logic can read it
+  localStorage.setItem(TENANT_SESSION_KEYS.apiKey, tenantSession.apiKey);
+  localStorage.setItem(TENANT_SESSION_KEYS.legacyApiKey, tenantSession.apiKey);
 
   window.dispatchEvent(new Event(TENANT_SESSION_EVENT));
 }
