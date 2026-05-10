@@ -21,7 +21,7 @@ interface BearerTokenRecord {
 }
 
 // In-memory cache for fast lookups (rebuilds from disk on each access to stay in sync)
-let bearerTokensByPrivyUserId: Map<string, BearerTokenRecord> | null = null;
+const bearerTokensByPrivyUserId: Map<string, BearerTokenRecord> | null = null;
 
 /**
  * Get the data directory for persistent storage (shared with frontend).

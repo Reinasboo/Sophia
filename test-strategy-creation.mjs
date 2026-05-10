@@ -1,3 +1,5 @@
+/* eslint-env node */
+/* global console, process */
 import { createAgent } from './dist/src/agent/index.js';
 
 // Try to create a scalping_trading agent directly
