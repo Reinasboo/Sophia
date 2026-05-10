@@ -18,13 +18,26 @@ const logger = createLogger('STORE');
 
 /**
  * Get writable data directory.
- * On Lambda (/var/task is read-only), uses /tmp. Locally uses ./data
+ * On Railway and Lambda, prefers a configured persistent volume path.
+ * Locally uses ./data.
  */
 function getDataDir(): string {
-  // Check if we're in Lambda environment (Railway/AWS Lambda)
-  if (process.env['LAMBDA_TASK_ROOT'] || process.env['RAILWAY_ENVIRONMENT']) {
-    return process.env['DATA_DIR'] || '/tmp/sophia';
+  const configuredDataDir = process.env['DATA_DIR'];
+  if (configuredDataDir) {
+    return configuredDataDir;
   }
+
+  // Lambda remains ephemeral, so default to /tmp when no persistent volume is configured.
+  if (process.env['LAMBDA_TASK_ROOT']) {
+    return '/tmp/sophia';
+  }
+
+  // Railway deploys are ephemeral unless a volume is mounted. Use /data so a mounted
+  // volume can retain agent histories, wallets, and withdrawals across redeploys.
+  if (process.env['RAILWAY_ENVIRONMENT']) {
+    return '/data';
+  }
+
   return join(process.cwd(), 'data');
 }
 
