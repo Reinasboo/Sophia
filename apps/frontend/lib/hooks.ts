@@ -43,9 +43,11 @@ export function useStrategies() {
 // Hook for health check
 export function useHealth(pollIntervalOrOptions: number | PollingOptions = 15000) {
   const pollInterval =
-    typeof pollIntervalOrOptions === 'number' ? pollIntervalOrOptions : pollIntervalOrOptions.pollInterval ?? 15000;
+    typeof pollIntervalOrOptions === 'number'
+      ? pollIntervalOrOptions
+      : (pollIntervalOrOptions.pollInterval ?? 15000);
   const enabled =
-    typeof pollIntervalOrOptions === 'number' ? true : pollIntervalOrOptions.enabled ?? true;
+    typeof pollIntervalOrOptions === 'number' ? true : (pollIntervalOrOptions.enabled ?? true);
   const [healthy, setHealthy] = useState<boolean | null>(null);
 
   const fetchHealth = useCallback(async () => {
@@ -72,11 +74,16 @@ interface PollingOptions {
 }
 
 // Hook for fetching events (REST fallback)
-export function useEvents(count: number = 100, pollIntervalOrOptions: number | PollingOptions = 5000) {
+export function useEvents(
+  count: number = 100,
+  pollIntervalOrOptions: number | PollingOptions = 5000
+) {
   const pollInterval =
-    typeof pollIntervalOrOptions === 'number' ? pollIntervalOrOptions : pollIntervalOrOptions.pollInterval ?? 5000;
+    typeof pollIntervalOrOptions === 'number'
+      ? pollIntervalOrOptions
+      : (pollIntervalOrOptions.pollInterval ?? 5000);
   const enabled =
-    typeof pollIntervalOrOptions === 'number' ? true : pollIntervalOrOptions.enabled ?? true;
+    typeof pollIntervalOrOptions === 'number' ? true : (pollIntervalOrOptions.enabled ?? true);
   const [events, setEvents] = useState<SystemEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -108,9 +115,11 @@ export function useEvents(count: number = 100, pollIntervalOrOptions: number | P
 // Hook for fetching agents
 export function useAgents(pollIntervalOrOptions: number | PollingOptions = 5000) {
   const pollInterval =
-    typeof pollIntervalOrOptions === 'number' ? pollIntervalOrOptions : pollIntervalOrOptions.pollInterval ?? 5000;
+    typeof pollIntervalOrOptions === 'number'
+      ? pollIntervalOrOptions
+      : (pollIntervalOrOptions.pollInterval ?? 5000);
   const enabled =
-    typeof pollIntervalOrOptions === 'number' ? true : pollIntervalOrOptions.enabled ?? true;
+    typeof pollIntervalOrOptions === 'number' ? true : (pollIntervalOrOptions.enabled ?? true);
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -149,9 +158,11 @@ export function useAgents(pollIntervalOrOptions: number | PollingOptions = 5000)
 // Hook for fetching single agent
 export function useAgent(id: string | null, pollIntervalOrOptions: number | PollingOptions = 3000) {
   const pollInterval =
-    typeof pollIntervalOrOptions === 'number' ? pollIntervalOrOptions : pollIntervalOrOptions.pollInterval ?? 3000;
+    typeof pollIntervalOrOptions === 'number'
+      ? pollIntervalOrOptions
+      : (pollIntervalOrOptions.pollInterval ?? 3000);
   const enabled =
-    typeof pollIntervalOrOptions === 'number' ? true : pollIntervalOrOptions.enabled ?? true;
+    typeof pollIntervalOrOptions === 'number' ? true : (pollIntervalOrOptions.enabled ?? true);
   const [data, setData] = useState<AgentDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -190,9 +201,11 @@ export function useAgent(id: string | null, pollIntervalOrOptions: number | Poll
 // Hook for fetching system stats
 export function useStats(pollIntervalOrOptions: number | PollingOptions = 5000) {
   const pollInterval =
-    typeof pollIntervalOrOptions === 'number' ? pollIntervalOrOptions : pollIntervalOrOptions.pollInterval ?? 5000;
+    typeof pollIntervalOrOptions === 'number'
+      ? pollIntervalOrOptions
+      : (pollIntervalOrOptions.pollInterval ?? 5000);
   const enabled =
-    typeof pollIntervalOrOptions === 'number' ? true : pollIntervalOrOptions.enabled ?? true;
+    typeof pollIntervalOrOptions === 'number' ? true : (pollIntervalOrOptions.enabled ?? true);
   const [stats, setStats] = useState<SystemStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
