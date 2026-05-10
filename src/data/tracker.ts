@@ -28,6 +28,19 @@ import GmgnAdapter from './gmgn-adapter.js';
 const logger = createLogger('DATA_TRACKER');
 const DATA_TRACKER_STORE_KEY = 'data-tracker';
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function extractGmgnPayload(data: Record<string, unknown>): Record<string, unknown> {
+  const payload = data['payload'];
+  if (isRecord(payload)) {
+    return payload;
+  }
+
+  return data;
+}
+
 interface PersistedTrackerState {
   transactions: IndexedTransaction[];
   intents: IndexedIntent[];
@@ -124,7 +137,11 @@ export class DataTracker {
     }
 
     if (this.storageMode === 'postgres') {
-      void this.persistToDatabase();
+      void this.persistToDatabase().catch((error) => {
+        logger.error('Failed to persist data tracker state', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      });
       return;
     }
 
@@ -456,7 +473,14 @@ export class DataTracker {
         `INSERT INTO indexing_state (
           id, last_processed_slot, last_processed_block_time, total_transactions_indexed,
           total_intents_indexed, missed_event_count, last_health_check
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7)
+        ON CONFLICT (id) DO UPDATE SET
+          last_processed_slot = EXCLUDED.last_processed_slot,
+          last_processed_block_time = EXCLUDED.last_processed_block_time,
+          total_transactions_indexed = EXCLUDED.total_transactions_indexed,
+          total_intents_indexed = EXCLUDED.total_intents_indexed,
+          missed_event_count = EXCLUDED.missed_event_count,
+          last_health_check = EXCLUDED.last_health_check`,
         [
           'default',
           this.indexingState.lastProcessedSlot,
@@ -638,7 +662,7 @@ export class DataTracker {
 
       const updated: IndexedIntent = {
         ...intent,
-        status: result.status as any,
+        status: result.status as IndexedIntent['status'],
         result: result.result,
         error: result.error,
         signature: result.signature,
@@ -751,14 +775,13 @@ export class DataTracker {
       const results = Array.from(this.events.values())
         .filter((e) => {
           if (e.tenantId !== tenantId) return false;
-          const data = e.data as any;
-          if (!data || data.source !== 'gmgn') return false;
-          if (kind && data.kind !== kind) return false;
+          if (!isRecord(e.data) || e.data['source'] !== 'gmgn') return false;
+          if (kind && e.data['kind'] !== kind) return false;
           return true;
         })
         .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
         .slice(0, Math.min(limit, 1000))
-        .map((e) => ((e.data as any).payload ?? (e.data as any)) as Record<string, unknown>);
+        .map((e) => extractGmgnPayload(e.data));
 
       return success(results);
     } catch (err) {

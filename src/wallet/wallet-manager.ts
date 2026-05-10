@@ -43,6 +43,7 @@ const logger = createLogger('WALLET');
 export class WalletManager {
   private walletsByTenant: Map<string, Map<string, InternalWallet>> = new Map();
   private walletTenantIndex: Map<string, string> = new Map();
+  private walletPublicKeyIndex: Map<string, string> = new Map();
   private policies: Map<string, Policy> = new Map();
   private dailyTransfers: Map<string, number> = new Map();
   private encryptionSecret: string;
@@ -116,6 +117,7 @@ export class WalletManager {
       }
       this.walletsByTenant.get(effectiveTenantId)!.set(walletId, wallet);
       this.walletTenantIndex.set(walletId, effectiveTenantId);
+      this.walletPublicKeyIndex.set(wallet.publicKey, effectiveTenantId);
 
       this.policies.set(walletId, { ...DEFAULT_POLICY });
       this.dailyTransfers.set(walletId, 0);
@@ -161,15 +163,7 @@ export class WalletManager {
    * Resolve the tenant that owns a wallet public key.
    */
   getTenantIdForPublicKey(publicKey: string): string | null {
-    for (const [tenantId, tenantBucket] of this.walletsByTenant.entries()) {
-      for (const wallet of tenantBucket.values()) {
-        if (wallet.publicKey === publicKey) {
-          return tenantId;
-        }
-      }
-    }
-
-    return null;
+    return this.walletPublicKeyIndex.get(publicKey) ?? null;
   }
 
   /**
@@ -443,10 +437,20 @@ export class WalletManager {
       return failure(new Error(`Wallet not found: ${walletId}`));
     }
 
+    const wallet = tenantBucket.get(walletId);
+    if (!wallet) {
+      return failure(new Error(`Wallet not found: ${walletId}`));
+    }
+
     tenantBucket.delete(walletId);
     this.walletTenantIndex.delete(walletId);
+    this.walletPublicKeyIndex.delete(wallet.publicKey);
     this.policies.delete(walletId);
     this.dailyTransfers.delete(walletId);
+
+    if (tenantBucket.size === 0) {
+      this.walletsByTenant.delete(effectiveTenantId);
+    }
 
     logger.info('Wallet deleted', { walletId, tenantId: effectiveTenantId });
 
@@ -506,6 +510,7 @@ export class WalletManager {
       }
       this.walletsByTenant.get(tenantId)!.set(wallet.id, wallet);
       this.walletTenantIndex.set(wallet.id, tenantId);
+      this.walletPublicKeyIndex.set(wallet.publicKey, tenantId);
       this.policies.set(wallet.id, saved.policies[wallet.id] ?? { ...DEFAULT_POLICY });
       this.dailyTransfers.set(wallet.id, 0);
       loaded++;

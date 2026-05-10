@@ -76,6 +76,59 @@ function isDeFiIntentType(type: SupportedIntentType): type is DeFiIntent['type']
   return DEFI_INTENT_TYPES.includes(type);
 }
 
+function expandScientificNotation(value: string): string {
+  const lowerValue = value.toLowerCase();
+  if (!lowerValue.includes('e')) {
+    return value;
+  }
+
+  const [mantissaPart, exponentPart] = lowerValue.split('e') as [string, string];
+  const exponent = Number(exponentPart);
+  if (!Number.isInteger(exponent)) {
+    throw new Error('Invalid scientific notation');
+  }
+
+  const negative = mantissaPart.startsWith('-');
+  const unsignedMantissa = negative ? mantissaPart.slice(1) : mantissaPart;
+  const [wholePart, fractionPart = ''] = unsignedMantissa.split('.') as [string, string?];
+  const digits = `${wholePart}${fractionPart}`.replace(/^0+/, '') || '0';
+  const decimalOffset = wholePart.length + exponent;
+
+  let expanded: string;
+  if (decimalOffset <= 0) {
+    expanded = `0.${'0'.repeat(-decimalOffset)}${digits}`;
+  } else if (decimalOffset >= digits.length) {
+    expanded = `${digits}${'0'.repeat(decimalOffset - digits.length)}`;
+  } else {
+    expanded = `${digits.slice(0, decimalOffset)}.${digits.slice(decimalOffset)}`;
+  }
+
+  return negative ? `-${expanded}` : expanded;
+}
+
+function amountToBaseUnits(amount: number, decimals: number): bigint {
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw new Error('Token transfer amount must be positive');
+  }
+
+  if (!Number.isInteger(decimals) || decimals < 0 || decimals > 18) {
+    throw new Error('decimals must be an integer between 0 and 18');
+  }
+
+  const normalizedAmount = expandScientificNotation(amount.toPrecision(15))
+    .replace(/0+$/, '')
+    .replace(/\.$/, '');
+  const [wholePart, fractionPart = ''] = normalizedAmount.replace(/^-/, '').split('.');
+  const paddedFraction = `${fractionPart}${'0'.repeat(decimals)}`.slice(0, decimals);
+  const baseUnits = `${wholePart}${paddedFraction}`.replace(/^0+(?=\d)/, '') || '0';
+
+  if (!/^\d+$/.test(baseUnits)) {
+    throw new Error('Token amount is too large to convert safely');
+  }
+
+  return BigInt(baseUnits);
+}
+
 // ────────────────────────────────────────────
 // Program reference for autonomous execute_instructions
 // All programs are allowed — this list is for logging only.
@@ -842,11 +895,7 @@ export class IntentRouter {
             return rawDecimals;
           })()
         : 9;
-    const scaled = amount * Math.pow(10, decimals);
-    if (!Number.isFinite(scaled) || scaled > Number.MAX_SAFE_INTEGER) {
-      throw new Error('Token amount is too large to convert safely');
-    }
-    const rawAmount = BigInt(Math.round(scaled));
+    const rawAmount = amountToBaseUnits(amount, decimals);
     const txResult = await buildTokenTransfer(
       pubkeyResult.value,
       mintPubkey,
@@ -1126,11 +1175,7 @@ export class IntentRouter {
             return rawDecimals;
           })()
         : 9;
-    const scaled = amount * Math.pow(10, decimals);
-    if (!Number.isFinite(scaled) || scaled > Number.MAX_SAFE_INTEGER) {
-      throw new Error('Token amount is too large to convert safely');
-    }
-    const rawAmount = BigInt(Math.round(scaled));
+    const rawAmount = amountToBaseUnits(amount, decimals);
     const txResult = await buildTokenTransfer(
       pubkeyResult.value,
       mintPubkey,

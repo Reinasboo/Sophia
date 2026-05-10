@@ -155,16 +155,19 @@ describe('WalletManager', () => {
 
   describe('deleteWallet', () => {
     it('removes a wallet', () => {
-      const cr = wm.createWallet('delete-me');
+      const cr = wm.createWallet('delete-me', 'tenant-delete');
       expect(cr.ok).toBe(true);
       if (!cr.ok) return;
 
-      const delResult = wm.deleteWallet(cr.value.id);
+      expect(wm.getTenantIdForPublicKey(cr.value.publicKey)).toBe('tenant-delete');
+
+      const delResult = wm.deleteWallet(cr.value.id, 'tenant-delete');
       expect(delResult.ok).toBe(true);
 
       // Should no longer exist
       const pkResult = wm.getPublicKey(cr.value.id);
       expect(pkResult.ok).toBe(false);
+      expect(wm.getTenantIdForPublicKey(cr.value.publicKey)).toBeNull();
     });
   });
 
