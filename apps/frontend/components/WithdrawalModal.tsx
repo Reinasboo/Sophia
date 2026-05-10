@@ -113,7 +113,7 @@ export function WithdrawalModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-gradient-to-br from-slate-800/95 to-slate-900/95 border border-slate-700/50 rounded-xl backdrop-blur-xl z-50 shadow-xl"
+            className="fixed left-1/2 top-1/3 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-gradient-to-br from-slate-800/95 to-slate-900/95 border border-slate-700/50 rounded-xl backdrop-blur-xl z-50 shadow-xl max-h-[80vh] overflow-y-auto"
           >
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-slate-700/50">
