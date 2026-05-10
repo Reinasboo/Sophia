@@ -38,7 +38,11 @@ export default function AgentsPage() {
   const { isLoading, isAuthenticated } = useAuthProtected();
   const router = useRouter();
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const { agents, loading: agentsLoading, refetch } = useAgents({
+  const {
+    agents,
+    loading: agentsLoading,
+    refetch,
+  } = useAgents({
     enabled: isAuthenticated && !isLoading,
   });
   const [filter, setFilter] = useState<string>('all');
