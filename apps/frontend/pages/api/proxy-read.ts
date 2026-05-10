@@ -23,6 +23,7 @@ const ALLOWED_PATH_PATTERNS = [
   /^\/api\/strategies(?:\/[^/]+)?$/,
   /^\/api\/byoa\/agents(?:\/[^/]+(?:\/intents)?)?$/,
   /^\/api\/byoa\/intents$/,
+  /^\/api\/intents$/,
   /^\/api\/byoa\/service-policies(?:\/[^/]+)?$/,
 ];
 
@@ -45,11 +46,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const decodedPath = decodeURIComponent(rawPath);
-  if (!isAllowedPath(decodedPath) || decodedPath.includes('..')) {
+  const targetUrl = parseUrl(decodedPath);
+
+  // Validate only the pathname so query parameters like ?count=10 or ?limit=50
+  // do not cause legitimate requests to fail with 400.
+  if (!isAllowedPath(targetUrl.pathname) || targetUrl.pathname.includes('..')) {
     return res.status(400).json({ success: false, error: 'Invalid read proxy target path' });
   }
 
-  const targetUrl = parseUrl(decodedPath);
   const upstreamUrl = `${BACKEND_URL.replace(/\/+$/, '')}${targetUrl.pathname}${targetUrl.search}`;
 
   try {
