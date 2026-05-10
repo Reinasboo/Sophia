@@ -29,6 +29,14 @@ interface PendingRequest<T> {
 class RequestDeduplicator {
   private cache = new Map<string, CacheEntry<any>>();
   private pendingRequests = new Map<string, PendingRequest<any>>();
+
+  invalidatePrefix(prefix: string): void {
+    for (const key of this.cache.keys()) {
+      if (key.startsWith(prefix)) {
+        this.cache.delete(key);
+      }
+    }
+  }
   
   /**
    * Execute a request with automatic deduplication
@@ -63,7 +71,7 @@ class RequestDeduplicator {
 
       // Revalidate in background (don't await)
       this.executeAndCache<T>(key, executor, ttl).catch((err) => {
-        console.warn(`[RequestDeduplication] Background revalidation failed for ${key}:`, err);
+        console.warn('[RequestDeduplication] Background revalidation failed for %s:', key, err);
       });
 
       return staleData;
@@ -176,10 +184,15 @@ export async function cachedFetch<T = any>(
   }
 ): Promise<T> {
   const { method = 'GET', body, ttl = 30000, staleTtl = 60000, headers = {} } = options || {};
+  const resolvedUrl = new URL(url, window.location.origin);
+
+  if (resolvedUrl.origin !== window.location.origin) {
+    throw new Error('cachedFetch only supports same-origin requests');
+  }
 
   // Skip caching for mutations (POST, PUT, DELETE)
   if (method !== 'GET') {
-    const response = await fetch(url, {
+    const response = await fetch(resolvedUrl.toString(), {
       method,
       headers: { 'Content-Type': 'application/json', ...headers },
       body: body ? JSON.stringify(body) : undefined,
@@ -193,19 +206,18 @@ export async function cachedFetch<T = any>(
 
     // Invalidate related cache entries after mutation
     if (method === 'POST' || method === 'PUT' || method === 'DELETE') {
-      const endpoint = new URL(url).pathname;
-      requestDeduplicator.invalidatePattern(`${endpoint}.*`);
+      requestDeduplicator.invalidatePrefix(`${resolvedUrl.pathname}:`);
     }
 
     return data;
   }
 
   // Deduplicate GET requests
-  const cacheKey = `${method}:${url}`;
+  const cacheKey = `${method}:${resolvedUrl.toString()}`;
   return requestDeduplicator.execute(
     cacheKey,
     async () => {
-      const response = await fetch(url, { 
+      const response = await fetch(resolvedUrl.toString(), { 
         method,
         headers: { 'Content-Type': 'application/json', ...headers }
       });

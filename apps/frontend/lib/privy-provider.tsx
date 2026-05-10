@@ -50,9 +50,7 @@ export function persistTenantSession(tenantSession: TenantSession): void {
   }
 
   localStorage.setItem(TENANT_SESSION_KEYS.tenantId, tenantSession.tenantId);
-  localStorage.setItem(TENANT_SESSION_KEYS.apiKey, tenantSession.apiKey);
   localStorage.setItem(TENANT_SESSION_KEYS.legacyTenantId, tenantSession.tenantId);
-  localStorage.setItem(TENANT_SESSION_KEYS.legacyApiKey, tenantSession.apiKey);
 
   window.dispatchEvent(new Event(TENANT_SESSION_EVENT));
 }
@@ -98,8 +96,6 @@ function readTenantSession(): TenantSession | null {
   }
 
   currentTenantSession = { tenantId, apiKey };
-  localStorage.removeItem(TENANT_SESSION_KEYS.apiKey);
-  localStorage.removeItem(TENANT_SESSION_KEYS.legacyApiKey);
   return currentTenantSession;
 }
 

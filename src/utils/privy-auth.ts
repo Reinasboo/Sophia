@@ -48,7 +48,7 @@ export async function verifyPrivyAccessToken(
   accessToken: string
 ): Promise<VerifiedPrivyToken | null> {
   if (!accessToken) {
-    console.log('[Privy Auth] No access token provided');
+    console.warn('[Privy Auth] No access token provided');
     return null;
   }
 
@@ -60,16 +60,6 @@ export async function verifyPrivyAccessToken(
 
   const appId = process.env['PRIVY_APP_ID'];
   const configuredIssuer = process.env['PRIVY_ISSUER'];
-  
-  // Log JWT structure for debugging
-  const jwtParts = accessToken.split('.');
-  console.log('[Privy Auth] JWT Structure Check', {
-    length: accessToken.length,
-    parts: jwtParts.length,
-    firstPart: jwtParts[0]?.slice(0, 20) + '...',
-    appIdConfigured: !!appId,
-    issuerConfigured: !!configuredIssuer,
-  });
 
   let verified;
   try {
@@ -80,12 +70,10 @@ export async function verifyPrivyAccessToken(
     const errorMsg = err instanceof Error ? err.message : String(err);
     console.error('[Privy Auth] JWT verification failed', {
       error: errorMsg,
-      jwtLength: accessToken.length,
-      jwtParts: jwtParts.length,
       usingJwks: !!process.env['PRIVY_JWKS_URL'],
       usingPem: !!process.env['PRIVY_PUBLIC_KEY_PEM'],
     });
-    throw err; // Re-throw for caller to handle
+    throw err;
   }
 
   const payload = verified.payload;

@@ -8,6 +8,7 @@
 import crypto from 'crypto';
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
+import rateLimit from 'express-rate-limit';
 import { WebSocketServer, WebSocket } from 'ws';
 import { z } from 'zod';
 import { PublicKey } from '@solana/web3.js';
@@ -186,9 +187,21 @@ app.use(
   })
 );
 
-const authRouteRateLimit = createRouteRateLimitMiddleware('auth', 60_000, 1000); // Permissive for login flows
+const authRouteRateLimit = rateLimit({
+  windowMs: 60_000,
+  limit: 1000,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: 'Too many auth requests. Please slow down.',
+});
 const byoaRouteRateLimit = createRouteRateLimitMiddleware('byoa', 60_000, 100); // Permissive for external agents
-const webhookRouteRateLimit = createRouteRateLimitMiddleware('webhook', 60_000, 100); // Permissive for webhook handlers
+const webhookRouteRateLimit = rateLimit({
+  windowMs: 60_000,
+  limit: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: 'Too many webhook requests. Please slow down.',
+});
 
 // L-3 FIX: Explicitly handle OPTIONS preflight so browsers get correct CORS headers.
 app.options(
@@ -501,6 +514,7 @@ app.get(
 // Verifies the Privy accessToken then persists the apiKey into data/bearer_tokens.json
 app.post(
   '/internal/register-bearer',
+  authRouteRateLimit,
   asyncHandler(async (req: Request, res: Response) => {
       const { accessToken, apiKey: providedApiKey } = req.body as {
         accessToken?: string;
@@ -579,6 +593,7 @@ app.post(
 // Body: { apiKey?: string }
 app.post(
   '/internal/verify-bearer',
+  authRouteRateLimit,
   asyncHandler(async (req: Request, res: Response) => {
     const { apiKey } = req.body as { apiKey?: string };
 
