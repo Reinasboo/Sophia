@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 const mocks = vi.hoisted(() => ({
   getBearerTokenByValueMock: vi.fn(),
   verifyPrivyAccessTokenMock: vi.fn(),

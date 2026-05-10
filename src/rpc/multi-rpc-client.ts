@@ -10,7 +10,7 @@
  * Example: "https://api.mainnet-beta.solana.com,https://solana-mainnet.g.alchemy.com/v2/KEY,..."
  */
 
-import { Connection, PublicKey, ParsedAccountData } from '@solana/web3.js';
+import { Connection, PublicKey } from '@solana/web3.js';
 import { createLogger } from '../utils/logger.js';
 
 const logger = createLogger('MULTI_RPC');
@@ -187,7 +187,7 @@ export class MultiRpcClient {
   /**
    * Get token balance
    */
-  async getTokenBalances(owner: PublicKey, _mint?: PublicKey): Promise<any> {
+  async getTokenBalances(owner: PublicKey, _mint?: PublicKey): Promise<unknown> {
     return this.execute(
       (conn) => conn.getTokenAccountsByOwner(owner, { programId: new PublicKey('TokenkegQfeZyiNwAJsyFbPVwwQQnmLYEMud6pNvitLSg') }),
       `getTokenBalances(${owner.toBase58().substring(0, 8)}...)`
@@ -197,7 +197,7 @@ export class MultiRpcClient {
   /**
    * Get account info
    */
-  async getAccountInfo(publicKey: PublicKey): Promise<any> {
+  async getAccountInfo(publicKey: PublicKey): Promise<unknown> {
     return this.execute(
       (conn) => conn.getAccountInfo(publicKey),
       `getAccountInfo(${publicKey.toBase58().substring(0, 8)}...)`
@@ -207,14 +207,14 @@ export class MultiRpcClient {
   /**
    * Send transaction
    */
-  async sendTransaction(tx: any): Promise<string> {
-    return this.execute((conn) => conn.sendRawTransaction(tx), 'sendTransaction');
+  async sendTransaction(tx: unknown): Promise<string> {
+    return this.execute((conn) => conn.sendRawTransaction(tx as Buffer | Uint8Array), 'sendTransaction');
   }
 
   /**
    * Get transaction details
    */
-  async getTransaction(signature: string): Promise<any> {
+  async getTransaction(signature: string): Promise<unknown> {
     return this.execute((conn) => conn.getTransaction(signature), `getTransaction(${signature.substring(0, 8)}...)`);
   }
 

@@ -37,13 +37,13 @@ import {
   LAMPORTS_PER_SOL,
 } from '@solana/web3.js';
 import {
-  TOKEN_PROGRAM_ID,
+  TOKEN_PROGRAM_ID as _TOKEN_PROGRAM_ID,
   NATIVE_MINT,
   getAssociatedTokenAddress,
   createAssociatedTokenAccountInstruction,
   createSyncNativeInstruction,
   createCloseAccountInstruction,
-  ASSOCIATED_TOKEN_PROGRAM_ID,
+  ASSOCIATED_TOKEN_PROGRAM_ID as _ASSOCIATED_TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
 
 // ── Config ────────────────────────────────────────────────────────
@@ -62,7 +62,7 @@ async function api(
   path: string,
   body?: unknown,
   bearerToken?: string
-): Promise<any> {
+): Promise<unknown> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (bearerToken) headers['Authorization'] = `Bearer ${bearerToken}`;
   else headers['X-Admin-Key'] = ADMIN_KEY;

@@ -14,7 +14,7 @@
 import { createAgent } from '../src/agent/index.js';
 import { getStrategyRegistry } from '../src/agent/index.js';
 import { createLogger } from '../src/utils/logger.js';
-import { writeFileSync, readFileSync } from 'fs';
+import { writeFileSync } from 'fs';
 import { join } from 'path';
 
 const logger = createLogger('SEED_STRATEGIES');
