@@ -10,10 +10,12 @@
 import { motion } from 'framer-motion';
 import { Bot, Wallet, ArrowRightLeft, Radio } from 'lucide-react';
 import { useStats } from '@/lib/hooks';
+import { useTenantSession } from '@/lib/privy-provider';
 import { formatSol, cn } from '@/lib/utils';
 
 export function StatsCards() {
-  const { stats, loading } = useStats();
+  const { tenantSession, loading: sessionLoading } = useTenantSession();
+  const { stats, loading } = useStats({ enabled: !sessionLoading && !!tenantSession });
 
   const cards = [
     {

@@ -41,7 +41,11 @@ export function useStrategies() {
 }
 
 // Hook for health check
-export function useHealth(pollInterval: number = 15000) {
+export function useHealth(pollIntervalOrOptions: number | PollingOptions = 15000) {
+  const pollInterval =
+    typeof pollIntervalOrOptions === 'number' ? pollIntervalOrOptions : pollIntervalOrOptions.pollInterval ?? 15000;
+  const enabled =
+    typeof pollIntervalOrOptions === 'number' ? true : pollIntervalOrOptions.enabled ?? true;
   const [healthy, setHealthy] = useState<boolean | null>(null);
 
   const fetchHealth = useCallback(async () => {
@@ -50,16 +54,29 @@ export function useHealth(pollInterval: number = 15000) {
   }, []);
 
   useEffect(() => {
+    if (!enabled) {
+      return;
+    }
+
     fetchHealth();
     const interval = setInterval(fetchHealth, pollInterval);
     return () => clearInterval(interval);
-  }, [fetchHealth, pollInterval]);
+  }, [enabled, fetchHealth, pollInterval]);
 
   return { healthy };
 }
 
+interface PollingOptions {
+  pollInterval?: number;
+  enabled?: boolean;
+}
+
 // Hook for fetching events (REST fallback)
-export function useEvents(count: number = 100, pollInterval: number = 5000) {
+export function useEvents(count: number = 100, pollIntervalOrOptions: number | PollingOptions = 5000) {
+  const pollInterval =
+    typeof pollIntervalOrOptions === 'number' ? pollIntervalOrOptions : pollIntervalOrOptions.pollInterval ?? 5000;
+  const enabled =
+    typeof pollIntervalOrOptions === 'number' ? true : pollIntervalOrOptions.enabled ?? true;
   const [events, setEvents] = useState<SystemEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -76,16 +93,24 @@ export function useEvents(count: number = 100, pollInterval: number = 5000) {
   }, [count]);
 
   useEffect(() => {
+    if (!enabled) {
+      return;
+    }
+
     fetchEvents();
     const interval = setInterval(fetchEvents, pollInterval);
     return () => clearInterval(interval);
-  }, [fetchEvents, pollInterval]);
+  }, [enabled, fetchEvents, pollInterval]);
 
   return { events, loading, error, refetch: fetchEvents };
 }
 
 // Hook for fetching agents
-export function useAgents(pollInterval: number = 5000) {
+export function useAgents(pollIntervalOrOptions: number | PollingOptions = 5000) {
+  const pollInterval =
+    typeof pollIntervalOrOptions === 'number' ? pollIntervalOrOptions : pollIntervalOrOptions.pollInterval ?? 5000;
+  const enabled =
+    typeof pollIntervalOrOptions === 'number' ? true : pollIntervalOrOptions.enabled ?? true;
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -109,16 +134,24 @@ export function useAgents(pollInterval: number = 5000) {
   }, []);
 
   useEffect(() => {
+    if (!enabled) {
+      return;
+    }
+
     fetchAgents();
     const interval = setInterval(fetchAgents, pollInterval);
     return () => clearInterval(interval);
-  }, [fetchAgents, pollInterval]);
+  }, [enabled, fetchAgents, pollInterval]);
 
   return { agents, loading, error, refetch: fetchAgents };
 }
 
 // Hook for fetching single agent
-export function useAgent(id: string | null, pollInterval: number = 3000) {
+export function useAgent(id: string | null, pollIntervalOrOptions: number | PollingOptions = 3000) {
+  const pollInterval =
+    typeof pollIntervalOrOptions === 'number' ? pollIntervalOrOptions : pollIntervalOrOptions.pollInterval ?? 3000;
+  const enabled =
+    typeof pollIntervalOrOptions === 'number' ? true : pollIntervalOrOptions.enabled ?? true;
   const [data, setData] = useState<AgentDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -141,17 +174,25 @@ export function useAgent(id: string | null, pollInterval: number = 3000) {
   }, [id]);
 
   useEffect(() => {
+    if (!enabled) {
+      return;
+    }
+
     setLoading(true);
     fetchAgent();
     const interval = setInterval(fetchAgent, pollInterval);
     return () => clearInterval(interval);
-  }, [fetchAgent, pollInterval]);
+  }, [enabled, fetchAgent, pollInterval]);
 
   return { data, loading, error, refetch: fetchAgent };
 }
 
 // Hook for fetching system stats
-export function useStats(pollInterval: number = 5000) {
+export function useStats(pollIntervalOrOptions: number | PollingOptions = 5000) {
+  const pollInterval =
+    typeof pollIntervalOrOptions === 'number' ? pollIntervalOrOptions : pollIntervalOrOptions.pollInterval ?? 5000;
+  const enabled =
+    typeof pollIntervalOrOptions === 'number' ? true : pollIntervalOrOptions.enabled ?? true;
   const [stats, setStats] = useState<SystemStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -168,10 +209,14 @@ export function useStats(pollInterval: number = 5000) {
   }, []);
 
   useEffect(() => {
+    if (!enabled) {
+      return;
+    }
+
     fetchStats();
     const interval = setInterval(fetchStats, pollInterval);
     return () => clearInterval(interval);
-  }, [fetchStats, pollInterval]);
+  }, [enabled, fetchStats, pollInterval]);
 
   return { stats, loading, error, refetch: fetchStats };
 }

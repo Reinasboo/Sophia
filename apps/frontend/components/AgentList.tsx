@@ -9,6 +9,7 @@
 import { motion } from 'framer-motion';
 import { Bot, Plus } from 'lucide-react';
 import { useAgents } from '@/lib/hooks';
+import { useTenantSession } from '@/lib/privy-provider';
 import { AgentCard } from './AgentCard';
 
 interface AgentListProps {
@@ -16,7 +17,10 @@ interface AgentListProps {
 }
 
 export function AgentList({ onCreateClick }: AgentListProps) {
-  const { agents, loading, error, refetch } = useAgents();
+  const { tenantSession, loading: sessionLoading } = useTenantSession();
+  const { agents, loading, error, refetch } = useAgents({
+    enabled: !sessionLoading && !!tenantSession,
+  });
 
   if (loading && agents.length === 0) {
     return (

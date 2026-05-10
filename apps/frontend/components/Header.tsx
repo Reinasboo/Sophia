@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 import { useStats, useWebSocket, useHealth } from '@/lib/hooks';
 import { formatUptime } from '@/lib/utils';
 import { BrandMark } from './BrandMark';
+import { useTenantSession } from '@/lib/privy-provider';
 
 interface HeaderProps {
   title?: string;
@@ -19,9 +20,11 @@ interface HeaderProps {
 }
 
 export function Header({ title, subtitle }: HeaderProps) {
-  const { stats } = useStats();
+  const { tenantSession, loading: sessionLoading } = useTenantSession();
+  const pollingEnabled = !sessionLoading && !!tenantSession;
+  const { stats } = useStats({ enabled: pollingEnabled });
   const { connected } = useWebSocket();
-  const { healthy } = useHealth();
+  const { healthy } = useHealth({ enabled: pollingEnabled });
 
   return (
     <header className="py-8 px-8 lg:px-12">

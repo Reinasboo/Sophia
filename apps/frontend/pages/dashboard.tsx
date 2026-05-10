@@ -27,10 +27,10 @@ import { useAgents, useStats, useEvents } from '@/lib/hooks';
 
 export default function Dashboard() {
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const { agents, refetch } = useAgents();
-  const { stats } = useStats();
-  const { events } = useEvents(10);
   const { isLoading, isAuthenticated } = useAuthProtected();
+  const { agents, refetch } = useAgents({ enabled: isAuthenticated && !isLoading });
+  const { stats } = useStats({ enabled: isAuthenticated && !isLoading });
+  const { events } = useEvents(10, { enabled: isAuthenticated && !isLoading });
   const router = useRouter();
 
   if (isLoading) {
