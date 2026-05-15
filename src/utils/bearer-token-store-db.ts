@@ -25,6 +25,14 @@ interface BearerTokenRecord {
 let pool: Pool | null = null;
 let fileBackendUsed = false;
 
+function isProduction(): boolean {
+  return process.env['NODE_ENV'] === 'production';
+}
+
+function canUseFileBackend(): boolean {
+  return fileBackendUsed && !isProduction();
+}
+
 /**
  * Initialize the database connection (production) or file backend (dev).
  */
@@ -60,8 +68,15 @@ async function initializeBackend(): Promise<void> {
       logger.error('Failed to connect to PostgreSQL', {
         error: err instanceof Error ? err.message : String(err),
       });
-      // Fall back to file backend
+      if (isProduction()) {
+        throw err;
+      }
+      // Fall back to file backend in non-production environments only.
     }
+  }
+
+  if (isProduction()) {
+    throw new Error('DATABASE_URL is required for bearer token storage in production.');
   }
 
   logger.warn('Using file-based bearer token store (not recommended for production)');
@@ -89,8 +104,12 @@ export async function storeBearerToken(record: BearerTokenRecord): Promise<void>
     }
   }
 
-  // File backend fallback
-  storeTokenToFile(record);
+  if (canUseFileBackend()) {
+    storeTokenToFile(record);
+    return;
+  }
+
+  throw new Error('Bearer token store is unavailable. Refusing to write tokens without PostgreSQL.');
 }
 
 /**
@@ -122,8 +141,11 @@ export async function getBearerTokenByUser(privyUserId: string): Promise<BearerT
     }
   }
 
-  // File backend fallback
-  return getTokenFromFile(privyUserId);
+  if (canUseFileBackend()) {
+    return getTokenFromFile(privyUserId);
+  }
+
+  return null;
 }
 
 /**
@@ -157,10 +179,11 @@ export async function getBearerTokenByValue(
     }
   }
 
-  // File backend fallback
-  const privyUserId = extractPrivyUserIdFromToken(bearerToken);
-  if (privyUserId) {
-    return getTokenFromFile(privyUserId);
+  if (canUseFileBackend()) {
+    const privyUserId = extractPrivyUserIdFromToken(bearerToken);
+    if (privyUserId) {
+      return getTokenFromFile(privyUserId);
+    }
   }
   return null;
 }
@@ -189,8 +212,11 @@ export async function listAllBearerTokens(): Promise<BearerTokenRecord[]> {
     }
   }
 
-  // File backend fallback
-  return listTokensFromFile();
+  if (canUseFileBackend()) {
+    return listTokensFromFile();
+  }
+
+  return [];
 }
 
 /**
@@ -208,8 +234,9 @@ export async function deleteBearerToken(privyUserId: string): Promise<void> {
     }
   }
 
-  // File backend fallback
-  deleteTokenFromFile(privyUserId);
+  if (canUseFileBackend()) {
+    deleteTokenFromFile(privyUserId);
+  }
 }
 
 // ============================================================================
