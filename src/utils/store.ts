@@ -27,6 +27,10 @@ function getDataDir(): string {
     return configuredDataDir;
   }
 
+  if (process.env['NODE_ENV'] === 'production') {
+    throw new Error('DATA_DIR must be set in production for shared state persistence.');
+  }
+
   // Lambda remains ephemeral, so default to /tmp when no persistent volume is configured.
   if (process.env['LAMBDA_TASK_ROOT']) {
     return '/tmp/sophia';

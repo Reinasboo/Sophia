@@ -9,6 +9,7 @@
     "restartPolicyWindowSeconds": 600
   },
   "vars": {
-    "NODE_VERSION": "22.13.0"
+    "NODE_VERSION": "22.13.0",
+    "DATA_DIR": "/data"
   }
 }

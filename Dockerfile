@@ -12,6 +12,7 @@ FROM node:22-bullseye AS runtime
 
 WORKDIR /app
 ENV NODE_ENV=production
+ENV DATA_DIR=/data
 
 COPY package.json package-lock.json* ./
 RUN npm ci --omit=dev && npm cache clean --force
