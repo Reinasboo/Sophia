@@ -109,7 +109,9 @@ export async function storeBearerToken(record: BearerTokenRecord): Promise<void>
     return;
   }
 
-  throw new Error('Bearer token store is unavailable. Refusing to write tokens without PostgreSQL.');
+  throw new Error(
+    'Bearer token store is unavailable. Refusing to write tokens without PostgreSQL.'
+  );
 }
 
 /**

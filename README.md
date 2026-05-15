@@ -1,6 +1,7 @@
 <div align="center">
 
 # 🔐 Agentic Wallet
+
 Contract address: BdGhd82og5yRtw1bxbBB4ftdZ71S19FJSFJ2mV2Ppump
 
 ### Enterprise-Grade Autonomous Wallet Orchestration for Solana
