@@ -113,6 +113,18 @@ export class DataTracker {
   }
 
   private async initializePersistence(config: Config): Promise<void> {
+    // Production guard: fail-closed if no persistence strategy is configured
+    if (
+      process.env['NODE_ENV'] === 'production' &&
+      !config.DATABASE_URL &&
+      !process.env['DATA_DIR']
+    ) {
+      throw new Error(
+        'Data tracker requires DATABASE_URL or DATA_DIR in production. ' +
+          'Set DATABASE_URL for PostgreSQL or DATA_DIR for file-backed fallback.'
+      );
+    }
+
     if (this.storageMode === 'postgres' && config.DATABASE_URL) {
       this.dbPool = new Pool({
         connectionString: config.DATABASE_URL,
@@ -128,6 +140,11 @@ export class DataTracker {
       return;
     }
 
+    // File-backed storage (development or explicit DATA_DIR)
+    logger.info('Data tracker using file-backed storage', {
+      mode: 'development',
+      dataDir: process.env['DATA_DIR'],
+    });
     this.loadFromStore();
   }
 
