@@ -1,4 +1,4 @@
-FROM node:24-bullseye AS build
+FROM node:22-bullseye AS build
 
 WORKDIR /app
 
@@ -8,7 +8,7 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-FROM node:24-bullseye AS runtime
+FROM node:22-bullseye AS runtime
 
 WORKDIR /app
 ENV NODE_ENV=production
