@@ -45,7 +45,7 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,json,md}\""
   },
   "dependencies": {
-    "@solana/spl-token": "^0.4.0",
+    "@solana/spl-token": "^0.1.8",
     "@solana/web3.js": "^1.91.0",
     "@types/pg": "^8.20.0",
     "bs58": "^5.0.0",
@@ -77,7 +77,7 @@
     "tsx": "^4.7.0",
     "typescript": "^5.3.3",
     "typescript-eslint": "^7.0.0",
-    "vitest": "^1.2.0"
+    "vitest": "^4.1.6"
   },
   "engines": {
     "node": ">=22.0.0"

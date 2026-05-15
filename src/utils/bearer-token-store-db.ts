@@ -12,6 +12,8 @@ import { Pool, QueryResult } from 'pg';
 import { createLogger } from './logger.js';
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
+import { encrypt, decrypt } from './encryption.js';
+import { getConfig } from './config.js';
 
 const logger = createLogger('BEARER_TOKEN_STORE_DB');
 
@@ -252,24 +254,53 @@ function getDataDir(): string {
   return join(process.cwd(), 'data');
 }
 
+interface EncryptedBearerTokenRecord {
+  privyUserId: string;
+  encryptedBearerToken: string;
+  createdAt: string;
+  issuedAt: number;
+}
+
+function getEncryptionSecret(): string {
+  try {
+    const config = getConfig();
+    return config.KEY_ENCRYPTION_SECRET;
+  } catch {
+    // Fallback for dev: use a deterministic but not production-safe secret
+    logger.warn('Using fallback encryption secret; configure KEY_ENCRYPTION_SECRET for security');
+    return 'dev-fallback-secret-not-for-production';
+  }
+}
+
 function storeTokenToFile(record: BearerTokenRecord): void {
   try {
     const dataDir = getDataDir();
     if (!existsSync(dataDir)) mkdirSync(dataDir, { recursive: true });
 
     const filePath = join(dataDir, 'bearer_tokens.json');
-    let records: BearerTokenRecord[] = [];
+    let records: EncryptedBearerTokenRecord[] = [];
 
     if (existsSync(filePath)) {
       const data = readFileSync(filePath, 'utf8');
       records = JSON.parse(data || '[]');
     }
 
+    // Encrypt the bearer token before storing to disk
+    const secret = getEncryptionSecret();
+    const encryptedBearerToken = encrypt(new TextEncoder().encode(record.bearerToken), secret);
+
+    const encryptedRecord: EncryptedBearerTokenRecord = {
+      privyUserId: record.privyUserId,
+      encryptedBearerToken,
+      createdAt: record.createdAt,
+      issuedAt: record.issuedAt,
+    };
+
     const index = records.findIndex((r) => r.privyUserId === record.privyUserId);
     if (index >= 0) {
-      records[index] = record;
+      records[index] = encryptedRecord;
     } else {
-      records.push(record);
+      records.push(encryptedRecord);
     }
 
     writeFileSync(filePath, JSON.stringify(records, null, 2), 'utf8');
@@ -288,8 +319,22 @@ function getTokenFromFile(privyUserId: string): BearerTokenRecord | null {
     if (!existsSync(filePath)) return null;
 
     const data = readFileSync(filePath, 'utf8');
-    const records = JSON.parse(data || '[]') as BearerTokenRecord[];
-    return records.find((r) => r.privyUserId === privyUserId) || null;
+    const encryptedRecords = JSON.parse(data || '[]') as EncryptedBearerTokenRecord[];
+    const encrypted = encryptedRecords.find((r) => r.privyUserId === privyUserId);
+
+    if (!encrypted) return null;
+
+    // Decrypt the bearer token
+    const secret = getEncryptionSecret();
+    const decrypted = decrypt(encrypted.encryptedBearerToken, secret);
+    const bearerToken = new TextDecoder().decode(decrypted);
+
+    return {
+      privyUserId: encrypted.privyUserId,
+      bearerToken,
+      createdAt: encrypted.createdAt,
+      issuedAt: encrypted.issuedAt,
+    };
   } catch (err) {
     logger.error('Failed to read token from file', {
       error: err instanceof Error ? err.message : String(err),
@@ -306,7 +351,29 @@ function listTokensFromFile(): BearerTokenRecord[] {
     if (!existsSync(filePath)) return [];
 
     const data = readFileSync(filePath, 'utf8');
-    return JSON.parse(data || '[]') as BearerTokenRecord[];
+    const encryptedRecords = JSON.parse(data || '[]') as EncryptedBearerTokenRecord[];
+
+    const secret = getEncryptionSecret();
+    return encryptedRecords
+      .map((encrypted) => {
+        try {
+          const decrypted = decrypt(encrypted.encryptedBearerToken, secret);
+          const bearerToken = new TextDecoder().decode(decrypted);
+          return {
+            privyUserId: encrypted.privyUserId,
+            bearerToken,
+            createdAt: encrypted.createdAt,
+            issuedAt: encrypted.issuedAt,
+          };
+        } catch (err) {
+          logger.error('Failed to decrypt token during list', {
+            privyUserId: encrypted.privyUserId,
+            error: err instanceof Error ? err.message : String(err),
+          });
+          return null;
+        }
+      })
+      .filter((r): r is BearerTokenRecord => r !== null);
   } catch (err) {
     logger.error('Failed to list tokens from file', {
       error: err instanceof Error ? err.message : String(err),
@@ -323,7 +390,7 @@ function deleteTokenFromFile(privyUserId: string): void {
     if (!existsSync(filePath)) return;
 
     const data = readFileSync(filePath, 'utf8');
-    let records = JSON.parse(data || '[]') as BearerTokenRecord[];
+    let records = JSON.parse(data || '[]') as EncryptedBearerTokenRecord[];
     records = records.filter((r) => r.privyUserId !== privyUserId);
 
     writeFileSync(filePath, JSON.stringify(records, null, 2), 'utf8');
