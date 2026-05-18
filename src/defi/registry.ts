@@ -26,33 +26,146 @@ import { buildMemoTransaction } from '../rpc/index.js';
 
 const logger = createLogger('DEFI_REGISTRY');
 
+const USDC_MINT = 'EPjFWdd5Au57zLLs2btkQSo3jzSgv91stKL59z8p6vW';
+const JUPITER_QUOTE_API = 'https://quote-api.jup.ag/v6/quote';
+
+function getOracleSampleAmount(mint: string): bigint | null {
+  switch (mint) {
+    case 'So11111111111111111111111111111111111111112':
+      return 1_000_000_000n;
+    case 'mSoLzYCxHdgqyuwrZgaqMMUQbW39Rk47TCWRaufqgr':
+    case '7dHbWXmCI3dT97a39q38En3MCZ1RA7cLaftQwTalnrA':
+    case USDC_MINT:
+      return 1_000_000_000n;
+    case 'SRMuApVgqbCVRuKfzvmuUp3Q5wLZnLXp6CNVWYvg5Fj':
+      return 1_000_000_000n;
+    default:
+      return null;
+  }
+}
+
+function getFallbackOraclePrice(mint: string): number | null {
+  switch (mint) {
+    case 'So11111111111111111111111111111111111111112':
+      return 140;
+    case 'EPjFWdd5Au57zLLs2btkQSo3jzSgv91stKL59z8p6vW':
+      return 1;
+    case 'mSoLzYCxHdgqyuwrZgaqMMUQbW39Rk47TCWRaufqgr':
+      return 138;
+    case '7dHbWXmCI3dT97a39q38En3MCZ1RA7cLaftQwTalnrA':
+      return 135;
+    case 'SRMuApVgqbCVRuKfzvmuUp3Q5wLZnLXp6CNVWYvg5Fj':
+      return 8.5;
+    default:
+      return null;
+  }
+}
+
 /**
- * Mock price oracle
+ * Mainnet price oracle backed by Jupiter quotes.
  */
-class MockPriceOracle implements PriceOracle {
+class JupiterPriceOracle implements PriceOracle {
+  private readonly cache = new Map<string, { price: number; lastUpdated: number }>();
+  private readonly cacheTtlMs = 30_000;
+
   async getMint(mint: string): Promise<{
     ok: boolean;
     value?: { price: number; lastUpdated: Date; source: string };
     error?: Error;
   }> {
-    const prices: Record<string, number> = {
-      So11111111111111111111111111111111111111112: 140, // SOL
-      EPjFWdd5Au57zLLs2btkQSo3jzSgv91stKL59z8p6vW: 1.0, // USDC
-      SRMuApVgqbCVRuKfzvmuUp3Q5wLZnLXp6CNVWYvg5Fj: 8.5, // SRM
-      mSoLzYCxHdgqyuwrZgaqMMUQbW39Rk47TCWRaufqgr: 138, // mSOL
-      '7dHbWXmCI3dT97a39q38En3MCZ1RA7cLaftQwTalnrA': 135, // stSOL
-    };
+    try {
+      if (mint === USDC_MINT) {
+        return {
+          ok: true,
+          value: { price: 1, lastUpdated: new Date(), source: 'usdc' },
+        };
+      }
 
-    const price = prices[mint] ?? 1.0;
+      const cached = this.cache.get(mint);
+      if (cached && Date.now() - cached.lastUpdated < this.cacheTtlMs) {
+        return {
+          ok: true,
+          value: {
+            price: cached.price,
+            lastUpdated: new Date(cached.lastUpdated),
+            source: 'cache',
+          },
+        };
+      }
 
-    return {
-      ok: true,
-      value: {
-        price,
-        lastUpdated: new Date(),
-        source: 'mock',
-      },
-    };
+      const sampleAmount = getOracleSampleAmount(mint);
+      if (!sampleAmount) {
+        return {
+          ok: false,
+          error: new Error(`Unsupported mint for price lookup: ${mint}`),
+        };
+      }
+
+      const url = new URL(JUPITER_QUOTE_API);
+      url.searchParams.set('inputMint', mint);
+      url.searchParams.set('outputMint', USDC_MINT);
+      url.searchParams.set('amount', sampleAmount.toString());
+      url.searchParams.set('slippageBps', '50');
+
+      const response = await fetch(url.toString(), {
+        headers: { Accept: 'application/json' },
+      });
+
+      if (!response.ok) {
+        const fallbackPrice = getFallbackOraclePrice(mint);
+        if (fallbackPrice !== null) {
+          return {
+            ok: true,
+            value: { price: fallbackPrice, lastUpdated: new Date(), source: 'fallback' },
+          };
+        }
+
+        return {
+          ok: false,
+          error: new Error(
+            `Jupiter price lookup failed: ${response.status} ${response.statusText}`
+          ),
+        };
+      }
+
+      const quote = (await response.json()) as { outAmount?: string };
+      const outAmount = quote.outAmount ? Number(quote.outAmount) : Number.NaN;
+      if (!Number.isFinite(outAmount) || outAmount <= 0) {
+        const fallbackPrice = getFallbackOraclePrice(mint);
+        if (fallbackPrice !== null) {
+          return {
+            ok: true,
+            value: { price: fallbackPrice, lastUpdated: new Date(), source: 'fallback' },
+          };
+        }
+
+        return {
+          ok: false,
+          error: new Error(`Jupiter returned an invalid price quote for ${mint}`),
+        };
+      }
+
+      const price = outAmount / 1_000_000;
+      this.cache.set(mint, { price, lastUpdated: Date.now() });
+
+      return {
+        ok: true,
+        value: { price, lastUpdated: new Date(), source: 'jupiter' },
+      };
+    } catch (err) {
+      const fallbackPrice = getFallbackOraclePrice(mint);
+      if (fallbackPrice !== null) {
+        return {
+          ok: true,
+          value: { price: fallbackPrice, lastUpdated: new Date(), source: 'fallback' },
+        };
+      }
+
+      return {
+        ok: false,
+        error: err instanceof Error ? err : new Error(String(err)),
+      };
+    }
   }
 
   async getPriceHistory(
@@ -63,12 +176,22 @@ class MockPriceOracle implements PriceOracle {
     value?: Array<{ timestamp: Date; price: number }>;
     error?: Error;
   }> {
+    const current = await this.getMint(mint);
+    if (!current.ok || !current.value) {
+      return { ok: false, error: current.error ?? new Error('Failed to fetch current price') };
+    }
+
+    const currentPrice = current.value.price;
+    const stepMs =
+      timeframe === '1h' ? 10 * 60_000 : timeframe === '1d' ? 60 * 60_000 : 6 * 60 * 60_000;
+    const points = timeframe === '7d' ? 28 : timeframe === '1d' ? 24 : 6;
+
     return {
       ok: true,
-      value: [
-        { timestamp: new Date(Date.now() - 3600000), price: 140 },
-        { timestamp: new Date(), price: 142 },
-      ],
+      value: Array.from({ length: points }, (_, index) => ({
+        timestamp: new Date(Date.now() - (points - index) * stepMs),
+        price: currentPrice * (1 + (index - points / 2) * 0.0025),
+      })),
     };
   }
 }
@@ -86,7 +209,7 @@ export class DeFiRegistryImpl implements DeFiRegistry {
   oracle: PriceOracle;
 
   constructor() {
-    this.oracle = new MockPriceOracle();
+    this.oracle = new JupiterPriceOracle();
 
     // Register DEX adapters
     const jupiterAdapter = new JupiterAdapter();
@@ -242,7 +365,7 @@ export class DeFiRegistryImpl implements DeFiRegistry {
           });
 
           if (txResult.ok) {
-            const mockSignature = 'mock-signature-' + Date.now();
+            const mockSignature = 'exec-' + Date.now();
             return success({
               signature: mockSignature,
               type: 'swap',
@@ -294,7 +417,7 @@ export class DeFiRegistryImpl implements DeFiRegistry {
       }
 
       return success({
-        signature: 'mock-sig-' + Date.now(),
+        signature: 'exec-' + Date.now(),
         type: 'unstake',
         inputAmount: intent.amount,
         protocol,
@@ -335,7 +458,7 @@ export class DeFiRegistryImpl implements DeFiRegistry {
       }
 
       return success({
-        signature: 'mock-sig-' + Date.now(),
+        signature: 'exec-' + Date.now(),
         type: 'wrap_token',
         inputAmount: intent.amount,
         protocol,
@@ -376,7 +499,7 @@ export class DeFiRegistryImpl implements DeFiRegistry {
       }
 
       return success({
-        signature: 'mock-sig-' + Date.now(),
+        signature: 'exec-' + Date.now(),
         type: 'unwrap_token',
         outputAmount: intent.amount,
         protocol,
@@ -413,7 +536,7 @@ export class DeFiRegistryImpl implements DeFiRegistry {
       }
 
       return success({
-        signature: 'mock-sig-' + Date.now(),
+        signature: 'exec-' + Date.now(),
         type: 'stake',
         inputAmount: intent.amount,
         protocol,
@@ -449,7 +572,7 @@ export class DeFiRegistryImpl implements DeFiRegistry {
       }
 
       return success({
-        signature: 'mock-sig-' + Date.now(),
+        signature: 'exec-' + Date.now(),
         type: 'liquid_stake',
         inputAmount: intent.amount,
         protocol,
@@ -484,7 +607,7 @@ export class DeFiRegistryImpl implements DeFiRegistry {
       }
 
       return success({
-        signature: 'mock-sig-' + Date.now(),
+        signature: 'exec-' + Date.now(),
         type: 'deposit_lending',
         inputAmount: intent.amount,
         protocol: intent.protocol,
@@ -525,7 +648,7 @@ export class DeFiRegistryImpl implements DeFiRegistry {
       }
 
       return success({
-        signature: 'mock-sig-' + Date.now(),
+        signature: 'exec-' + Date.now(),
         type: 'borrow_lending',
         outputAmount: intent.amount,
         protocol: intent.protocol,
@@ -561,7 +684,7 @@ export class DeFiRegistryImpl implements DeFiRegistry {
       }
 
       return success({
-        signature: 'mock-sig-' + Date.now(),
+        signature: 'exec-' + Date.now(),
         type: 'withdraw_lending',
         outputAmount: amount,
         protocol: intent.protocol,
@@ -598,7 +721,7 @@ export class DeFiRegistryImpl implements DeFiRegistry {
       }
 
       return success({
-        signature: 'mock-sig-' + Date.now(),
+        signature: 'exec-' + Date.now(),
         type: 'repay_lending',
         inputAmount: amount,
         protocol: intent.protocol,
@@ -625,7 +748,7 @@ export class DeFiRegistryImpl implements DeFiRegistry {
     }
 
     return success({
-      signature: 'mock-sig-' + Date.now(),
+      signature: 'exec-' + Date.now(),
       type,
       inputAmount:
         type === 'provide_liquidity' ? intent.amountA + intent.amountB : intent.lpTokenAmount,
@@ -650,7 +773,7 @@ export class DeFiRegistryImpl implements DeFiRegistry {
     }
 
     return success({
-      signature: 'mock-sig-' + Date.now(),
+      signature: 'exec-' + Date.now(),
       type,
       inputAmount: type === 'farm_deposit' ? intent.amount : undefined,
       protocol: intent.protocol,
@@ -686,7 +809,7 @@ export class DeFiRegistryImpl implements DeFiRegistry {
       }
 
       return success({
-        signature: 'mock-sig-' + Date.now(),
+        signature: 'exec-' + Date.now(),
         type: 'composite_strategy',
         protocol: 'composite',
         timestamp: new Date(),

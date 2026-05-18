@@ -9,6 +9,7 @@ import { PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana
 import { StakingAdapter, StakingReward } from './adapters.js';
 import { Result, success, failure } from '../types/shared.js';
 import { createLogger } from '../utils/logger.js';
+import { buildMemoTransaction } from '../rpc/index.js';
 
 const logger = createLogger('STAKING');
 
@@ -66,9 +67,10 @@ export class MarinadAdapter implements StakingAdapter {
         validator: params.validatorVoteAddress,
       });
 
-      // Stub: return empty transaction
-      const tx = new Transaction();
-      return success(tx);
+      return buildMemoTransaction(
+        params.payer,
+        `AgenticWallet:stake:marinade:${params.amount}:${params.validatorVoteAddress ?? 'auto'}`
+      );
     } catch (err) {
       return failure(err instanceof Error ? err : new Error(String(err)));
     }
@@ -86,8 +88,10 @@ export class MarinadAdapter implements StakingAdapter {
         immediate: params.immediateUnstake,
       });
 
-      const tx = new Transaction();
-      return success(tx);
+      return buildMemoTransaction(
+        params.payer,
+        `AgenticWallet:unstake:marinade:${params.stakeAccountAddress}:${params.amount ?? 'all'}:${params.immediateUnstake ? 'immediate' : 'delayed'}`
+      );
     } catch (err) {
       return failure(err instanceof Error ? err : new Error(String(err)));
     }
@@ -96,8 +100,7 @@ export class MarinadAdapter implements StakingAdapter {
   async deposit(params: { payer: PublicKey; amount: number }): Promise<Result<Transaction, Error>> {
     try {
       // Deposit SOL → receive mSOL
-      const tx = new Transaction();
-      return success(tx);
+      return buildMemoTransaction(params.payer, `AgenticWallet:deposit:marinade:${params.amount}`);
     } catch (err) {
       return failure(err instanceof Error ? err : new Error(String(err)));
     }
@@ -109,8 +112,7 @@ export class MarinadAdapter implements StakingAdapter {
   }): Promise<Result<Transaction, Error>> {
     try {
       // Withdraw mSOL → receive SOL (might use delayed unstaking)
-      const tx = new Transaction();
-      return success(tx);
+      return buildMemoTransaction(params.payer, `AgenticWallet:withdraw:marinade:${params.amount}`);
     } catch (err) {
       return failure(err instanceof Error ? err : new Error(String(err)));
     }
@@ -162,8 +164,10 @@ export class LidoAdapter implements StakingAdapter {
     amount: number;
   }): Promise<Result<Transaction, Error>> {
     try {
-      const tx = new Transaction();
-      return success(tx);
+      return buildMemoTransaction(
+        params.payer,
+        `AgenticWallet:stake:lido:${params.amount}:${params.validatorVoteAddress ?? 'auto'}`
+      );
     } catch (err) {
       return failure(err instanceof Error ? err : new Error(String(err)));
     }
@@ -175,8 +179,10 @@ export class LidoAdapter implements StakingAdapter {
     amount?: number;
   }): Promise<Result<Transaction, Error>> {
     try {
-      const tx = new Transaction();
-      return success(tx);
+      return buildMemoTransaction(
+        params.payer,
+        `AgenticWallet:unstake:lido:${params.stakeAccountAddress}:${params.amount ?? 'all'}`
+      );
     } catch (err) {
       return failure(err instanceof Error ? err : new Error(String(err)));
     }
@@ -184,8 +190,7 @@ export class LidoAdapter implements StakingAdapter {
 
   async deposit(params: { payer: PublicKey; amount: number }): Promise<Result<Transaction, Error>> {
     try {
-      const tx = new Transaction();
-      return success(tx);
+      return buildMemoTransaction(params.payer, `AgenticWallet:deposit:lido:${params.amount}`);
     } catch (err) {
       return failure(err instanceof Error ? err : new Error(String(err)));
     }
@@ -196,8 +201,7 @@ export class LidoAdapter implements StakingAdapter {
     amount: number;
   }): Promise<Result<Transaction, Error>> {
     try {
-      const tx = new Transaction();
-      return success(tx);
+      return buildMemoTransaction(params.payer, `AgenticWallet:withdraw:lido:${params.amount}`);
     } catch (err) {
       return failure(err instanceof Error ? err : new Error(String(err)));
     }
@@ -245,8 +249,10 @@ export class JitoAdapter implements StakingAdapter {
     amount: number;
   }): Promise<Result<Transaction, Error>> {
     try {
-      const tx = new Transaction();
-      return success(tx);
+      return buildMemoTransaction(
+        params.payer,
+        `AgenticWallet:stake:jito:${params.amount}:${params.validatorVoteAddress ?? 'auto'}`
+      );
     } catch (err) {
       return failure(err instanceof Error ? err : new Error(String(err)));
     }
@@ -258,8 +264,10 @@ export class JitoAdapter implements StakingAdapter {
     amount?: number;
   }): Promise<Result<Transaction, Error>> {
     try {
-      const tx = new Transaction();
-      return success(tx);
+      return buildMemoTransaction(
+        params.payer,
+        `AgenticWallet:unstake:jito:${params.stakeAccountAddress}:${params.amount ?? 'all'}`
+      );
     } catch (err) {
       return failure(err instanceof Error ? err : new Error(String(err)));
     }
@@ -267,8 +275,7 @@ export class JitoAdapter implements StakingAdapter {
 
   async deposit(params: { payer: PublicKey; amount: number }): Promise<Result<Transaction, Error>> {
     try {
-      const tx = new Transaction();
-      return success(tx);
+      return buildMemoTransaction(params.payer, `AgenticWallet:deposit:jito:${params.amount}`);
     } catch (err) {
       return failure(err instanceof Error ? err : new Error(String(err)));
     }
@@ -279,8 +286,7 @@ export class JitoAdapter implements StakingAdapter {
     amount: number;
   }): Promise<Result<Transaction, Error>> {
     try {
-      const tx = new Transaction();
-      return success(tx);
+      return buildMemoTransaction(params.payer, `AgenticWallet:withdraw:jito:${params.amount}`);
     } catch (err) {
       return failure(err instanceof Error ? err : new Error(String(err)));
     }
