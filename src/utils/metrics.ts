@@ -10,6 +10,7 @@
  */
 
 import { createLogger } from './logger.js';
+import * as dgram from 'node:dgram';
 
 const logger = createLogger('METRICS');
 
@@ -91,7 +92,6 @@ class StatsDMetricsBackend implements MetricsBackend {
   private ensureSocket() {
     if (!this.sendSocket) {
       try {
-        const dgram = require('dgram');
         this.sendSocket = dgram.createSocket('udp4');
         logger.info('StatsD metrics backend initialized', { host: this.host, port: this.port });
       } catch (err) {
