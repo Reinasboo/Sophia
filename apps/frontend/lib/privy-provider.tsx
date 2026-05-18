@@ -19,9 +19,7 @@ interface PrivyContextType {
 
 const TENANT_SESSION_KEYS = {
   tenantId: 'sophia_tenant_id',
-  apiKey: 'sophia_api_key',
   legacyTenantId: 'tenantId',
-  legacyApiKey: 'apiKey',
 } as const;
 
 function isLikelyValidApiKey(token: string): boolean {
@@ -51,9 +49,6 @@ export function persistTenantSession(tenantSession: TenantSession): void {
 
   localStorage.setItem(TENANT_SESSION_KEYS.tenantId, tenantSession.tenantId);
   localStorage.setItem(TENANT_SESSION_KEYS.legacyTenantId, tenantSession.tenantId);
-  // Persist API key so session survives page reloads and gating logic can read it
-  localStorage.setItem(TENANT_SESSION_KEYS.apiKey, tenantSession.apiKey);
-  localStorage.setItem(TENANT_SESSION_KEYS.legacyApiKey, tenantSession.apiKey);
 
   window.dispatchEvent(new Event(TENANT_SESSION_EVENT));
 }
@@ -67,8 +62,6 @@ export function clearTenantSession(): void {
 
   localStorage.removeItem(TENANT_SESSION_KEYS.tenantId);
   localStorage.removeItem(TENANT_SESSION_KEYS.legacyTenantId);
-  localStorage.removeItem(TENANT_SESSION_KEYS.apiKey);
-  localStorage.removeItem(TENANT_SESSION_KEYS.legacyApiKey);
 
   window.dispatchEvent(new Event(TENANT_SESSION_EVENT));
 }
@@ -82,24 +75,7 @@ function readTenantSession(): TenantSession | null {
     return null;
   }
 
-  const tenantId =
-    localStorage.getItem(TENANT_SESSION_KEYS.tenantId) ??
-    localStorage.getItem(TENANT_SESSION_KEYS.legacyTenantId);
-  const apiKey =
-    localStorage.getItem(TENANT_SESSION_KEYS.apiKey) ??
-    localStorage.getItem(TENANT_SESSION_KEYS.legacyApiKey);
-
-  if (!tenantId || !apiKey) {
-    return null;
-  }
-
-  if (!isLikelyValidApiKey(apiKey)) {
-    clearTenantSession();
-    return null;
-  }
-
-  currentTenantSession = { tenantId, apiKey };
-  return currentTenantSession;
+  return null;
 }
 
 export function getCurrentTenantApiKey(): string | null {
